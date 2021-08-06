@@ -87,7 +87,7 @@ class DS345(SerialInstrument):
     burst_count: int
         Range: 1 <= burst_count <= 30000, subject to the
         constraint that the burst time cannot exceed 500s.
-    am_depth: float
+    am_depth: int
         Depth of AM modulation [percent]
         Range: 0 <= am_depth <= 100
         Note: negative values enable double-sideband-suppressed

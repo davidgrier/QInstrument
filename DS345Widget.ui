@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>402</width>
-    <height>102</height>
+    <width>420</width>
+    <height>209</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,14 +17,11 @@
    <property name="spacing">
     <number>1</number>
    </property>
-   <property name="leftMargin">
-    <number>2</number>
-   </property>
    <property name="topMargin">
     <number>1</number>
    </property>
    <property name="rightMargin">
-    <number>2</number>
+    <number>1</number>
    </property>
    <property name="bottomMargin">
     <number>1</number>
@@ -64,7 +61,7 @@
        </widget>
       </item>
       <item row="0" column="1">
-       <widget class="QLabel" name="frequencylabel">
+       <widget class="QLabel" name="frequencyLabel">
         <property name="text">
          <string>Frequency</string>
         </property>
@@ -158,14 +155,14 @@
        </widget>
       </item>
       <item row="1" column="1">
-       <widget class="QLabel" name="amplitudelabel">
+       <widget class="QLabel" name="amplitudeLabel">
         <property name="text">
          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Amplitude&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
        </widget>
       </item>
       <item row="1" column="4">
-       <widget class="QLabel" name="mutelabel">
+       <widget class="QLabel" name="muteLabel">
         <property name="text">
          <string>Muted</string>
         </property>
@@ -191,7 +188,7 @@
        </widget>
       </item>
       <item row="2" column="1">
-       <widget class="QLabel" name="offsetlabel">
+       <widget class="QLabel" name="offsetLabel">
         <property name="text">
          <string>Offset</string>
         </property>
@@ -217,7 +214,7 @@
        </widget>
       </item>
       <item row="2" column="4">
-       <widget class="QLabel" name="phaselabel">
+       <widget class="QLabel" name="phaseLabel">
         <property name="text">
          <string>Phase</string>
         </property>
@@ -230,6 +227,219 @@
         </property>
         <property name="checkable">
          <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QFrame" name="modulationFrame">
+     <property name="frameShape">
+      <enum>QFrame::StyledPanel</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Sunken</enum>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_2">
+      <property name="leftMargin">
+       <number>5</number>
+      </property>
+      <property name="topMargin">
+       <number>1</number>
+      </property>
+      <property name="rightMargin">
+       <number>5</number>
+      </property>
+      <property name="bottomMargin">
+       <number>1</number>
+      </property>
+      <property name="horizontalSpacing">
+       <number>5</number>
+      </property>
+      <property name="verticalSpacing">
+       <number>2</number>
+      </property>
+      <item row="0" column="0">
+       <widget class="QPushButton" name="modulation">
+        <property name="text">
+         <string>Modulation</string>
+        </property>
+        <property name="checkable">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QComboBox" name="modulation_waveform">
+        <item>
+         <property name="text">
+          <string>Single Sweep</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Ramp</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Triangle</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Sine</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Square</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Arbitrary</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>None</string>
+         </property>
+        </item>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QLabel" name="modulation_waveformLabel">
+        <property name="text">
+         <string>Waveform</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="2">
+       <widget class="QDoubleSpinBox" name="modulation_rate">
+        <property name="suffix">
+         <string> Hz</string>
+        </property>
+        <property name="decimals">
+         <number>3</number>
+        </property>
+        <property name="minimum">
+         <double>0.001000000000000</double>
+        </property>
+        <property name="maximum">
+         <double>10000.000000000000000</double>
+        </property>
+        <property name="value">
+         <double>1.000000000000000</double>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="3">
+       <widget class="QLabel" name="modulation_rateLabel">
+        <property name="text">
+         <string>Rate</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0">
+       <widget class="QComboBox" name="modulation_type">
+        <item>
+         <property name="text">
+          <string>Linear Sweep</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Logarithmic Sweep</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Amplitude</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Frequency</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Phase</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Burst</string>
+         </property>
+        </item>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="QLabel" name="modulation_typeLabel">
+        <property name="text">
+         <string>Type</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="2">
+       <widget class="QSpinBox" name="am_depth">
+        <property name="suffix">
+         <string>%</string>
+        </property>
+        <property name="prefix">
+         <string/>
+        </property>
+        <property name="maximum">
+         <number>100</number>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="3">
+       <widget class="QLabel" name="am_depthLabel">
+        <property name="text">
+         <string>AM Depth</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="0">
+       <widget class="QDoubleSpinBox" name="fm_span">
+        <property name="suffix">
+         <string> Hz</string>
+        </property>
+        <property name="decimals">
+         <number>6</number>
+        </property>
+        <property name="maximum">
+         <double>30000000.000000000000000</double>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="1">
+       <widget class="QLabel" name="fm_spanLabel">
+        <property name="text">
+         <string>FM Span</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="2">
+       <widget class="QDoubleSpinBox" name="pm_span">
+        <property name="suffix">
+         <string>°</string>
+        </property>
+        <property name="decimals">
+         <number>3</number>
+        </property>
+        <property name="maximum">
+         <double>7199.998999999999796</double>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="3">
+       <widget class="QLabel" name="pm_spanLabel">
+        <property name="text">
+         <string>PM Span</string>
         </property>
        </widget>
       </item>
@@ -259,7 +469,7 @@
   <connection>
    <sender>mute</sender>
    <signal>toggled(bool)</signal>
-   <receiver>amplitudelabel</receiver>
+   <receiver>amplitudeLabel</receiver>
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
@@ -275,7 +485,7 @@
   <connection>
    <sender>mute</sender>
    <signal>toggled(bool)</signal>
-   <receiver>offsetlabel</receiver>
+   <receiver>offsetLabel</receiver>
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
