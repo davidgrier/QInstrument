@@ -3,7 +3,8 @@ from QInstrument import DS345
 
 
 class QDS345(QInstrument):
-
+    '''Stanford Research Systems DS345 Function Generator
+    '''
     def __init__(self, **kwargs):
         super().__init__(uiFile='DS345Widget.ui',
                          deviceClass=DS345,
