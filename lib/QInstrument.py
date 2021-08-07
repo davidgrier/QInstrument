@@ -1,6 +1,6 @@
 from PyQt5 import uic
 from PyQt5.QtWidgets import QWidget
-from PyQt5.QtCore import pyqtSlot
+from PyQt5.QtCore import (pyqtSlot, pyqtProperty)
 import os
 import sys
 
