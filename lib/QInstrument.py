@@ -6,6 +6,39 @@ import sys
 
 
 class QInstrument(QWidget):
+    '''Glue class to attach a GUI created with Qt Designer
+    with its hardware implementation.
+
+    Widgets in the ui that are intended to control device
+    properties must have the same name as the corresponding
+    property.
+
+    While QInstrument() can be used to create a hardware-enabled
+    GUI directly, a better choice is to subclass QInstrument,
+    providing both the device.ui GUI specification and the
+    class for the hardware implementation.
+
+    ...
+
+    Inherits
+    --------
+    PyQt5.QtWidgets.QWidget
+
+    Properties
+    ----------
+    uiFile: str
+        Name of the ui file that defines the GUI. The base class
+        for the widget should be QWidget.
+    deviceClass: SerialInstrument
+        Hardware interface to the instrument.
+
+    Methods
+    -------
+    properties(): list
+        List of the instrument properties that are
+        controlled by the QInstrument instance.
+
+    '''
 
     wsetter = {'QSpinBox': 'setValue',
                'QDoubleSpinBox': 'setValue',
@@ -22,13 +55,12 @@ class QInstrument(QWidget):
                  deviceClass=None,
                  **kwargs):
         super().__init__(**kwargs)
-        self.configureUi(uiFile)
-        self.configureDevice(deviceClass)
+        self._configureUi(uiFile)
+        self._configureDevice(deviceClass)
 
     def configureUi(self, uiFile):
         if uiFile is None:
             return
-        #file = __file__
         file = sys.modules[self.__module__].__file__
         dir = os.path.dirname(os.path.abspath(file))
         uipath = os.path.join(dir, uiFile)
