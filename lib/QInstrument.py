@@ -6,8 +6,7 @@ import sys
 
 
 class QInstrument(QWidget):
-    '''Glue class to attach a GUI created with Qt Designer
-    with its hardware implementation.
+    '''Glue class to attach a PyQt5 GUI to an instrument interface
 
     Widgets in the ui that are intended to control device
     properties must have the same name as the corresponding

@@ -19,6 +19,10 @@ class SR830(SerialInstrument):
 
     Reference and Phase
     -------------------
+    amplitude: int
+        Amplitude of reference sine output [V]
+        Rounted to 0.002V.
+        Range: 0.004V <= output_amplitude <= 5.000V    
     frequency: float
         Reference frequency for internal oscillator [Hz]
         Rounded to 5 digits or 0.0001 Hz, whichever is greater.
@@ -29,10 +33,6 @@ class SR830(SerialInstrument):
     internal_reference: bool
         True: use internal reference source
         False: use external reference source
-    output_amplitude: int
-        Amplitude of reference sine output [V]
-        Rounted to 0.002V.
-        Range: 0.004V <= output_amplitude <= 5.000V
     phase: float
         Reference phase shift [degrees]
         Range: -360 degrees <= phase <= 729.99 degrees, mod 180 degrees
@@ -79,9 +79,9 @@ class SR830(SerialInstrument):
         1:   5 nV/fA    11:  10 uV/pA    21:  20 mV/nA
         2:  10 nV/fA    12:  20 uV/pA    22:  50 mV/nA
         3:  20 nV/fA    13:  50 uV/pA    23: 100 mV/nA
-        4:  50 nV/fA    14: 100 uV/nA    24: 200 mV/nA
-        5: 100 nV/fA    15: 200 uV/nA    25: 500 mV/nA
-        6: 200 nV/fA    16: 500 uV/nA    26:   1 V/uA
+        4:  50 nV/fA    14: 100 uV/pA    24: 200 mV/nA
+        5: 100 nV/fA    15: 200 uV/pA    25: 500 mV/nA
+        6: 200 nV/fA    16: 500 uV/pA    26:   1  V/uA
         7: 500 nV/fA    17:   1 mV/nA
         8:   1 uV/pA    18:   2 mV/nA
         9:   2 uV/pA    19:   5 mV/nA
@@ -129,10 +129,10 @@ class SR830(SerialInstrument):
         return prop
 
     # Reference and Phase
+    amplitude = Property('SLVL', float)
     frequency = Property('FREQ', float)
     harmonic = Property('HARM')
     internal_reference = Property('FMOD', bool)
-    output_amplitude = Property('SLVL', float)
     phase = Property('PHAS', float)
     reference_trigger = Property('RSLP')
     # Input and Filter
