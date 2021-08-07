@@ -160,13 +160,17 @@ class SR830(SerialInstrument):
         return list(map(float, self.handshake('SNAP?9,3,4').split(',')))
 
     def auto_gain(self):
+        '''Autorange gain'''
         self.send('AGAN')
 
     def auto_reserve(self):
+        '''Autorange dynamic reserve'''
         self.send('ARSV')
 
     def auto_phase(self):
+        '''Autorange phase'''
         self.send('APHS')
 
     def auto_offset(self, channel):
+        '''Autorange offset'''
         self.send('AOFF{channel}')

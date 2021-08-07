@@ -31,13 +31,6 @@ class QInstrument(QWidget):
         for the widget should be QWidget.
     deviceClass: SerialInstrument
         Hardware interface to the instrument.
-
-    Methods
-    -------
-    properties(): list
-        List of the instrument properties that are
-        controlled by the QInstrument instance.
-
     '''
 
     wsetter = {'QSpinBox': 'setValue',
@@ -57,8 +50,29 @@ class QInstrument(QWidget):
         super().__init__(**kwargs)
         self._configureUi(uiFile)
         self._configureDevice(deviceClass)
+        self._configureProperties()
 
-    def configureUi(self, uiFile):
+    @pyqtProperty(list)
+    def properties(self):
+        '''List of device properties that are controlled by the ui
+
+           This property is configured automatically at instantiation
+           and is read-only.
+        '''
+        return self._properties
+
+    @pyqtProperty(dict)
+    def settings(self):
+        '''Dictionary of properties and their current values'''
+        return {key: getattr(self.ui, key) for key in self.properties}
+
+    @settings.setter
+    def settings(self, settings):
+        for key, value in settings.items():
+            if hasattr(self.ui, key, value):
+                setattr(self.ui, key, value)
+            
+    def _configureUi(self, uiFile):
         if uiFile is None:
             return
         file = sys.modules[self.__module__].__file__
@@ -68,7 +82,7 @@ class QInstrument(QWidget):
         self.ui = form()
         self.ui.setupUi(self)
 
-    def configureDevice(self, deviceClass):
+    def _configureDevice(self, deviceClass):
         if deviceClass is None:
             return
         self.device = deviceClass().find()
@@ -78,10 +92,10 @@ class QInstrument(QWidget):
             self._updateUiValues()
             self._connectSignals()
 
-    def properties(self):
-        uiproperties = vars(self.ui).keys()
-        deviceproperties = dir(self.device)
-        return [p for p in uiproperties if p in deviceproperties]
+    def _configureProperties():
+        uiprops = vars(self.ui).keys()
+        deviceprops = dir(self.device)
+        self._properties = [p for p in uiprops if p in deviceprops]
 
     def _getMethod(self, widget, method):
         typeName = type(widget).__name__.split('.')[-1]
