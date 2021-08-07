@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>417</width>
-    <height>234</height>
+    <width>488</width>
+    <height>233</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -54,6 +54,26 @@
        <number>2</number>
       </property>
       <item row="0" column="0">
+       <widget class="QLabel" name="input_configurationLabel">
+        <property name="text">
+         <string>Input</string>
+        </property>
+        <property name="buddy">
+         <cstring>input_configuration</cstring>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="2">
+       <widget class="QLabel" name="line_filterLabel">
+        <property name="text">
+         <string>Line Filter</string>
+        </property>
+        <property name="buddy">
+         <cstring>line_filter</cstring>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
        <widget class="QComboBox" name="input_configuration">
         <item>
          <property name="text">
@@ -78,26 +98,6 @@
        </widget>
       </item>
       <item row="0" column="3">
-       <widget class="QLabel" name="line_filterLabel">
-        <property name="text">
-         <string>Line Filter</string>
-        </property>
-        <property name="buddy">
-         <cstring>line_filter</cstring>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="1">
-       <widget class="QLabel" name="input_configurationLabel">
-        <property name="text">
-         <string>Input</string>
-        </property>
-        <property name="buddy">
-         <cstring>input_configuration</cstring>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="2">
        <widget class="QComboBox" name="line_filter">
         <item>
          <property name="text">
@@ -121,7 +121,7 @@
         </item>
        </widget>
       </item>
-      <item row="1" column="0" colspan="2">
+      <item row="1" column="0">
        <widget class="QCheckBox" name="dc_coupling">
         <property name="text">
          <string> DC Coupling</string>
@@ -165,77 +165,17 @@
       <property name="verticalSpacing">
        <number>2</number>
       </property>
-      <item row="3" column="2">
-       <widget class="QComboBox" name="low_pass_slope">
-        <item>
-         <property name="text">
-          <string> 6 dB/octave</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>12 dB/octave</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>18 dB/octave</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>24 dB/octave</string>
-         </property>
-        </item>
-       </widget>
-      </item>
-      <item row="3" column="1">
-       <widget class="QLabel" name="dynamic_reserveLabel">
-        <property name="text">
-         <string>Reserve</string>
-        </property>
-        <property name="buddy">
-         <cstring>dynamic_reserve</cstring>
-        </property>
-       </widget>
-      </item>
-      <item row="4" column="0" colspan="3">
-       <widget class="QCheckBox" name="synchronous_filter">
-        <property name="text">
-         <string>Synchronous Filter</string>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="3">
-       <widget class="QLabel" name="low_pass_slopeLabel">
-        <property name="text">
-         <string>Low Pass Slope</string>
-        </property>
-        <property name="buddy">
-         <cstring>low_pass_slope</cstring>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="0">
-       <widget class="QComboBox" name="dynamic_reserve">
-        <item>
-         <property name="text">
-          <string>High</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Normal</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Low Noise</string>
-         </property>
-        </item>
-       </widget>
-      </item>
       <item row="0" column="0">
+       <widget class="QLabel" name="sensitivityLabel">
+        <property name="text">
+         <string>Sensitivity</string>
+        </property>
+        <property name="buddy">
+         <cstring>sensitivity</cstring>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
        <widget class="QComboBox" name="sensitivity">
         <item>
          <property name="text">
@@ -374,17 +314,17 @@
         </item>
        </widget>
       </item>
-      <item row="0" column="1">
-       <widget class="QLabel" name="sensitivityLabel">
+      <item row="0" column="2">
+       <widget class="QLabel" name="time_constantLabel">
         <property name="text">
-         <string>Sensitivity</string>
+         <string>Time Constant</string>
         </property>
         <property name="buddy">
-         <cstring>sensitivity</cstring>
+         <cstring>time_constant</cstring>
         </property>
        </widget>
       </item>
-      <item row="0" column="2">
+      <item row="0" column="3">
        <widget class="QComboBox" name="time_constant">
         <item>
          <property name="text">
@@ -488,13 +428,73 @@
         </item>
        </widget>
       </item>
-      <item row="0" column="3">
-       <widget class="QLabel" name="time_constantLabel">
+      <item row="1" column="0">
+       <widget class="QLabel" name="dynamic_reserveLabel">
         <property name="text">
-         <string>Time Constant</string>
+         <string>Reserve</string>
         </property>
         <property name="buddy">
-         <cstring>time_constant</cstring>
+         <cstring>dynamic_reserve</cstring>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QComboBox" name="dynamic_reserve">
+        <item>
+         <property name="text">
+          <string>High</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Normal</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Low Noise</string>
+         </property>
+        </item>
+       </widget>
+      </item>
+      <item row="1" column="2">
+       <widget class="QLabel" name="low_pass_slopeLabel">
+        <property name="text">
+         <string>Low Pass Slope</string>
+        </property>
+        <property name="buddy">
+         <cstring>low_pass_slope</cstring>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="3">
+       <widget class="QComboBox" name="low_pass_slope">
+        <item>
+         <property name="text">
+          <string> 6 dB/octave</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>12 dB/octave</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>18 dB/octave</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>24 dB/octave</string>
+         </property>
+        </item>
+       </widget>
+      </item>
+      <item row="2" column="0">
+       <widget class="QCheckBox" name="synchronous_filter">
+        <property name="text">
+         <string>Synchronous Filter</string>
         </property>
        </widget>
       </item>
@@ -529,25 +529,6 @@
        <number>2</number>
       </property>
       <item row="0" column="2">
-       <widget class="QComboBox" name="reference_trigger">
-        <item>
-         <property name="text">
-          <string>Sine Zero Crossing</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>TTL Rising Edge</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>TTL Falling Edge</string>
-         </property>
-        </item>
-       </widget>
-      </item>
-      <item row="0" column="3">
        <widget class="QLabel" name="reference_triggerLabel">
         <property name="text">
          <string>Trigger</string>
@@ -557,36 +538,17 @@
         </property>
        </widget>
       </item>
-      <item row="1" column="0">
-       <widget class="QDoubleSpinBox" name="frequency">
-        <property name="suffix">
-         <string> Hz</string>
-        </property>
-        <property name="decimals">
-         <number>3</number>
-        </property>
-        <property name="minimum">
-         <double>0.001000000000000</double>
-        </property>
-        <property name="maximum">
-         <double>102000.000000000000000</double>
-        </property>
-        <property name="value">
-         <double>1000.000000000000000</double>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="1">
-       <widget class="QLabel" name="frequencyLabel">
+      <item row="0" column="0">
+       <widget class="QCheckBox" name="internal_reference">
         <property name="text">
-         <string>Frequency</string>
+         <string>Internal Reference</string>
         </property>
-        <property name="buddy">
-         <cstring>frequency</cstring>
+        <property name="checkable">
+         <bool>true</bool>
         </property>
        </widget>
       </item>
-      <item row="1" column="2">
+      <item row="1" column="3">
        <widget class="QDoubleSpinBox" name="amplitude">
         <property name="suffix">
          <string> V</string>
@@ -605,7 +567,26 @@
         </property>
        </widget>
       </item>
-      <item row="1" column="3">
+      <item row="0" column="3">
+       <widget class="QComboBox" name="reference_trigger">
+        <item>
+         <property name="text">
+          <string>Sine Zero Crossing</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>TTL Rising Edge</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>TTL Falling Edge</string>
+         </property>
+        </item>
+       </widget>
+      </item>
+      <item row="1" column="2">
        <widget class="QLabel" name="amplitudeLabel">
         <property name="text">
          <string>Amplitude</string>
@@ -615,7 +596,46 @@
         </property>
        </widget>
       </item>
-      <item row="2" column="0">
+      <item row="1" column="1">
+       <widget class="QDoubleSpinBox" name="frequency">
+        <property name="suffix">
+         <string> Hz</string>
+        </property>
+        <property name="decimals">
+         <number>3</number>
+        </property>
+        <property name="minimum">
+         <double>0.001000000000000</double>
+        </property>
+        <property name="maximum">
+         <double>102000.000000000000000</double>
+        </property>
+        <property name="value">
+         <double>1000.000000000000000</double>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="frequencyLabel">
+        <property name="text">
+         <string>Frequency</string>
+        </property>
+        <property name="buddy">
+         <cstring>frequency</cstring>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="0">
+       <widget class="QLabel" name="phase_label">
+        <property name="text">
+         <string>Phase</string>
+        </property>
+        <property name="buddy">
+         <cstring>phase</cstring>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="1">
        <widget class="QDoubleSpinBox" name="phase">
         <property name="suffix">
          <string>°</string>
@@ -628,27 +648,7 @@
         </property>
        </widget>
       </item>
-      <item row="2" column="1">
-       <widget class="QLabel" name="phase_label">
-        <property name="text">
-         <string>Phase</string>
-        </property>
-        <property name="buddy">
-         <cstring>phase</cstring>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="2">
-       <widget class="QSpinBox" name="harmonic">
-        <property name="minimum">
-         <number>1</number>
-        </property>
-        <property name="maximum">
-         <number>20000</number>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="3">
+      <item row="3" column="2">
        <widget class="QLabel" name="harmonicLabel">
         <property name="text">
          <string>Harmonic</string>
@@ -658,13 +658,13 @@
         </property>
        </widget>
       </item>
-      <item row="0" column="0">
-       <widget class="QCheckBox" name="internal_reference">
-        <property name="text">
-         <string>Internal Reference</string>
+      <item row="3" column="3">
+       <widget class="QSpinBox" name="harmonic">
+        <property name="minimum">
+         <number>1</number>
         </property>
-        <property name="checkable">
-         <bool>true</bool>
+        <property name="maximum">
+         <number>20000</number>
         </property>
        </widget>
       </item>
@@ -673,23 +673,6 @@
    </item>
   </layout>
  </widget>
- <tabstops>
-  <tabstop>input_configuration</tabstop>
-  <tabstop>line_filter</tabstop>
-  <tabstop>dc_coupling</tabstop>
-  <tabstop>shield_grounding</tabstop>
-  <tabstop>sensitivity</tabstop>
-  <tabstop>time_constant</tabstop>
-  <tabstop>dynamic_reserve</tabstop>
-  <tabstop>low_pass_slope</tabstop>
-  <tabstop>synchronous_filter</tabstop>
-  <tabstop>internal_reference</tabstop>
-  <tabstop>reference_trigger</tabstop>
-  <tabstop>frequency</tabstop>
-  <tabstop>amplitude</tabstop>
-  <tabstop>phase</tabstop>
-  <tabstop>harmonic</tabstop>
- </tabstops>
  <resources/>
  <connections>
   <connection>
