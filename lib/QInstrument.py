@@ -91,7 +91,7 @@ class QInstrument(QWidget):
             self._updateUiValues()
             self._connectSignals()
 
-    def _configureProperties():
+    def _configureProperties(self):
         uiprops = vars(self.ui).keys()
         deviceprops = dir(self.device)
         self._properties = [p for p in uiprops if p in deviceprops]
