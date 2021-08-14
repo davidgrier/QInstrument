@@ -4,6 +4,11 @@ from PyQt5.QtCore import (pyqtSlot, pyqtProperty)
 import os
 import sys
 
+import logging
+logging.basicConfig()
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.WARNING)
+
 
 class QInstrument(QWidget):
     '''Glue class to attach a PyQt5 GUI to an instrument interface
@@ -32,15 +37,24 @@ class QInstrument(QWidget):
         Hardware interface to the instrument.
     '''
 
-    wsetter = {'QSpinBox': 'setValue',
+    wsetter = {'QCheckBox':      'setChecked',
+               'QComboBox':      'setCurrentIndex',
                'QDoubleSpinBox': 'setValue',
-               'QComboBox': 'setCurrentIndex',
-               'QPushButton': 'setChecked'}
+               'QGroupBox':      'setChecked',
+               'QLabel':         'setText',
+               'QLineEdit':      'setText',
+               'QPushButton':    'setChecked',
+               'QRadioButton':   'setChecked',
+               'QSpinBox':       'setValue'}
 
-    wsignal = {'QSpinBox': 'valueChanged',
+    wsignal = {'QCheckBox':      'toggled',
+               'QComboBox':      'currentIndexChanged',
                'QDoubleSpinBox': 'valueChanged',
-               'QComboBox': 'currentIndexChanged',
-               'QPushButton': 'toggled'}
+               'QGroupBox':      'toggled',
+               'QLineEdit':      'editingFinished',
+               'QPushButton':    'toggled',
+               'QRadioButton':   'toggled',
+               'QSpinBox':       'valueChanged'}
 
     def __init__(self,
                  uiFile=None,
@@ -70,6 +84,10 @@ class QInstrument(QWidget):
         for key, value in settings.items():
             if hasattr(self.ui, key, value):
                 setattr(self.ui, key, value)
+
+    def waitForDevice(self):
+        '''Can be overridden by subclass'''
+        pass
             
     def _configureUi(self, uiFile):
         if uiFile is None:
@@ -95,8 +113,8 @@ class QInstrument(QWidget):
         uiprops = vars(self.ui).keys()
         deviceprops = dir(self.device)
         self._properties = [p for p in uiprops if p in deviceprops]
-
-    def _getMethod(self, widget, method):
+        
+    def _method(self, widget, method):
         typeName = type(widget).__name__.split('.')[-1]
         return getattr(widget, method[typeName])
 
@@ -104,19 +122,30 @@ class QInstrument(QWidget):
         for prop in self.properties():
             widget = getattr(self.ui, prop)
             value = getattr(self.device, prop)
-            update = self._getMethod(widget, self.wsetter)
+            update = self._method(widget, self.wsetter)
             update(value)
 
     def _connectSignals(self):
         for prop in self.properties():
             widget = getattr(self.ui, prop)
-            signal = self._getMethod(widget, self.wsignal)
-            signal.connect(self._setDeviceValue)
+            signal = self._method(widget, self.wsignal)
+            if signal is not None:
+                signal.connect(self._setDeviceProperty)
+
+    def _disconnectSignals(self):
+        for prop in self.properties():
+            widget = getattr(self.ui, prop)
+            signal = self._method(widget, self.wsignal)
+            if signal is not None:
+                signal.disconnect(self._setDeviceProperty)
 
     @pyqtSlot(bool)
     @pyqtSlot(int)
     @pyqtSlot(float)
-    def _setDeviceValue(self, value):
-        attr = self.sender().objectName()
-        if hasattr(self.device, attr):
+    @pyqtSlot(str)
+    def _setDeviceProperty(self, value):
+        name = self.sender().objectName()
+        if hasattr(self.device, name):
             setattr(self.device, attr, value)
+            self.waitForDevice()
+            logger.debug(f'Setting device: {name}: {value}')
