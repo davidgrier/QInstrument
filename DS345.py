@@ -136,14 +136,12 @@ class DS345(SerialInstrument):
                     eol='\n')
 
     def Property(pstr, dtype=float):      
-        @pyqtProperty(dtype)
-        def prop(self):
+        def getter(self):
             return self.get_value(f'{pstr}?', dtype=dtype)
-        @prop.setter
-        def prop(self, value):
+        def setter(self, value):
             value = int(value) if (dtype == bool) else dtype(value)
             self.send(f'{pstr}{value}')
-        return prop
+        return property(getter, setter)
 
     # Function output controls
     frequency              = Property('FREQ')
