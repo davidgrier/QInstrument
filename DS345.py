@@ -141,7 +141,7 @@ class DS345(SerialInstrument):
         def setter(self, value):
             value = int(value) if (dtype == bool) else dtype(value)
             self.send(f'{pstr}{value}')
-        return property(getter, setter)
+        return pyqtProperty(dtype, getter, setter)
 
     # Function output controls
     frequency              = Property('FREQ')
