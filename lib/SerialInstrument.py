@@ -2,10 +2,8 @@ from PyQt5.QtCore import (pyqtSlot, pyqtSignal)
 from PyQt5.QtSerialPort import (QSerialPort, QSerialPortInfo)
 import logging
 
-logging.basicConfig()
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.ERROR)
-
 
 class SerialInstrument(QSerialPort):
     '''Base class for instruments connected to serial ports
@@ -28,6 +26,8 @@ class SerialInstrument(QSerialPort):
     >>> instrument = SerialInstrument().find()
 
     '''
+    
+    
     def __init__(self, portName=None, eol='', **kwargs):
         super().__init__(**kwargs)
         self.eol = eol
@@ -55,7 +55,8 @@ class SerialInstrument(QSerialPort):
         if super().open(QSerialPort.ReadWrite):
             self.clear()
             if not self.identify():
-                logger.warning(f'Device on {portName} did not identify as expected')
+                msg = 'Device on {} does not identify as {}'
+                logger.warning(msg.format(portName, self.__class__.__name__))
                 self.close()
         else:
             logger.warning(f'Could not open {portName}')
@@ -78,7 +79,7 @@ class SerialInstrument(QSerialPort):
             self.open(name)
             if self.isOpen():
                 return self
-        logger.error('Could not find device')
+        logger.error('Could not find {}'.format(self.__class__.__name__))
         return None
     
     def send(self, data):
@@ -181,4 +182,5 @@ class SerialInstrument(QSerialPort):
         if hasattr(self, name):
             setattr(self, name, value)
         else:
-            logger.warning(f'Failed to set {name} ({value}): Not a valid property')
+            msg = f'Failed to set {name} ({value}): Not a valid property'
+            logger.warning(msg)
