@@ -56,9 +56,7 @@ class QInstrument(QWidget):
                'QRadioButton':   'toggled',
                'QSpinBox':       'valueChanged'}
 
-    def __init__(self,
-                 uiFile=None,
-                 deviceClass=None,
+    def __init__(self, uiFile, deviceClass,
                  **kwargs):
         super().__init__(**kwargs)
         self._configureUi(uiFile)
@@ -77,21 +75,47 @@ class QInstrument(QWidget):
     @pyqtProperty(dict)
     def settings(self):
         '''Dictionary of properties and their current values'''
-        return {key: getattr(self.ui, key) for key in self.properties}
+        return {key: self.get(key) for key in self.properties}
 
     @settings.setter
     def settings(self, settings):
         for key, value in settings.items():
-            if hasattr(self.ui, key, value):
-                setattr(self.ui, key, value)
+            self.set(key, value)
+
+    def set(key, value):
+        '''Set value of named property
+
+        Arguments
+        ---------
+        key: str
+            Name of property
+        value: (bool, int, float, str)
+            Value of property
+
+        Note
+        ----
+        This method explicitly sets the value of the named
+        widget in the UI and relies on the widget to set the
+        corresponding device value.
+        '''
+        if hasattr(self.ui, key):
+            setattr(self.ui, key, value)
+
+    def get(key):
+        '''Get value of named property
+
+        Arguments
+        ---------
+        key: str
+            Name of property to retrieve
+        '''
+        getattr(self.ui, key, None)
 
     def waitForDevice(self):
         '''Can be overridden by subclass'''
         pass
             
     def _configureUi(self, uiFile):
-        if uiFile is None:
-            return
         file = sys.modules[self.__module__].__file__
         dir = os.path.dirname(os.path.abspath(file))
         uipath = os.path.join(dir, uiFile)
@@ -100,8 +124,6 @@ class QInstrument(QWidget):
         self.ui.setupUi(self)
 
     def _configureDevice(self, deviceClass):
-        if deviceClass is None:
-            return
         self.device = deviceClass().find()
         if self.device is None:
             self.setEnabled(False)
@@ -131,13 +153,6 @@ class QInstrument(QWidget):
             signal = self._method(widget, self.wsignal)
             if signal is not None:
                 signal.connect(self._setDeviceProperty)
-
-    def _disconnectSignals(self):
-        for prop in self.properties():
-            widget = getattr(self.ui, prop)
-            signal = self._method(widget, self.wsignal)
-            if signal is not None:
-                signal.disconnect(self._setDeviceProperty)
 
     @pyqtSlot(bool)
     @pyqtSlot(int)
