@@ -118,34 +118,32 @@ class SR830(SerialInstrument):
                     eol='\n')
 
     def Property(pstr, dtype=int):      
-        @pyqtProperty(dtype)
-        def prop(self):
+        def getter(self):
             return self.get_value(f'{pstr}?', dtype=dtype)
-        @prop.setter
-        def prop(self, value):
+        def setter(self, value):
             if dtype == bool:
                 value = int(value)
             self.send(f'{pstr}{value}')
-        return prop
+        return pyqtProperty(dtype, getter, setter)
 
     # Reference and Phase
-    amplitude = Property('SLVL', float)
-    frequency = Property('FREQ', float)
-    harmonic = Property('HARM')
-    internal_reference = Property('FMOD', bool)
-    phase = Property('PHAS', float)
-    reference_trigger = Property('RSLP')
+    amplitude           = Property('SLVL', float)
+    frequency           = Property('FREQ', float)
+    harmonic            = Property('HARM')
+    internal_reference  = Property('FMOD', bool)
+    phase               = Property('PHAS', float)
+    reference_trigger   = Property('RSLP')
     # Input and Filter
-    dc_coupling = Property('ICPL', bool)
+    dc_coupling         = Property('ICPL', bool)
     input_configuration = Property('ISRC')
-    line_filter = Property('ILIN')    
-    shield_grounding = Property('IGND', bool)
+    line_filter         = Property('ILIN')    
+    shield_grounding    = Property('IGND', bool)
     # Gain and Time Constant
-    dynamic_reserve = Property('RMOD')
-    low_pass_slope = Property('OFSL')
-    sensitivity = Property('SENS')
-    synchronous_filter = Property('SYNC', bool)
-    time_contant = Property('OFLT')
+    dynamic_reserve     = Property('RMOD')
+    low_pass_slope      = Property('OFSL')
+    sensitivity         = Property('SENS')
+    synchronous_filter  = Property('SYNC', bool)
+    time_contant        = Property('OFLT')
 
     def __init__(self, portName=None, **kwargs):
         super().__init__(portName, **self.settings, **kwargs)
