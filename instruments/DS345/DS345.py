@@ -224,7 +224,7 @@ class DS345(SerialInstrument):
         signal = np.round(np.clip(waveform, -2047, 2047)).astype('>i2')
         checksum = (np.sum(signal) & 0xFFFF).astype('>i2')
         self.send('LDWF?0,{}'.format(len(signal)))
-        res = self.receive()
+        res = self.read_until()
         self.send(signal.tobytes())
         self.send(checksum.tobytes())
 
@@ -241,7 +241,7 @@ class DS345(SerialInstrument):
        self.modulation_type = 2
        self.modulation_waveform = 5
        self.send(f'AMOD?{npts}')
-       res = self.receive()
+       res = self.read_until()
        self.send(signal.tobytes())
        self.send(checksum)
        self.modulation = True

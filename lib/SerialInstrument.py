@@ -1,4 +1,4 @@
-from PyQt5.QtCore import (pyqtSlot, pyqtSignal)
+from PyQt5.QtCore import (pyqtSlot, pyqtSignal, QByteArray)
 from PyQt5.QtSerialPort import (QSerialPort, QSerialPortInfo)
 import logging
 
@@ -29,6 +29,8 @@ class SerialInstrument(QSerialPort):
     >>> instrument = SerialInstrument().find()
 
     '''
+
+    dataReady = pyqtSignal(str)
     
     def __init__(self,
                  portName=None,
@@ -36,8 +38,9 @@ class SerialInstrument(QSerialPort):
                  timeout=None,
                  **kwargs):
         super().__init__(**kwargs)
-        self.eol = bytes(eol)
-        self.timeout = timeout or 100. 
+        self.eol = eol.encode()
+        self.timeout = timeout or 100.
+        self.buffer = QByteArray()
         self.open(portName)
 
     def open(self, portName):
@@ -105,31 +108,33 @@ class SerialInstrument(QSerialPort):
             without eol termination.
         '''
         if type(data) == str:
-            cmd = data + self.eol
-            self.write(bytes(cmd, 'utf-8'))
-        else:
-            self.write(data)
+            data = data.encode() + self.eol
+        self.write(data)
         self.flush()
         logger.debug(f' sent: {data}')
 
-    def receive(self, raw=False):
+    def read_until(self, raw=False, eol=None):
         '''Receive data from the instrument
 
         Keywords
         --------
-        raw: bool
+        raw: bool [optional]
             True: Return raw data as bytes
             False: Decode data into str [Default]
+        eol: bytes [optional]
+            End-of-line character
+            Default: self.eol
 
         Returns
         -------
         response: str | bytes
             Data received from the instrument.
         '''
+        eol = eol or self.eol
         buffer = b''
         while self.waitForReadyRead(self.timeout):
             char = bytes(self.read(1))
-            if char == self.eol:
+            if char == eol:
                 break
             buffer += char
         logger.debug(f' received: {buffer}')
@@ -157,7 +162,7 @@ class SerialInstrument(QSerialPort):
         '''
         self.blockSignals(True)
         self.send(query)
-        response = self.receive(raw=raw)
+        response = self.read_until(raw=raw)
         self.blockSignals(False)
         return response
 
@@ -192,6 +197,19 @@ class SerialInstrument(QSerialPort):
         '''
         return dtype(self.handshake(query).strip())
 
+    @pyqtSlot()
+    def receive(self):
+        self.buffer.append(self.readAll())
+        if self.buffer.contains(self.eol):
+            len = self.buffer.indexOf(self.eol) + 1
+            if len < buffer.size():
+                data = bytes(self.buffer.left(len)).decode('utf-8')
+                self.buffer.remove(0, len)
+            else:
+                data = bytes(self.buffer).decode('utf-8')
+                self.buffer.clear()
+            self.dataReady.emit(data)
+            
     @pyqtSlot(object)
     def set_value(self, value):
         name = str(self.sender().objectName())
