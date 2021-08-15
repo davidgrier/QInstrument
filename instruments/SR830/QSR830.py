@@ -1,13 +1,13 @@
 from QInstrument.lib import QInstrument
-from QInstrument import DS345
+from . import SR830
 
 
-class QDS345(QInstrument):
-    '''Stanford Research Systems DS345 Function Generator
+class QSR830(QInstrument):
+    '''Stanford Research Systems SR830 Lockin Amplifier
     '''
     def __init__(self, **kwargs):
-        super().__init__(uiFile='DS345Widget.ui',
-                         deviceClass=DS345,
+        super().__init__(uiFile='SR830Widget.ui',
+                         deviceClass=SR830,
                          **kwargs)
 
 
@@ -16,7 +16,7 @@ def main():
     from PyQt5.QtWidgets import QApplication
 
     app = QApplication(sys.argv)
-    widget = QDS345()
+    widget = QSR830()
     widget.show()
     sys.exit(app.exec_())
 
