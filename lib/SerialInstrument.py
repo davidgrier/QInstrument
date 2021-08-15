@@ -16,15 +16,12 @@ class SerialInstrument(QSerialPort):
 
     Properties
     ----------
-    eol: str
+    eol: bytes
         End-of-line string (character) used to terminate
         strings that are transmitted to the instrument.
-        Default: ''
-    timeout0: float
-        Time to wait for initial characters from device [ms]
-        Default: 1000.
-    timeout1: float
-        Time to wait for subsequent characters [ms]
+        Default: b''
+    timeout: float
+        Time to wait for characters from device [ms]
         Default: 100.
 
     Example
@@ -35,14 +32,12 @@ class SerialInstrument(QSerialPort):
     
     def __init__(self,
                  portName=None,
-                 eol='',
-                 timeout0=None,
-                 timeout1=None,
+                 eol=b'',
+                 timeout=None,
                  **kwargs):
         super().__init__(**kwargs)
-        self.eol = eol
-        self.timeout0 = timeout0 or 1000.
-        self.timeout1 = timeout1 or 100. 
+        self.eol = bytes(eol)
+        self.timeout = timeout or 100. 
         self.open(portName)
 
     def open(self, portName):
@@ -62,16 +57,18 @@ class SerialInstrument(QSerialPort):
             Examples: 'ttyUSB0', 'COM1'
         '''
         if portName is None:
-            return
+            return False
         self.setPortName(portName)
         if super().open(QSerialPort.ReadWrite):
             self.clear()
             if not self.identify():
-                msg = 'Device on {} does not identify as {}'
-                logger.warning(msg.format(portName, self.__class__.__name__))
+                className = self.__class__.__name__
+                msg = f'Device on {portName} is not {className}'
+                logger.warning(msg)
                 self.close()
         else:
             logger.warning(f'Could not open {portName}')
+        return self.isOpen()
 
     def find(self):
         '''Poll all serial ports to identify suitable instrument
@@ -88,8 +85,7 @@ class SerialInstrument(QSerialPort):
         ports = QSerialPortInfo.availablePorts()
         names = [port.portName() for port in ports]
         for name in names:
-            self.open(name)
-            if self.isOpen():
+            if self.open(name):
                 return self
         logger.error('Could not find {}'.format(self.__class__.__name__))
         return None
@@ -116,7 +112,7 @@ class SerialInstrument(QSerialPort):
         self.flush()
         logger.debug(f' sent: {data}')
 
-    def receive(self, raw=False, breakoneol=False):
+    def receive(self, raw=False):
         '''Receive data from the instrument
 
         Keywords
@@ -124,34 +120,27 @@ class SerialInstrument(QSerialPort):
         raw: bool
             True: Return raw data as bytes
             False: Decode data into str [Default]
-        breakoneol: bool
-            True: Return as soon as eolcharacter appears
-            False: Wait for timeout.
 
         Returns
         -------
         response: str | bytes
             Data received from the instrument.
         '''
-        if not self.waitForReadyRead(self.timeout0):
-            return ''
-        response = self.readAll()
-        while (self.waitForReadyRead(self.timeout1)):
-            response.append(self.readAll())
-            if breakoneol and (self.eol in response):
+        buffer = b''
+        while self.waitForReadyRead(self.timeout):
+            char = bytes(self.read(1))
+            if char == self.eol:
                 break
-        logger.debug(f' received: {response}')
-        if raw:
-            return response.data()
-        else:
-            return response.data().decode('utf-8')
+            buffer += char
+        logger.debug(f' received: {buffer}')
+        return buffer if raw else buffer.decode('utf-8').strip()
 
-    def handshake(self, cmd, raw=False, breakoneol=False):
+    def handshake(self, query, raw=False):
         '''Send command to the instrument and receive its response
 
         Arguments
         ---------
-        command: str
+        query: str
             String to be communicated to the instrument that
             will elicit a response.
 
@@ -160,17 +149,17 @@ class SerialInstrument(QSerialPort):
         raw: bool
             True: Return raw data as bytes
             False: Decode data into str [Default]
-        breakoneol: bool
-            True: Return as soon as eolcharacter appears
-            False: Wait for timeout.
 
         Returns
         -------
         response: str | bytes
             Response from instrument
         '''
-        self.send(cmd)
-        return self.receive(raw=raw, breakoneol=breakoneol)
+        self.blockSignals(True)
+        self.send(query)
+        response = self.receive(raw=raw)
+        self.blockSignals(False)
+        return response
 
     def identify(self):
         '''Identify intended instrument
