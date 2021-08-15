@@ -17,9 +17,15 @@ class SerialInstrument(QSerialPort):
     Properties
     ----------
     eol: str
-       End-of-line string (character) used to terminate
-       strings that are transmitted to the instrument.
-       Default: ''
+        End-of-line string (character) used to terminate
+        strings that are transmitted to the instrument.
+        Default: ''
+    timeout0: float
+        Time to wait for initial characters from device [ms]
+        Default: 1000.
+    timeout1: float
+        Time to wait for subsequent characters [ms]
+        Default: 100.
 
     Example
     -------
@@ -27,10 +33,16 @@ class SerialInstrument(QSerialPort):
 
     '''
     
-    
-    def __init__(self, portName=None, eol='', **kwargs):
+    def __init__(self,
+                 portName=None,
+                 eol='',
+                 timeout0=None,
+                 timeout1=None,
+                 **kwargs):
         super().__init__(**kwargs)
         self.eol = eol
+        self.timeout0 = timeout0 or 1000.
+        self.timeout1 = timeout1 or 100. 
         self.open(portName)
 
     def open(self, portName):
@@ -104,7 +116,7 @@ class SerialInstrument(QSerialPort):
         self.flush()
         logger.debug(f' sent: {data}')
 
-    def receive(self, raw=False):
+    def receive(self, raw=False, breakoneol=False):
         '''Receive data from the instrument
 
         Keywords
@@ -112,23 +124,29 @@ class SerialInstrument(QSerialPort):
         raw: bool
             True: Return raw data as bytes
             False: Decode data into str [Default]
+        breakoneol: bool
+            True: Return as soon as eolcharacter appears
+            False: Wait for timeout.
 
         Returns
         -------
         response: str | bytes
             Data received from the instrument.
         '''
-        self.waitForReadyRead(1000)
+        if not self.waitForReadyRead(self.timeout0):
+            return ''
         response = self.readAll()
-        while (self.waitForReadyRead(100)):
+        while (self.waitForReadyRead(self.timeout1)):
             response.append(self.readAll())
+            if breakoneol and (self.eol in response):
+                break
         logger.debug(f' received: {response}')
         if raw:
             return response.data()
         else:
             return response.data().decode('utf-8')
 
-    def handshake(self, cmd):
+    def handshake(self, cmd, raw=False, breakoneol=False):
         '''Send command to the instrument and receive its response
 
         Arguments
@@ -137,13 +155,22 @@ class SerialInstrument(QSerialPort):
             String to be communicated to the instrument that
             will elicit a response.
 
+        Keywords
+        --------
+        raw: bool
+            True: Return raw data as bytes
+            False: Decode data into str [Default]
+        breakoneol: bool
+            True: Return as soon as eolcharacter appears
+            False: Wait for timeout.
+
         Returns
         -------
-        response: str
+        response: str | bytes
             Response from instrument
         '''
         self.send(cmd)
-        return self.receive()
+        return self.receive(raw=raw, breakoneol=breakoneol)
 
     def identify(self):
         '''Identify intended instrument

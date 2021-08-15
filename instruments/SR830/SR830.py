@@ -155,7 +155,8 @@ class SR830(SerialInstrument):
         self.send('*RST')
 
     def report(self):
-        return list(map(float, self.handshake('SNAP?9,3,4').split(',')))
+        response = self.handshake('SNAP?9,3,4', breakoneol=True)
+        return list(map(float, response.split(',')))
 
     def auto_gain(self):
         '''Autorange gain'''
