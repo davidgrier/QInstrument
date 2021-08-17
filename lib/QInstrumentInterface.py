@@ -10,15 +10,15 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.WARNING)
 
 
-class QInstrument(QWidget):
+class QInstrumentInterface(QWidget):
     '''Glue class to attach a PyQt5 GUI to an instrument interface
 
     Widgets in the ui that are intended to control device
     properties must have the same name as the corresponding
     property.
 
-    While QInstrument() can be used to create a hardware-enabled
-    GUI directly, a better choice is to subclass QInstrument,
+    While QInstrumentInterface() can be used to create a hardware-enabled
+    GUI directly, a better choice is to subclass QInstrumentInterface,
     providing both the device.ui GUI specification and the
     class for the hardware implementation.
 

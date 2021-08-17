@@ -1,8 +1,8 @@
-from QInstrument.lib import QInstrument
-from . import SR830
+from QInstrument.lib import QInstrumentInterface
+from QInstrument.instruments import SR830
 
 
-class QSR830(QInstrument):
+class QSR830(QInstrumentInterface):
     '''Stanford Research Systems SR830 Lockin Amplifier
     '''
     def __init__(self, **kwargs):

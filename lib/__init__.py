@@ -1,6 +1,6 @@
-from .QInstrument import QInstrument
+from .QInstrumentInterface import QInstrumentInterface
 from .SerialInstrument import SerialInstrument
 
 
-__all__ = ['SerialInstrument', 'QInstrument']
+__all__ = ['SerialInstrument', 'QInstrumentInterface']
 
