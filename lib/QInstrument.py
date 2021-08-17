@@ -59,9 +59,10 @@ class QInstrument(QWidget):
     def __init__(self, uiFile, deviceClass,
                  **kwargs):
         super().__init__(**kwargs)
+        self.device = deviceClass().find()
         self._configureUi(uiFile)
-        self._configureDevice(deviceClass)
         self._configureProperties()
+        self._configureDevice(deviceClass)
 
     @pyqtProperty(list)
     def properties(self):
@@ -124,7 +125,6 @@ class QInstrument(QWidget):
         self.ui.setupUi(self)
 
     def _configureDevice(self, deviceClass):
-        self.device = deviceClass().find()
         if self.device is None:
             self.setEnabled(False)
         elif self.device.isOpen():
@@ -141,14 +141,14 @@ class QInstrument(QWidget):
         return getattr(widget, method[typeName])
 
     def _updateUiValues(self):
-        for prop in self.properties():
+        for prop in self.properties:
             widget = getattr(self.ui, prop)
             value = getattr(self.device, prop)
             update = self._method(widget, self.wsetter)
             update(value)
 
     def _connectSignals(self):
-        for prop in self.properties():
+        for prop in self.properties:
             widget = getattr(self.ui, prop)
             signal = self._method(widget, self.wsignal)
             if signal is not None:
@@ -161,6 +161,6 @@ class QInstrument(QWidget):
     def _setDeviceProperty(self, value):
         name = self.sender().objectName()
         if hasattr(self.device, name):
-            setattr(self.device, attr, value)
+            setattr(self.device, name, value)
             self.waitForDevice()
             logger.debug(f'Setting device: {name}: {value}')

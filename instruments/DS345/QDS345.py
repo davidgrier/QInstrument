@@ -1,5 +1,5 @@
 from QInstrument.lib import QInstrument
-from . import DS345
+from QInstrument.instruments import DS345
 
 
 class QDS345(QInstrument):
