@@ -99,7 +99,7 @@ class QInstrumentInterface(QWidget):
         for key, value in settings.items():
             self.set(key, value)
 
-    def get(key):
+    def get(self, key):
         '''Get value of named widget
 
         Arguments
@@ -114,7 +114,7 @@ class QInstrumentInterface(QWidget):
         logger.error(f'Unknown property {key}')
         return None
     
-    def set(key, value=None):
+    def set(self, key, value=None):
         '''Set value of named property
 
         This method explicitly sets the value of the named
@@ -137,7 +137,7 @@ class QInstrumentInterface(QWidget):
         
         '''
         if hasattr(self.ui, key):
-            widget = geattr(self.ui, key)
+            widget = getattr(self.ui, key)
             setter = self._method(widget, self.wsetter)
             if value is None:
                 value = getattr(self.device, key, None)
