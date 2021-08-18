@@ -113,17 +113,17 @@ class SerialInstrument(QSerialPort):
         self.flush()
         logger.debug(f' sent: {data}')
 
-    def read_until(self, raw=False, eol=None):
+    def read_until(self, eol=None, raw=False):
         '''Receive data from the instrument
 
         Keywords
         --------
-        raw: bool [optional]
-            True: Return raw data as bytes
-            False: Decode data into str [Default]
         eol: bytes [optional]
             End-of-line character
             Default: self.eol
+        raw: bool [optional]
+            True: Return raw data as bytes
+            False: Decode data into str [Default]
 
         Returns
         -------
@@ -138,7 +138,9 @@ class SerialInstrument(QSerialPort):
                 break
             buffer += char
         logger.debug(f' received: {buffer}')
-        return buffer if raw else buffer.decode('utf-8').strip()
+        if raw:
+            return buffer
+        return buffer.decode('utf-8').strip()
 
     def handshake(self, query, raw=False):
         '''Send command to the instrument and receive its response

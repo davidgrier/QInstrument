@@ -24,7 +24,7 @@ class Proscan(SerialInstrument):
                     stopBits=SerialInstrument.OneStop,
                     parity=SerialInstrument.NoParity,
                     flowControl=SerialInstrument.NoFlowControl,
-                    eol='\n')
+                    eol='\r')
 
     def __init__(self, portName=None, **kwargs):
         super().__init__(portName, **self.settings, **kwargs)
@@ -33,3 +33,12 @@ class Proscan(SerialInstrument):
     def identify(self):
         return 'PROSCAN' in self.handshake('DATE').upper()
 
+    def describe(self):
+        self.send('?')
+        response = []
+        while True:
+            this = self.read_until()
+            response.append(this)
+            if 'END' in this:
+                break
+        return response
