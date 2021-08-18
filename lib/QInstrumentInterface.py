@@ -66,13 +66,17 @@ class QInstrumentInterface(QWidget):
                'QRadioButton':   'toggled',
                'QSpinBox':       'valueChanged'}
 
-    def __init__(self, uiFile, deviceClass,
-                 **kwargs):
+    def __init__(self, uiFile, deviceClass, **kwargs):
         super().__init__(**kwargs)
-        self.device = deviceClass().find()
         self.ui = self._loadUi(uiFile)
-        self.properties = self._identifyProperties()
-        self._configureDevice(deviceClass)
+        self.device = deviceClass().find()
+        if self.device.isOpen():
+            self.properties = self._identifyProperties()
+            self._syncProperties()
+            self._connectSignals()
+        else:
+            self.properties = None
+            self.setEnabled(False)
 
     @pyqtProperty(list)
     def properties(self):
@@ -94,12 +98,12 @@ class QInstrumentInterface(QWidget):
             self.set(key, value)
 
     def get(key):
-        '''Get value of named property
+        '''Get value of named widget
 
         Arguments
         ---------
         key: str
-            Name of property to retrieve from UI
+            Name of property to retrieve
         '''
         if hasattr(self.ui, key):
             widget = getattr(self.ui, key)
@@ -111,6 +115,13 @@ class QInstrumentInterface(QWidget):
     def set(key, value=None):
         '''Set value of named property
 
+        This method explicitly sets the value of the named
+        widget in the UI and relies on the widget to emit a
+        signal that will set the corresponding device value.
+
+        If no value is provided, the method set the widget
+        to the value obtained from the device.
+
         Arguments
         ---------
         key: str
@@ -121,33 +132,27 @@ class QInstrumentInterface(QWidget):
 
         Note
         ----
-        This method explicitly sets the value of the named
-        widget in the UI and relies on the widget to set the
-        corresponding device value.
+        
         '''
         if hasattr(self.ui, key):
             widget = geattr(self.ui, key)
             setter = self._method(widget, self.wsetter)
             if value is None:
-                widget.blockSignals(True)
-                setter(getattr(self.device, key))
-                widget.blockSignals(False)
-            else:
-                try:
-                    setter(value)
-                except Exception as ex:
-                    logger.error(f'Could not set {key} to {value}: {ex}')
+                value = getattr(self.device, key, None)
+                self.blockSignals(True)
+            try:
+                setter(value)
+            except Exception as ex:
+                logger.error(f'Could not set {key} to {value}: {ex}')
+            self.blockSignals(False)
         else:
             logger.error(f'Unknown property {key}')
 
-    def waitForDevice(self):
-        '''Can be overridden by subclass'''
-        pass
-
+    
     def _method(self, widget, method):
         typeName = type(widget).__name__.split('.')[-1]
         return getattr(widget, method[typeName])
-            
+
     def _loadUi(self, uiFile):
         file = sys.modules[self.__module__].__file__
         dir = os.path.dirname(os.path.abspath(file))
@@ -161,18 +166,11 @@ class QInstrumentInterface(QWidget):
         uiprops = vars(self.ui).keys()
         deviceprops = dir(self.device)
         return [p for p in uiprops if p in deviceprops]
-        
-    def _configureDevice(self, deviceClass):
-        if self.device is None:
-            self.setEnabled(False)
-        elif self.device.isOpen():
-            self._updateUiValues()
-            self._connectSignals()
-     
-    def _updateUiValues(self):
-        for prop in self.properties:
-            set(prop)
 
+    def _syncProperties(self):
+        for prop in self.properties:
+            self.set(prop)
+            
     def _connectSignals(self):
         for prop in self.properties:
             widget = getattr(self.ui, prop)
@@ -190,3 +188,7 @@ class QInstrumentInterface(QWidget):
             setattr(self.device, name, value)
             self.waitForDevice()
             logger.debug(f'Setting device: {name}: {value}')
+
+    def waitForDevice(self):
+        '''Can be overridden by subclass'''
+        pass
