@@ -31,7 +31,7 @@ class Proscan(SerialInstrument):
         self._muted = False
 
     def identify(self):
-        return 'PROSCAN' in self.handshake('DATE').upper()
+        return len(self.handshake('VERSION')) == 3
 
     def describe(self):
         self.send('?')
