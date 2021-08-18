@@ -71,11 +71,11 @@ class QInstrumentInterface(QWidget):
         self.ui = self._loadUi(uiFile)
         self.device = deviceClass().find()
         if self.device.isOpen():
-            self.properties = self._identifyProperties()
+            self._identifyProperties()
             self._syncProperties()
             self._connectSignals()
         else:
-            self.properties = None
+            self._properties = []
             self.setEnabled(False)
 
     @pyqtProperty(list)
@@ -165,7 +165,7 @@ class QInstrumentInterface(QWidget):
     def _identifyProperties(self):
         uiprops = vars(self.ui).keys()
         deviceprops = dir(self.device)
-        return [p for p in uiprops if p in deviceprops]
+        self._properties = [p for p in uiprops if p in deviceprops]
 
     def _syncProperties(self):
         for prop in self.properties:
