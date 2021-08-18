@@ -200,7 +200,6 @@ class DS345(SerialInstrument):
             self._muted = False
             self.amplitude = self._saved_amplitude
 
-
     def trigger(self):
         '''Trigger sweep or burst
         

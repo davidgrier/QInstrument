@@ -195,7 +195,13 @@ class SerialInstrument(QSerialPort):
         value: dtype
             Value elicited from instrument by query
         '''
-        return dtype(self.handshake(query).strip())
+        response = self.handshake(query)
+        try:
+            value = dtype(response.strip())
+        except ValueError:
+            value = None
+            logger.error(f'Could not parse {response}')
+        return value
 
     @pyqtSlot()
     def receive(self):

@@ -47,6 +47,16 @@ class QInstrumentInterface(QWidget):
                'QRadioButton':   'setChecked',
                'QSpinBox':       'setValue'}
 
+    wgetter = {'QCheckBox':      'isChecked',
+               'QComboBox':      'currentIndex',
+               'QDoubleSpinBox': 'value',
+               'QGroupBox':      'isChecked',
+               'QLabel':         'text',
+               'QLineEdit':      'text',
+               'QPushButton':    'isChecked',
+               'QRadioButton':   'isChecked',
+               'QSpinBox':       'value'}    
+
     wsignal = {'QCheckBox':      'toggled',
                'QComboBox':      'currentIndexChanged',
                'QDoubleSpinBox': 'valueChanged',
@@ -60,8 +70,8 @@ class QInstrumentInterface(QWidget):
                  **kwargs):
         super().__init__(**kwargs)
         self.device = deviceClass().find()
-        self._configureUi(uiFile)
-        self._configureProperties()
+        self.ui = self._loadUi(uiFile)
+        self.properties = self._identifyProperties()
         self._configureDevice(deviceClass)
 
     @pyqtProperty(list)
@@ -83,15 +93,31 @@ class QInstrumentInterface(QWidget):
         for key, value in settings.items():
             self.set(key, value)
 
-    def set(key, value):
+    def get(key):
+        '''Get value of named property
+
+        Arguments
+        ---------
+        key: str
+            Name of property to retrieve from UI
+        '''
+        if hasattr(self.ui, key):
+            widget = getattr(self.ui, key)
+            getter = self._method(widget, self.wgetter)
+            return getter()
+        logger.error(f'Unknown property {key}')
+        return None
+    
+    def set(key, value=None):
         '''Set value of named property
 
         Arguments
         ---------
         key: str
             Name of property
-        value: (bool, int, float, str)
+        value: bool | int | float | str [optional]
             Value of property
+            Default: update widget value with device value
 
         Note
         ----
@@ -100,52 +126,52 @@ class QInstrumentInterface(QWidget):
         corresponding device value.
         '''
         if hasattr(self.ui, key):
-            setattr(self.ui, key, value)
-
-    def get(key):
-        '''Get value of named property
-
-        Arguments
-        ---------
-        key: str
-            Name of property to retrieve
-        '''
-        getattr(self.ui, key, None)
+            widget = geattr(self.ui, key)
+            setter = self._method(widget, self.wsetter)
+            if value is None:
+                widget.blockSignals(True)
+                setter(getattr(self.device, key))
+                widget.blockSignals(False)
+            else:
+                try:
+                    setter(value)
+                except Exception as ex:
+                    logger.error(f'Could not set {key} to {value}: {ex}')
+        else:
+            logger.error(f'Unknown property {key}')
 
     def waitForDevice(self):
         '''Can be overridden by subclass'''
         pass
+
+    def _method(self, widget, method):
+        typeName = type(widget).__name__.split('.')[-1]
+        return getattr(widget, method[typeName])
             
-    def _configureUi(self, uiFile):
+    def _loadUi(self, uiFile):
         file = sys.modules[self.__module__].__file__
         dir = os.path.dirname(os.path.abspath(file))
         uipath = os.path.join(dir, uiFile)
         form, _ = uic.loadUiType(uipath)
-        self.ui = form()
-        self.ui.setupUi(self)
+        ui = form()
+        ui.setupUi(self)
+        return ui
 
+    def _identifyProperties(self):
+        uiprops = vars(self.ui).keys()
+        deviceprops = dir(self.device)
+        return [p for p in uiprops if p in deviceprops]
+        
     def _configureDevice(self, deviceClass):
         if self.device is None:
             self.setEnabled(False)
         elif self.device.isOpen():
             self._updateUiValues()
             self._connectSignals()
-
-    def _configureProperties(self):
-        uiprops = vars(self.ui).keys()
-        deviceprops = dir(self.device)
-        self._properties = [p for p in uiprops if p in deviceprops]
-        
-    def _method(self, widget, method):
-        typeName = type(widget).__name__.split('.')[-1]
-        return getattr(widget, method[typeName])
-
+     
     def _updateUiValues(self):
         for prop in self.properties:
-            widget = getattr(self.ui, prop)
-            value = getattr(self.device, prop)
-            update = self._method(widget, self.wsetter)
-            update(value)
+            set(prop)
 
     def _connectSignals(self):
         for prop in self.properties:
