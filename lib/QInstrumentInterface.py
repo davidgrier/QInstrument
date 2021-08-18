@@ -13,14 +13,13 @@ logger.setLevel(logging.WARNING)
 class QInstrumentInterface(QWidget):
     '''Glue class to attach a PyQt5 GUI to an instrument interface
 
-    Widgets in the ui that are intended to control device
-    properties must have the same name as the corresponding
-    property.
+    A widget in the UI that is intended to control a device property
+    must have the same name as the corresponding device property.
 
     While QInstrumentInterface() can be used to create a hardware-enabled
     GUI directly, a better choice is to subclass QInstrumentInterface,
-    providing both the device.ui GUI specification and the
-    class for the hardware implementation.
+    providing both the name of the UI file and the class for the 
+    hardware implementation.
 
     ...
 
@@ -89,7 +88,10 @@ class QInstrumentInterface(QWidget):
 
     @pyqtProperty(dict)
     def settings(self):
-        '''Dictionary of properties and their current values'''
+        '''Dictionary of properties and their current values.
+
+        Setting this property changes values on the UI and on
+        the device.'''
         return {key: self.get(key) for key in self.properties}
 
     @settings.setter
@@ -190,5 +192,9 @@ class QInstrumentInterface(QWidget):
             logger.debug(f'Setting device: {name}: {value}')
 
     def waitForDevice(self):
-        '''Can be overridden by subclass'''
+        '''Method called when setting a device property to ensure
+        that the device has completed the change before allowing
+        further user interaction.
+
+        Should be overridden by subclass'''
         pass
