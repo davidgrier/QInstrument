@@ -27,7 +27,7 @@ class Proscan(SerialInstrument):
                     eol='\r')
 
     def __init__(self, portName=None, **kwargs):
-        super().__init__(portName, *self.settings, **kwargs)
+        super().__init__(portName, **self.settings, **kwargs)
         self._muted = False
 
     def identify(self):
