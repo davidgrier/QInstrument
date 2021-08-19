@@ -133,10 +133,14 @@ class SerialInstrument(QSerialPort):
         eol = eol or self.eol
         buffer = b''
         while self.waitForReadyRead(self.timeout):
-            char = bytes(self.read(1))
-            if char == eol:
-                break
-            buffer += char
+            while self.bytesAvailable():
+                char = bytes(self.read(1))
+                buffer += char
+                if char == eol:
+                    break
+            else:
+                continue
+            break
         logger.debug(f' received: {buffer}')
         if raw:
             return buffer
