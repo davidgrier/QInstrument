@@ -45,7 +45,8 @@ class Proscan(SerialInstrument):
 
     def __init__(self, portName=None, **kwargs):
         super().__init__(portName, **self.settings, **kwargs)
-        self._muted = False
+        self._mirror = False
+        self._flip = False
 
     def identify(self):
         return len(self.version()) == 3
@@ -67,6 +68,11 @@ class Proscan(SerialInstrument):
         self.positionChanged.emit(position)
         return position
 
+    def set_position(self, position):
+        position = ','.join(map(str, position))
+        return self.expect(f'P,{position}', '0')
+
+    @pyqtSlot()
     def set_origin(self):
         '''Set the origin of the coordinate system
 
@@ -120,7 +126,7 @@ class Proscan(SerialInstrument):
     
     @pyqtProperty(float)
     def resolution(self):
-        return float(self.handshake('RES,X'))
+        return self.get_value('RES,s')
 
     @resolution.setter
     def resolution(self, value):
