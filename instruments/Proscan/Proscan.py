@@ -31,10 +31,16 @@ class Proscan(SerialInstrument):
         self._muted = False
 
     def identify(self):
-        return len(self.handshake('VERSION')) == 3
+        return len(self.version()) == 3
 
-    def describe(self):
-        self.send('?')
+    def position(self):
+        return list(map(int, self.handshake('P').split(',')))
+
+    def version(self):
+        return self.handshake('VERSION')
+    
+    def read_lines(self, query):
+        self.send(query)
         response = []
         while True:
             this = self.read_until()
@@ -42,3 +48,12 @@ class Proscan(SerialInstrument):
             if 'END' in this:
                 break
         return response
+
+    def describe(self):
+        return self.read_lines('?')
+
+    def stage(self):
+        return self.read_lines('STAGE')
+
+    def focus(self):
+        return self.read_lines('FOCUS')
