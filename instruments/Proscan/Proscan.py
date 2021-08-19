@@ -1,4 +1,4 @@
-from PyQt5.QtCore import pyqtProperty
+from PyQt5.QtCore import (pyqtProperty, pyqtSignal, pyqtSlot)
 from QInstrument.lib import SerialInstrument
 import numpy as np
 
@@ -26,6 +26,23 @@ class Proscan(SerialInstrument):
                     flowControl=SerialInstrument.NoFlowControl,
                     eol='\r')
 
+    positionChanged = pyqtSignal(object)
+    
+    def Property(cmd, dtype=int):      
+        def getter(self):
+            return self.get_value(cmd, dtype=dtype)
+        def setter(self, value):
+            value = dtype(value)
+            self.expect(f'{cmd},{value}', res)
+        return pyqtProperty(dtype, getter, setter)
+
+    speed         = Property('SMS')
+    acceleration  = Property('SAS')
+    scurve        = Property('SCS')
+    zspeed        = Property('SMZ')
+    zacceleration = Property('SAZ')
+    zscurve       = Property('SCZ')
+
     def __init__(self, portName=None, **kwargs):
         super().__init__(portName, **self.settings, **kwargs)
         self._muted = False
@@ -37,6 +54,7 @@ class Proscan(SerialInstrument):
         '''Return 3-digit firmware version'''
         return self.handshake('VERSION')
 
+    @pyqtSlot()
     def position(self):
         '''Report the (x, y, z) coordinates of the stage
 
@@ -45,7 +63,9 @@ class Proscan(SerialInstrument):
         position: list of int
            x, y, z coordinates of current stage position
         '''
-        return list(map(int, self.handshake('P').split(',')))
+        position = list(map(int, self.handshake('P').split(',')))
+        self.positionChanged.emit(position)
+        return position
 
     def set_origin(self):
         '''Set the origin of the coordinate system
@@ -66,6 +86,38 @@ class Proscan(SerialInstrument):
     def move_to_origin(self):
         return self.expect('M', 'R')
 
+    def set_velocity(self, velocity):
+        '''Virtual joystick move'''
+        velocity = ','.join(map(str, velocity))
+        self.send(f'VS,{velocity}')
+
+    def stop(self):
+        '''Stop stage motion'''
+        return self.expect('I', 'R')
+
+    def status(self):
+        return self.get_value('$', dtype=int)
+
+    @pyqtProperty(bool)
+    def flip(self):
+        return self._flip
+
+    @flip.setter
+    def flip(self, value):
+        self._mirror = value
+        c = -1 if value else 1
+        self.expect(f'YD,{c}', '0')
+    
+    @pyqtProperty(bool)
+    def mirror(self):
+        return self._mirror
+
+    @mirror.setter
+    def mirror(self, value):
+        self._mirror = value
+        c = -1 if value else 1
+        self.expect(f'XD,{c}', '0')
+    
     @pyqtProperty(float)
     def resolution(self):
         return float(self.handshake('RES,X'))
@@ -75,35 +127,6 @@ class Proscan(SerialInstrument):
         '''Get and set the resolution for the stage in micrometers'''
         self.send(f'RES,s,{value}')
 
-    @pyqtProperty(int)
-    def speed(self):
-        return int(self.handshake('SMS'))
-
-    @speed.setter
-    def speed(self, value):
-        return self.expect(f'SMS,{value}', '0')
-    
-    @pyqtProperty(int)
-    def acceleration(self):
-        return int(self.handshake('SAS'))
-
-    @acceleration.setter
-    def acceleration(self, value):
-        '''Maximum acceleration of stage in range [1, 100]'''
-        return self.expect(f'SAS,{value}', '0')
-
-    @pyqtProperty(int)
-    def scurve(self):
-        return int(self.handshake('SCS'))
-
-    @scurve.setter
-    def scurve(self, value):
-        return self.expect(f'SCS,{value}', '0')
-
-    def stop(self):
-        '''Stop stage motion'''
-        return self.expect('I', 'R')
-    
     def description(self):
         '''Description of Proscan hardware'''
         return self._read_lines('?')

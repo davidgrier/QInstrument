@@ -204,7 +204,7 @@ class SerialInstrument(QSerialPort):
         '''
         response = self.handshake(query)
         try:
-            value = dtype(response.strip())
+            value = dtype(response)
         except ValueError:
             value = None
             logger.error(f'Could not parse {response}')
