@@ -132,7 +132,7 @@ class SerialInstrument(QSerialPort):
         '''
         eol = eol or self.eol
         buffer = b''
-        while self.waitForReadyRead(self.timeout):
+        while self.bytesAvailable() or self.waitForReadyRead(self.timeout):
             while self.bytesAvailable():
                 char = bytes(self.read(1))
                 buffer += char
