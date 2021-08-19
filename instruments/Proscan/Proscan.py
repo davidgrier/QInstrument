@@ -105,6 +105,11 @@ class Proscan(SerialInstrument):
         return self.get_value('$', dtype=int)
 
     @pyqtProperty(bool)
+    def moving(self):
+        '''True if stage or focus are in motion'''
+        return bool(self.status() & 0xF)
+
+    @pyqtProperty(bool)
     def flip(self):
         return self._flip
 
