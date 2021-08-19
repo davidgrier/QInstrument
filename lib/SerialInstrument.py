@@ -168,18 +168,23 @@ class SerialInstrument(QSerialPort):
         self.blockSignals(False)
         return response
 
-    def identify(self):
-        '''Identify intended instrument
+    def expect(self, query, response):
+        '''Send query and check for anticipated response
 
-        Subclasses are responsible for overriding identify().
+        Arguments
+        ---------
+        query: str
+            Command to instrument that will elicit response.
+        response: str
+            Anticipated response
 
         Returns
         -------
-        identify: bool
-            True: specified instrument is connected to the serial port
-            False: instrument on the port failed to identify correctly
+        expect: bool
+            True: expected response was received
+            False: expected response was not received
         '''
-        return True
+        return response in self.handshake(query)
 
     def get_value(self, query, dtype=float):
         '''Send query and return response in specified data type
@@ -226,3 +231,16 @@ class SerialInstrument(QSerialPort):
         else:
             msg = f'Failed to set {name} ({value}): Not a valid property'
             logger.warning(msg)
+
+    def identify(self):
+        '''Identify intended instrument
+
+        Subclasses are responsible for overriding identify().
+
+        Returns
+        -------
+        identify: bool
+            True: specified instrument is connected to the serial port
+            False: instrument on the port failed to identify correctly
+        '''
+        return True
