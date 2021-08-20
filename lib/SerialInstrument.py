@@ -86,10 +86,9 @@ class SerialInstrument(QSerialPort):
             Reference to the instrument object, if found,
             else None if no instruments are identified
         '''
-        ports = QSerialPortInfo.availablePorts()
-        names = [port.portName() for port in ports]
-        for name in names:
-            if self.open(name):
+        for port in QSerialPortInfo.availablePorts():
+            logger.debug('Trying to open {}'.format(port.portName()))
+            if self.open(port.portName()):
                 break
         else:
             logger.error('Could not find {}'.format(self.__class__.__name__))
