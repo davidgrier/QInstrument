@@ -115,7 +115,7 @@ class Proscan(SerialInstrument):
 
     @flip.setter
     def flip(self, value):
-        self._mirror = value
+        self._flip = value
         c = -1 if value else 1
         self.expect(f'YD,{c}', '0')
     
