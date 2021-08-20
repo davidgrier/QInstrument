@@ -5,6 +5,7 @@ import logging
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.ERROR)
 
+
 class SerialInstrument(QSerialPort):
     '''Base class for instruments connected to serial ports
 
@@ -31,7 +32,7 @@ class SerialInstrument(QSerialPort):
     '''
 
     dataReady = pyqtSignal(str)
-    
+
     def __init__(self,
                  portName=None,
                  eol=b'',
@@ -91,8 +92,8 @@ class SerialInstrument(QSerialPort):
             if self.open(name):
                 return self
         logger.error('Could not find {}'.format(self.__class__.__name__))
-        return None
-    
+        return self
+
     def send(self, data):
         '''Send data to the instrument
 
@@ -196,7 +197,7 @@ class SerialInstrument(QSerialPort):
         dtype: type [optional]
             Anticipated type of returned data.
             Default: float
-        
+
         Returns
         -------
         value: dtype
@@ -222,7 +223,7 @@ class SerialInstrument(QSerialPort):
                 data = bytes(self.buffer).decode('utf-8')
                 self.buffer.clear()
             self.dataReady.emit(data)
-            
+
     @pyqtSlot(object)
     def set_value(self, value):
         name = str(self.sender().objectName())
