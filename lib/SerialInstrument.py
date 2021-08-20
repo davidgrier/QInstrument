@@ -90,8 +90,9 @@ class SerialInstrument(QSerialPort):
         names = [port.portName() for port in ports]
         for name in names:
             if self.open(name):
-                return self
-        logger.error('Could not find {}'.format(self.__class__.__name__))
+                break
+        else:
+            logger.error('Could not find {}'.format(self.__class__.__name__))
         return self
 
     def send(self, data):
