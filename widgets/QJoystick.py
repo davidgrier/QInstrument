@@ -33,12 +33,16 @@ class QJoystick(QWidget):
         self.active = False
 
     def paintEvent(self, event):
+        if self.isEnabled():
+            pen, bg, knob = Qt.black, QColor('#F8EEFF'), Qt.gray
+        else:
+            pen, bg, knob = Qt.darkGray, QColor('#F8F8F8'), Qt.lightGray
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
-        painter.setPen(QPen(Qt.black, 2, Qt.SolidLine))
-        painter.setBrush(QColor('#F8EEFF'))
+        painter.setPen(pen)
+        painter.setBrush(bg)
         painter.drawEllipse(self._ring())
-        painter.setBrush(QBrush(Qt.gray, Qt.SolidPattern))
+        painter.setBrush(knob)
         painter.drawEllipse(self._knob())
 
     def _ring(self):
