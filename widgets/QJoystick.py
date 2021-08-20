@@ -13,7 +13,7 @@ logger.setLevel(logging.WARNING)
 class QJoystick(QWidget):
 
     joystickChanged = pyqtSignal(object)
-    
+
     def __init__(self, *args,
                  radius=None,
                  padding=None,
@@ -34,6 +34,7 @@ class QJoystick(QWidget):
 
     def paintEvent(self, event):
         painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing)
         painter.setPen(QPen(Qt.black, 2, Qt.SolidLine))
         painter.setBrush(QColor('#F8EEFF'))
         painter.drawEllipse(self._ring())
@@ -43,7 +44,7 @@ class QJoystick(QWidget):
     def _ring(self):
         rect = np.array([-1, -1, 2, 2]) * self.radius
         return QRectF(*rect).translated(self._center())
-    
+
     def _knob(self):
         size = self.radius * self.knobFraction
         rect = np.array([-1, -1, 2, 2]) * size
@@ -95,7 +96,7 @@ class QJoystick(QWidget):
 if __name__ == '__main__':
     from PyQt5.QtWidgets import QApplication
     import sys
-    
+
     app = QApplication(sys.argv)
     joystick = QJoystick()
     joystick.show()
