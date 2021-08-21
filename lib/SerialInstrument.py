@@ -218,7 +218,7 @@ class SerialInstrument(QSerialPort):
         self.buffer.append(self.readAll())
         if self.buffer.contains(self.eol):
             len = self.buffer.indexOf(self.eol) + 1
-            if len < buffer.size():
+            if len < self.buffer.size():
                 data = bytes(self.buffer.left(len))
                 self.buffer.remove(0, len)
             else:
