@@ -150,8 +150,8 @@ class Proscan(SerialInstrument):
         '''Description of focus system'''
         return self._read_lines('FOCUS')
 
+    @blocking
     def _read_lines(self, query):
-        self.blockSignals(True)
         self.send(query)
         response = []
         while True:
@@ -159,5 +159,4 @@ class Proscan(SerialInstrument):
             response.append(this)
             if 'END' in this:
                 break
-        self.blockSignals(False)
         return response
