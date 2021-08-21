@@ -28,9 +28,17 @@ class QJoystick(QWidget):
         self.joystickPosition = QPointF(0, 0)
         self.limit = (1. - self.knobFraction) * self.radius
         self.fullscale = fullscale or 1.
-        self.tolerance = 0.1 * self.fullscale
         self._values = np.zeros(2)
         self.active = False
+
+    @pyqtProperty(float)
+    def fullscale(self):
+        return self._fullscale
+
+    @fullscale.setter
+    def fullscale(self, value):
+        self._fullscale = value
+        self.tolerance = 0.1 * value
 
     def paintEvent(self, event):
         if self.isEnabled():
