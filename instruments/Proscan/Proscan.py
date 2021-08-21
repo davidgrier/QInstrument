@@ -17,6 +17,21 @@ class Proscan(SerialInstrument):
     Setting properties on an instantiated object
     changes corresponding settings on the connected
     instrument.
+
+    speed: int
+        maximum stage speed in range [1, 100]
+    acceleration: int
+        maximum stage acceleration in range [1, 100]
+    scurve: int
+        time derivative of stage acceleration in range [1, 100]
+
+    zspeed: int
+        maximum focus speed in range [1, 100]
+    zacceleration: int
+        maximum focus acceleration in range [1, 100]
+    zscurve: int
+        time derivative of focus acceleration in range [1, 100]
+
     '''
 
     settings = dict(baudRate=SerialInstrument.Baud9600,
@@ -69,6 +84,18 @@ class Proscan(SerialInstrument):
         return position
 
     def set_position(self, position):
+        '''Define coordinates of present position
+
+        Arguments
+        ---------
+        position: (x, y, [z])
+            coordinates of present position in micrometers
+
+        Returns
+        -------
+        success: bool
+            True: position set successfully
+        '''
         position = ','.join(map(str, position))
         return self.expect(f'P,{position}', '0')
 
@@ -85,15 +112,38 @@ class Proscan(SerialInstrument):
         return self.expect('Z', '0')
 
     def move_to(self, position, relative=False):
+        '''Move stage to specified position
+
+        Arguments
+        ---------
+        position: (x, y)
+            Initiates stage motion to specified position
+            using the current scurve, acceleration and speed
+            settings. Coordinates are specified in micrometers.
+        relative: bool [optional]
+            True: Move by (x, y) relative to current position.
+            False: Move to absolute position [Default]
+        '''
         cmd = 'GR' if relative else 'G'
         coordinates = ','.join(map(str, position))
         return self.expect(f'{cmd},{coordinates}', 'R')
 
     def move_to_origin(self):
+        '''Move stage to origin'''
         return self.expect('M', 'R')
 
     def set_velocity(self, velocity):
-        '''Virtual joystick move'''
+        '''Initiate stage motion with specified velocity
+
+        Arguments
+        ---------
+        velocity: (vx, vy)
+            Start stage motion with velocity vx along the x axis
+            and vy along the y axis. Velocity components are 
+            specified in micrometers per second.
+
+        Note: set_velocity([0, 0]) stops the motion
+        '''
         velocity = ','.join(map(str, velocity))
         self.send(f'VS,{velocity}')
 
