@@ -7,9 +7,6 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.ERROR)
 
 
-
-
-
 class SerialInstrument(QSerialPort):
     '''Base class for instruments connected to serial ports
 
@@ -29,6 +26,19 @@ class SerialInstrument(QSerialPort):
         Time to wait for characters from device [ms]
         Default: 100.
 
+    Signals
+    -------
+    dataReady(bytes | str):
+        Emitted when asynchronous reading encounters
+        the eol character and transmits the received data
+        up to and including the eol character.
+
+    Slots
+    -----
+    set_value(value):
+        Intended as a slot for instrument widgets that
+        subclass SerialInstrument.
+
     Example
     -------
     >>> instrument = SerialInstrument().find()
@@ -38,6 +48,7 @@ class SerialInstrument(QSerialPort):
     dataReady = pyqtSignal([bytes], [str])
 
     def blocking(method):
+        '''Decorator for blocking communication methods'''
         @wraps(method)
         def wrapper(inst, *args, **kwargs):
             inst.blockSignals(True)
@@ -226,6 +237,7 @@ class SerialInstrument(QSerialPort):
 
     @pyqtSlot()
     def receive(self):
+        '''Slot for nonblocking data communication'''
         self.buffer.append(self.readAll())
         if self.buffer.contains(self.eol):
             len = self.buffer.indexOf(self.eol) + 1
