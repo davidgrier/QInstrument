@@ -31,7 +31,7 @@ class SerialInstrument(QSerialPort):
 
     '''
 
-    dataReady = pyqtSignal(str)
+    dataReady = pyqtSignal([bytes], [str])
 
     def __init__(self,
                  portName=None,
@@ -41,6 +41,7 @@ class SerialInstrument(QSerialPort):
         super().__init__(**kwargs)
         self.eol = eol.encode()
         self.timeout = timeout or 100.
+        self.readyRead.connect(self.receive)
         self.buffer = QByteArray()
         self.open(portName)
 
@@ -91,7 +92,8 @@ class SerialInstrument(QSerialPort):
             if self.open(port.portName()):
                 break
         else:
-            logger.error('Could not find {}'.format(self.__class__.__name__))
+            name = self.__class__.__name__
+            logger.error(f'Could not find {name}')
         return self
 
     def send(self, data):
@@ -217,12 +219,14 @@ class SerialInstrument(QSerialPort):
         if self.buffer.contains(self.eol):
             len = self.buffer.indexOf(self.eol) + 1
             if len < buffer.size():
-                data = bytes(self.buffer.left(len)).decode('utf-8')
+                data = bytes(self.buffer.left(len))
                 self.buffer.remove(0, len)
             else:
-                data = bytes(self.buffer).decode('utf-8')
+                data = bytes(self.buffer)
                 self.buffer.clear()
-            self.dataReady.emit(data)
+            self.dataReady[bytes].emit(data)
+            self.dataReady[str].emit(data.decode('utf-8',
+                                                 'backslashreplace'))
 
     @pyqtSlot(object)
     def set_value(self, value):

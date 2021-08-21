@@ -1,5 +1,6 @@
 from QInstrument.lib import QInstrumentInterface
 from QInstrument.instruments import Proscan
+from PyQt5.QtCore import pyqtSlot
 
 
 class QProscan(QInstrumentInterface):
@@ -10,8 +11,17 @@ class QProscan(QInstrumentInterface):
         super().__init__(uiFile='ProscanWidget.ui',
                          deviceClass=Proscan,
                          **kwargs)
+        self.connectSignals()
 
+    def connectSignals(self):
+        if self.device.isOpen():
+            self.device.dataReady.connect(self.updatePosition)
 
+    @pyqtSlot(str)
+    def updatePosition(self, data):
+        print(data)
+        x, y, z = list(map(int, data.strip().split(',')))
+        
 def main():
     import sys
     from PyQt5.QtWidgets import QApplication
