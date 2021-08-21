@@ -3,7 +3,7 @@ from PyQt5.QtSerialPort import (QSerialPort, QSerialPortInfo)
 import logging
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.ERROR)
+logger.setLevel(logging.DEBUG)
 
 
 class SerialInstrument(QSerialPort):
@@ -224,9 +224,12 @@ class SerialInstrument(QSerialPort):
             else:
                 data = bytes(self.buffer)
                 self.buffer.clear()
+            logger.debug('emitting {}'.format(data.decode('utf-8')))
             self.dataReady[bytes].emit(data)
             self.dataReady[str].emit(data.decode('utf-8',
                                                  'backslashreplace'))
+        else:
+            logger.debug(f'buffered {self.buffer}')
 
     @pyqtSlot(object)
     def set_value(self, value):
