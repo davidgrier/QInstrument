@@ -1,18 +1,13 @@
 from PyQt5.QtCore import (pyqtSlot, pyqtSignal, QByteArray)
 from PyQt5.QtSerialPort import (QSerialPort, QSerialPortInfo)
+from functools import wraps
 import logging
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.ERROR)
 
 
-def blocking(method):
-    def wrapper(self, *args, **kwargs):
-        self.blockSignals(True)
-        result = method(self, *args, **kwargs)
-        self.blockSignals(False)
-        return result
-    return wrapper
+
 
 
 class SerialInstrument(QSerialPort):
@@ -41,6 +36,15 @@ class SerialInstrument(QSerialPort):
     '''
 
     dataReady = pyqtSignal([bytes], [str])
+
+    def blocking(method):
+        @wraps(method)
+        def wrapper(inst, *args, **kwargs):
+            inst.blockSignals(True)
+            result = method(inst, *args, **kwargs)
+            inst.blockSignals(False)
+            return result
+        return wrapper
 
     def __init__(self,
                  portName=None,
