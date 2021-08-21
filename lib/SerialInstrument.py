@@ -3,7 +3,16 @@ from PyQt5.QtSerialPort import (QSerialPort, QSerialPortInfo)
 import logging
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.ERROR)
+
+
+def blocking(method):
+    def wrapper(self, *args, **kwargs):
+        self.blockSignals(True)
+        result = method(self, *args, **kwargs)
+        self.blockSignals(False)
+        return result
+    return wrapper
 
 
 class SerialInstrument(QSerialPort):
@@ -145,6 +154,7 @@ class SerialInstrument(QSerialPort):
             return buffer
         return buffer.decode('utf-8').strip()
 
+    @blocking
     def handshake(self, query, raw=False):
         '''Send command to the instrument and receive its response
 
@@ -165,11 +175,8 @@ class SerialInstrument(QSerialPort):
         response: str | bytes
             Response from instrument
         '''
-        self.blockSignals(True)
         self.send(query)
-        response = self.read_until(raw=raw)
-        self.blockSignals(False)
-        return response
+        return self.read_until(raw=raw)
 
     def expect(self, query, response):
         '''Send query and check for anticipated response
