@@ -15,18 +15,13 @@ class QJoystick(QWidget):
     joystickChanged = pyqtSignal(object)
 
     def __init__(self, *args,
-                 radius=None,
-                 padding=None,
                  fullscale=None,
                  **kwargs):
         super().__init__(*args, **kwargs)
-        self.radius = radius or 40
-        self.padding = padding or 5
+        self.sizePolicy().setHeightForWidth(True)
+        self.padding = padding or 0.2
         self.knobFraction = 0.3
-        size = 2 * (self.radius + self.padding)
-        self.setMinimumSize(size, size)
         self.joystickPosition = QPointF(0, 0)
-        self.limit = (1. - self.knobFraction) * self.radius
         self.fullscale = fullscale or 1.
         self._values = np.zeros(2)
         self.active = False
@@ -40,6 +35,11 @@ class QJoystick(QWidget):
         self._fullscale = value
         self.tolerance = 0.1 * value
 
+    def resizeEvent(self, event):
+        self.radius = min(self.size().width(), self.size().height()) / 2
+        self.radius *= (1. - self.padding)
+        self.limit = (1. - self.knobFraction) * self.radius
+        
     def paintEvent(self, event):
         if self.isEnabled():
             pen, bg, knob = Qt.black, QColor('#F8EEFF'), Qt.gray
