@@ -3,8 +3,9 @@ from PyQt5.QtWidgets import QWidget
 from PyQt5.QtCore import (pyqtSlot, pyqtProperty)
 import os
 import sys
-
+import types
 import logging
+
 logging.basicConfig()
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.WARNING)
@@ -69,12 +70,11 @@ class QInstrumentInterface(QWidget):
         super().__init__(**kwargs)
         self.ui = self._loadUi(uiFile)
         self.device = deviceClass().find()
+        self._identifyProperties()
         if self.device.isOpen():
-            self._identifyProperties()
             self._syncProperties()
             self._connectSignals()
         else:
-            self._properties = []
             self.setEnabled(False)
 
     @pyqtProperty(list)
@@ -85,6 +85,15 @@ class QInstrumentInterface(QWidget):
            and is read-only.
         '''
         return self._properties
+
+    @pyqtProperty(list)
+    def methods(self):
+        '''List of device methods that are called by the ui
+
+           This property is configured automatically at instantiation
+           and is read-only.
+        '''
+        return self._methods
 
     @pyqtProperty(dict)
     def settings(self):
@@ -109,7 +118,7 @@ class QInstrumentInterface(QWidget):
         '''
         if hasattr(self.ui, key):
             widget = getattr(self.ui, key)
-            getter = self._method(widget, self.wgetter)
+            getter = self._wmethod(widget, self.wgetter)
             return getter()
         logger.error(f'Unknown property {key}')
         return None
@@ -138,7 +147,7 @@ class QInstrumentInterface(QWidget):
         '''
         if hasattr(self.ui, key):
             widget = getattr(self.ui, key)
-            setter = self._method(widget, self.wsetter)
+            setter = self._wmethod(widget, self.wsetter)
             if value is None:
                 value = getattr(self.device, key, None)
                 self.blockSignals(True)
@@ -149,9 +158,8 @@ class QInstrumentInterface(QWidget):
             self.blockSignals(False)
         else:
             logger.error(f'Unknown property {key}')
-
     
-    def _method(self, widget, method):
+    def _wmethod(self, widget, method):
         typeName = type(widget).__name__.split('.')[-1]
         return getattr(widget, method[typeName])
 
@@ -163,22 +171,33 @@ class QInstrumentInterface(QWidget):
         ui = form()
         ui.setupUi(self)
         return ui
-
+    
     def _identifyProperties(self):
         uiprops = vars(self.ui).keys()
-        deviceprops = dir(self.device)
-        self._properties = [p for p in uiprops if p in deviceprops]
+        self._properties = []
+        self._methods = []
+        for k, v in vars(type(self.device)).items():
+            if k not in uiprops:
+                continue
+            if isinstance(v, pyqtProperty):
+                self._properties.append(k)
+            elif isinstance(v, types.FunctionType):
+                self._methods.append(k)
 
     def _syncProperties(self):
         for prop in self.properties:
             self.set(prop)
-            
+
     def _connectSignals(self):
         for prop in self.properties:
             widget = getattr(self.ui, prop)
-            signal = self._method(widget, self.wsignal)
+            signal = self._wmethod(widget, self.wsignal)
             if signal is not None:
                 signal.connect(self._setDeviceProperty)
+        for method in self.methods:
+            widget = getattr(self.ui, method)
+            if isinstance(widget, 'QPushButton'):
+                widget.clicked.connect(getattr(self.device, method))
 
     @pyqtSlot(bool)
     @pyqtSlot(int)

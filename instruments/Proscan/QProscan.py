@@ -1,6 +1,11 @@
 from QInstrument.lib import QInstrumentInterface
 from QInstrument.instruments import Proscan
 from PyQt5.QtCore import (pyqtSlot, QTimer)
+import logging
+
+logging.basicConfig()
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 
 class QProscan(QInstrumentInterface):
@@ -18,6 +23,7 @@ class QProscan(QInstrumentInterface):
     def connectSignals(self):
         self.device.dataReady.connect(self.updatePosition)
         self.timer.timeout.connect(self.poll)
+        self.ui.joystick.positionChanged.connect(self.updateVelocity)
 
     def start(self):
         if self.isEnabled():
@@ -36,6 +42,11 @@ class QProscan(QInstrumentInterface):
         self.ui.x.setValue(x)
         self.ui.y.setValue(y)
         self.ui.z.setValue(z)
+
+    @pyqtSlot(object)
+    def updateVelocity(self, velocity):
+        logger.debug(f'velocity: {velocity}')
+        
         
 def main():
     import sys

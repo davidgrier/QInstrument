@@ -28,7 +28,7 @@ class SerialInstrument(QSerialPort):
 
     Signals
     -------
-    dataReady(bytes | str):
+    dataReady(str):
         Emitted when asynchronous reading encounters
         the eol character and transmits the received data
         up to and including the eol character.
@@ -45,7 +45,7 @@ class SerialInstrument(QSerialPort):
 
     '''
 
-    dataReady = pyqtSignal([bytes], [str])
+    dataReady = pyqtSignal(str)
 
     def blocking(method):
         '''Decorator for blocking communication methods'''
@@ -248,9 +248,7 @@ class SerialInstrument(QSerialPort):
                 data = bytes(self.buffer)
                 self.buffer.clear()
             logger.debug('emitting {}'.format(data.decode('utf-8')))
-            self.dataReady[bytes].emit(data)
-            self.dataReady[str].emit(data.decode('utf-8',
-                                                 'backslashreplace'))
+            self.dataReady.emit(data.decode('utf-8', 'backslashreplace'))
         else:
             logger.debug(f'buffered {self.buffer}')
 
