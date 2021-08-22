@@ -19,7 +19,7 @@ class QJoystick(QWidget):
                  **kwargs):
         super().__init__(*args, **kwargs)
         self.sizePolicy().setHeightForWidth(True)
-        self.padding = padding or 0.2
+        self.padding = 0.2
         self.knobFraction = 0.3
         self.joystickPosition = QPointF(0, 0)
         self.fullscale = fullscale or 1.
