@@ -40,7 +40,10 @@ class QProscan(QInstrumentInterface):
 
     @pyqtSlot(str)
     def updatePosition(self, data):
-        x, y, z = list(map(int, data.strip().split(',')))
+        try:
+            x, y, z = list(map(int, data.strip().split(',')))
+        except ValueError:
+            return
         self.ui.x.display(x)
         self.ui.y.display(y)
         self.ui.z.display(z)
