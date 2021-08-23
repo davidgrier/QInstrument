@@ -1,7 +1,10 @@
 from PyQt5.QtCore import (pyqtProperty, pyqtSignal, pyqtSlot)
 from QInstrument.lib import SerialInstrument
 import numpy as np
+import logging
 
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 class Proscan(SerialInstrument):
     '''Prior Proscan Microscope Stage Controller
@@ -150,8 +153,10 @@ class Proscan(SerialInstrument):
         velocity = ','.join(map(str, velocity))
         self.send(f'VS,{velocity}')
 
+    @pyqtSlot()
     def stop(self):
         '''Stop stage motion'''
+        logger.debug('STOP')
         return self.expect('I', 'R')
 
     def status(self):

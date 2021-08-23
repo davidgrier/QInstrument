@@ -29,6 +29,7 @@ class QProscan(QInstrumentInterface):
     def startPolling(self):
         if self.isEnabled():
             self.timer.start(self.interval)
+        return self
 
     def stopPolling(self):
         self.timer.stop()
@@ -40,13 +41,14 @@ class QProscan(QInstrumentInterface):
     @pyqtSlot(str)
     def updatePosition(self, data):
         x, y, z = list(map(int, data.strip().split(',')))
-        self.ui.x.setValue(x)
-        self.ui.y.setValue(y)
-        self.ui.z.setValue(z)
+        self.ui.x.display(x)
+        self.ui.y.display(y)
+        self.ui.z.display(z)
 
     @pyqtSlot(object)
     def updateVelocity(self, velocity):
         logger.debug(f'velocity: {velocity}')
+        self.device.set_velocity(velocity)
         
         
 def main():
@@ -54,7 +56,7 @@ def main():
     from PyQt5.QtWidgets import QApplication
 
     app = QApplication(sys.argv)
-    widget = QProscan()
+    widget = QProscan().startPolling()
     widget.show()
     sys.exit(app.exec_())
 

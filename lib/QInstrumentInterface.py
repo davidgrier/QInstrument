@@ -1,5 +1,5 @@
 from PyQt5 import uic
-from PyQt5.QtWidgets import QWidget
+from PyQt5.QtWidgets import (QWidget, QPushButton)
 from PyQt5.QtCore import (pyqtSlot, pyqtProperty)
 import os
 import sys
@@ -196,7 +196,7 @@ class QInstrumentInterface(QWidget):
                 signal.connect(self._setDeviceProperty)
         for method in self.methods:
             widget = getattr(self.ui, method)
-            if isinstance(widget, 'QPushButton'):
+            if isinstance(widget, QPushButton):
                 widget.clicked.connect(getattr(self.device, method))
 
     @pyqtSlot(bool)
