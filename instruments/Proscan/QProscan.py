@@ -16,7 +16,8 @@ class QProscan(QInstrumentInterface):
         super().__init__(uiFile='ProscanWidget.ui',
                          deviceClass=Proscan,
                          **kwargs)
-        self.interval = interval or 200
+        self.ui.joystick.fullscale = 200. # um/s
+        self.interval = interval or 200   # ms
         self.timer = QTimer()
         self.connectSignals()
 
@@ -25,11 +26,11 @@ class QProscan(QInstrumentInterface):
         self.timer.timeout.connect(self.poll)
         self.ui.joystick.positionChanged.connect(self.updateVelocity)
 
-    def start(self):
+    def startPolling(self):
         if self.isEnabled():
             self.timer.start(self.interval)
 
-    def stop(self):
+    def stopPolling(self):
         self.timer.stop()
         
     @pyqtSlot()

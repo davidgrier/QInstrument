@@ -45,9 +45,11 @@ class Proscan(SerialInstrument):
     
     def Property(cmd, dtype=int):      
         def getter(self):
+            logger.debug('Getting')
             return self.get_value(cmd, dtype=dtype)
         def setter(self, value):
             value = dtype(value)
+            logger.debug(f'Setting {value}')
             self.expect(f'{cmd},{value}', res)
         return pyqtProperty(dtype, getter, setter)
 
@@ -132,6 +134,7 @@ class Proscan(SerialInstrument):
         '''Move stage to origin'''
         return self.expect('M', 'R')
 
+    @pyqtSlot(object)
     def set_velocity(self, velocity):
         '''Initiate stage motion with specified velocity
 

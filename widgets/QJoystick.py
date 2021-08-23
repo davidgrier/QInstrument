@@ -38,7 +38,7 @@ class QJoystick(QWidget):
         else:
             pen, bg, knob = Qt.darkGray, QColor('#F8F8F8'), Qt.lightGray
         painter = QPainter(self)
-        painter.setRenderHint(QPainter.Antialiasing)
+        painter.setRenderHint(QPainter.Antialiasing, True)
         painter.setPen(pen)
         painter.setBrush(bg)
         painter.drawEllipse(self._limitRect())
