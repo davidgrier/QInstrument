@@ -6,6 +6,7 @@ import logging
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
+
 class Proscan(SerialInstrument):
     '''Prior Proscan Microscope Stage Controller
 
@@ -45,23 +46,24 @@ class Proscan(SerialInstrument):
                     eol='\r')
 
     positionChanged = pyqtSignal(object)
-    
-    def Property(cmd, dtype=int):      
+
+    def Property(cmd, dtype=int):
         def getter(self):
             logger.debug('Getting')
             return self.get_value(cmd, dtype=dtype)
+
         def setter(self, value):
             value = dtype(value)
             logger.debug(f'Setting {value}')
             self.expect(f'{cmd},{value}', res)
         return pyqtProperty(dtype, getter, setter)
 
-    speed         = Property('SMS')
-    acceleration  = Property('SAS')
-    scurve        = Property('SCS')
-    zspeed        = Property('SMZ')
+    speed = Property('SMS')
+    acceleration = Property('SAS')
+    scurve = Property('SCS')
+    zspeed = Property('SMZ')
     zacceleration = Property('SAZ')
-    zscurve       = Property('SCZ')
+    zscurve = Property('SCZ')
 
     def __init__(self, portName=None, **kwargs):
         super().__init__(portName, **self.settings, **kwargs)
@@ -151,7 +153,7 @@ class Proscan(SerialInstrument):
         Note: set_velocity([0, 0]) stops the motion
         '''
         velocity = ','.join(map(str, velocity))
-        self.send(f'VS,{velocity}')
+        self.expect(f'VS,{velocity}', 'R')
 
     @pyqtSlot()
     def stop(self):
@@ -176,7 +178,7 @@ class Proscan(SerialInstrument):
         self._flip = value
         c = -1 if value else 1
         self.expect(f'YD,{c}', '0')
-    
+
     @pyqtProperty(bool)
     def mirror(self):
         return self._mirror
@@ -186,7 +188,7 @@ class Proscan(SerialInstrument):
         self._mirror = value
         c = -1 if value else 1
         self.expect(f'XD,{c}', '0')
-    
+
     @pyqtProperty(float)
     def resolution(self):
         return self.get_value('RES,s')
