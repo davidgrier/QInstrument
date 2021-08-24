@@ -47,7 +47,7 @@ class Proscan(SerialInstrument):
 
     positionChanged = pyqtSignal(object)
 
-    def Property(cmd, dtype=int):
+    def Property(cmd, dtype=int, res='0'):
         def getter(self):
             logger.debug('Getting')
             return self.get_value(cmd, dtype=dtype)
@@ -58,6 +58,7 @@ class Proscan(SerialInstrument):
             self.expect(f'{cmd},{value}', res)
         return pyqtProperty(dtype, getter, setter)
 
+    zstepsize = Property('C', dtype=float)
     speed = Property('SMS')
     acceleration = Property('SAS')
     scurve = Property('SCS')
@@ -117,6 +118,14 @@ class Proscan(SerialInstrument):
              False: communication error
         '''
         return self.expect('Z', '0')
+
+    @pyqtProperty(float)
+    def stepsize(self):
+        return list(map(float, self.handshake('X').split(',')))[0]
+
+    @stepsize.setter
+    def stepsize(self, value):
+        self.expect(f'X,{value},{value}', '0')
 
     def move_to(self, position, relative=False):
         '''Move stage to specified position

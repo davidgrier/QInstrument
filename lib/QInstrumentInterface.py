@@ -55,7 +55,7 @@ class QInstrumentInterface(QWidget):
                'QLineEdit':      'text',
                'QPushButton':    'isChecked',
                'QRadioButton':   'isChecked',
-               'QSpinBox':       'value'}    
+               'QSpinBox':       'value'}
 
     wsignal = {'QCheckBox':      'toggled',
                'QComboBox':      'currentIndexChanged',
@@ -75,7 +75,7 @@ class QInstrumentInterface(QWidget):
             self._syncProperties()
             self._connectSignals()
         else:
-            self.setEnabled(False)
+            self.setEnabled(True)
 
     @pyqtProperty(list)
     def properties(self):
@@ -122,7 +122,7 @@ class QInstrumentInterface(QWidget):
             return getter()
         logger.error(f'Unknown property {key}')
         return None
-    
+
     def set(self, key, value=None):
         '''Set value of named property
 
@@ -143,7 +143,7 @@ class QInstrumentInterface(QWidget):
 
         Note
         ----
-        
+
         '''
         if hasattr(self.ui, key):
             widget = getattr(self.ui, key)
@@ -158,7 +158,7 @@ class QInstrumentInterface(QWidget):
             self.blockSignals(False)
         else:
             logger.error(f'Unknown property {key}')
-    
+
     def _wmethod(self, widget, method):
         typeName = type(widget).__name__.split('.')[-1]
         return getattr(widget, method[typeName])
@@ -171,7 +171,7 @@ class QInstrumentInterface(QWidget):
         ui = form()
         ui.setupUi(self)
         return ui
-    
+
     def _identifyProperties(self):
         uiprops = vars(self.ui).keys()
         self._properties = []

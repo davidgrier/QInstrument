@@ -1,6 +1,7 @@
 from QInstrument.lib import QInstrumentInterface
 from QInstrument.instruments import Proscan
 from PyQt5.QtCore import (pyqtSlot, QTimer)
+import numpy as np
 import logging
 
 logging.basicConfig()
@@ -20,6 +21,7 @@ class QProscan(QInstrumentInterface):
         self.interval = interval or 200   # ms
         self.timer = QTimer()
         self.connectSignals()
+        self._zvalue = self.ui.zdial.value()
 
     def connectSignals(self):
         self.device.dataReady.connect(self.updatePosition)
@@ -63,9 +65,10 @@ class QProscan(QInstrumentInterface):
         if np.abs(delta) > self.ui.zdial.maximum() / 2:
             direction *= -1
         if direction > 0:
-            logger.debug('step up')
+            logger.debug(f'{zvalue} step up')
         else:
-            logger.debug('step down')
+            logger.debug(f'{zvalue} step down')
+        self._zvalue = zvalue
 
 
 def main():
@@ -73,7 +76,7 @@ def main():
     from PyQt5.QtWidgets import QApplication
 
     app = QApplication(sys.argv)
-    widget = QProscan().startPolling()
+    widget = QProscan()  # .startPolling()
     widget.show()
     sys.exit(app.exec_())
 
