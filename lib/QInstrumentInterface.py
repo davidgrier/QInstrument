@@ -15,7 +15,8 @@ class QInstrumentInterface(QWidget):
     '''Glue class to attach a PyQt5 GUI to an instrument interface
 
     A widget in the UI that is intended to control a device property
-    must have the same name as the corresponding device property.
+    must have the same name and data type as the corresponding
+    device property.
 
     While QInstrumentInterface() can be used to create a hardware-enabled
     GUI directly, a better choice is to subclass QInstrumentInterface,
