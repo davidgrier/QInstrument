@@ -75,7 +75,7 @@ class QInstrumentInterface(QWidget):
             self._syncProperties()
             self._connectSignals()
         else:
-            self.setEnabled(True)
+            self.setEnabled(False)
 
     @pyqtProperty(list)
     def properties(self):
