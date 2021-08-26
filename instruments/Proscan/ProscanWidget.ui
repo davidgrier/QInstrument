@@ -298,6 +298,9 @@
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
+        <property name="focusPolicy">
+         <enum>Qt::ClickFocus</enum>
+        </property>
         <property name="minimum">
          <number>1</number>
         </property>
@@ -344,6 +347,9 @@
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
+        <property name="focusPolicy">
+         <enum>Qt::ClickFocus</enum>
+        </property>
         <property name="minimum">
          <number>1</number>
         </property>
@@ -357,12 +363,18 @@
         <property name="text">
          <string>Stage</string>
         </property>
+        <property name="buddy">
+         <cstring>stepsize</cstring>
+        </property>
        </widget>
       </item>
       <item row="0" column="2">
        <widget class="QLabel" name="focusLabel">
         <property name="text">
          <string>Focus</string>
+        </property>
+        <property name="buddy">
+         <cstring>zstepsize</cstring>
         </property>
        </widget>
       </item>
@@ -371,13 +383,24 @@
         <property name="text">
          <string>Step Size</string>
         </property>
+        <property name="buddy">
+         <cstring>stepsize</cstring>
+        </property>
        </widget>
       </item>
       <item row="1" column="1">
-       <widget class="QDoubleSpinBox" name="xstepsize"/>
+       <widget class="QDoubleSpinBox" name="stepsize">
+        <property name="focusPolicy">
+         <enum>Qt::ClickFocus</enum>
+        </property>
+       </widget>
       </item>
       <item row="1" column="2">
-       <widget class="QDoubleSpinBox" name="zstepsize"/>
+       <widget class="QDoubleSpinBox" name="zstepsize">
+        <property name="focusPolicy">
+         <enum>Qt::ClickFocus</enum>
+        </property>
+       </widget>
       </item>
       <item row="4" column="2">
        <widget class="QSpinBox" name="zscurve">
@@ -386,6 +409,9 @@
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
+        </property>
+        <property name="focusPolicy">
+         <enum>Qt::ClickFocus</enum>
         </property>
         <property name="minimum">
          <number>1</number>
@@ -404,7 +430,7 @@
          </sizepolicy>
         </property>
         <property name="focusPolicy">
-         <enum>Qt::WheelFocus</enum>
+         <enum>Qt::ClickFocus</enum>
         </property>
         <property name="minimum">
          <number>1</number>
@@ -422,6 +448,9 @@
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
+        <property name="focusPolicy">
+         <enum>Qt::ClickFocus</enum>
+        </property>
         <property name="minimum">
          <number>1</number>
         </property>
@@ -437,6 +466,9 @@
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
+        </property>
+        <property name="focusPolicy">
+         <enum>Qt::ClickFocus</enum>
         </property>
         <property name="minimum">
          <number>1</number>
@@ -461,12 +493,14 @@
  </customwidgets>
  <tabstops>
   <tabstop>stop</tabstop>
-  <tabstop>zdial</tabstop>
-  <tabstop>mirror</tabstop>
-  <tabstop>flip</tabstop>
-  <tabstop>set_origin</tabstop>
+  <tabstop>stepsize</tabstop>
   <tabstop>speed</tabstop>
+  <tabstop>acceleration</tabstop>
+  <tabstop>scurve</tabstop>
+  <tabstop>zstepsize</tabstop>
+  <tabstop>zspeed</tabstop>
   <tabstop>zacceleration</tabstop>
+  <tabstop>zscurve</tabstop>
  </tabstops>
  <resources/>
  <connections/>

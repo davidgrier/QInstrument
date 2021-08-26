@@ -1,6 +1,5 @@
 from PyQt5.QtCore import (pyqtProperty, pyqtSignal, pyqtSlot)
 from QInstrument.lib import SerialInstrument
-import numpy as np
 import logging
 
 logger = logging.getLogger(__name__)
@@ -22,6 +21,8 @@ class Proscan(SerialInstrument):
     changes corresponding settings on the connected
     instrument.
 
+    stepsize: float
+        size of single stage step [um]
     speed: int
         maximum stage speed in range [1, 100]
     acceleration: int
@@ -29,6 +30,8 @@ class Proscan(SerialInstrument):
     scurve: int
         time derivative of stage acceleration in range [1, 100]
 
+    zstepsize: float
+        size of single focus step [um]
     zspeed: int
         maximum focus speed in range [1, 100]
     zacceleration: int
@@ -58,13 +61,13 @@ class Proscan(SerialInstrument):
             self.expect(f'{cmd},{value}', res)
         return pyqtProperty(dtype, getter, setter)
 
-    zstepsize = Property('C', dtype=float)
-    speed = Property('SMS')
-    acceleration = Property('SAS')
-    scurve = Property('SCS')
-    zspeed = Property('SMZ')
+    speed         = Property('SMS')
+    acceleration  = Property('SAS')
+    scurve        = Property('SCS')
+    zstepsize     = Property('C', dtype=float)
+    zspeed        = Property('SMZ')
     zacceleration = Property('SAZ')
-    zscurve = Property('SCZ')
+    zscurve       = Property('SCZ')
 
     def __init__(self, portName=None, **kwargs):
         super().__init__(portName, **self.settings, **kwargs)
@@ -156,7 +159,7 @@ class Proscan(SerialInstrument):
         ---------
         velocity: (vx, vy)
             Start stage motion with velocity vx along the x axis
-            and vy along the y axis. Velocity components are 
+            and vy along the y axis. Velocity components are
             specified in micrometers per second.
 
         Note: set_velocity([0, 0]) stops the motion
