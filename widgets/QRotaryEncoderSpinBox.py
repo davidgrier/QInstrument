@@ -8,16 +8,11 @@ import numpy as np
 
 class QRotaryEncoderSpinBox(QWidget):
 
-    def __init__(self, *args,
-                 minColor=None,
-                 maxColor=None,
-                 **kwargs):
+    def __init__(self, *args, colors=None, **kwargs):
         super().__init__(*args, **kwargs)
-        self.minColor = minColor or 'white'
-        self.maxColor = maxColor or '#65ff00'
         self.ui = self._loadUi()
         self._inheritMethods()
-        self.valueChanged.connect(self.updateAppearance)
+        self.setColors(colors or ('white', 'red'))
 
     def _loadUi(self):
         uifile = os.path.splitext(__file__)[0] + '.ui'
@@ -41,33 +36,27 @@ class QRotaryEncoderSpinBox(QWidget):
         for method in methods:
             setattr(self, method, getattr(self.ui.value, method))
 
-    @pyqtProperty(object)
-    def minColor(self):
-        return self._minColor
+    def colors(self):
+        return self._colors
 
-    @minColor.setter
-    def minColor(self, value):
-        self._minColor = value
-        self._c1 = np.array(to_rgb(value))
+    def setColors(self, colors):
+        self._colors = colors
+        if colors is None:
+            self.valueChanged.disconnect(self._updateAppearance)
+        else:
+            self._c1 = np.array(to_rgb(colors[0]))
+            self._c2 = np.array(to_rgb(colors[1]))
+            self.valueChanged.connect(self._updateAppearance)
 
-    @pyqtProperty(object)
-    def maxColor(self):
-        return self._maxColor
-
-    @maxColor.setter
-    def maxColor(self, value):
-        self._maxColor = value
-        self._c2 = np.array(to_rgb(value))
-
-    def setBackgroundColor(self, color):
+    def _setBackgroundColor(self, color):
         style = f'QDoubleSpinBox {{background-color: {color}; }}'
         self.ui.value.setStyleSheet(style)
 
     @pyqtSlot(float)
-    def updateAppearance(self, value):
+    def _updateAppearance(self, value):
         f = (value - self.minimum())/(self.maximum() - self.minimum())
         color = to_hex((1-f)*self._c1 + f*self._c2)
-        self.setBackgroundColor(color)
+        self._setBackgroundColor(color)
 
 
 def main():
@@ -80,6 +69,7 @@ def main():
     widget.setSingleStep(0.01)
     widget.setValue(0)
     widget.setSuffix(' W')
+    widget.setColors(('white', '#68ff00'))
     widget.show()
     sys.exit(app.exec_())
 
