@@ -26,21 +26,20 @@ class QRotaryEncoder(QDial):
 
     Signals
     -------
-    tick: int
-        emitted each time the dial turns one step.
-        +1: clockwise
-        -1: counterclockwise
-
+    stepUp:
+        emitted each time the dial turns one step clockwise
+    stepDown:
+        emitted each time the dial turns one step counterclockwise
     '''
 
-    tick = pyqtSignal(int)
+    stepUp = pyqtSignal()
+    stepDown = pyqtSignal()
 
     def __init__(self, *args, steps=None, **kwargs):
         super().__init__(*args, **kwargs)
-        self._steps = steps or 100
         self.setWrapping(True)
         self.setMinimum(0)
-        self.setMaximum(self._steps - 1)
+        self.setSteps(steps or 100)
         self._value = self.value()
         self.valueChanged.connect(self.emitTick)
 
@@ -53,8 +52,18 @@ class QRotaryEncoder(QDial):
         direction = np.sign(delta)
         if np.abs(delta) > self.maximum() / 2:
             direction *= -1
+        if direction > 0:
+            self.stepUp.emit()
+        else:
+            self.stepDown.emit()
         logger.debug(f'{value}: ' + 'up' if direction > 0 else 'down')
-        self.tick.emit(direction)
+
+    def setSteps(self, value):
+        self._steps = int(value)
+        self.setMaximum(self._steps - 1)
+
+    def steps(self):
+        return self._steps
 
 
 if __name__ == '__main__':
