@@ -49,7 +49,9 @@ class QRotaryEncoderSpinBox(QWidget):
             self.valueChanged.connect(self._updateAppearance)
 
     def _setBackgroundColor(self, color):
-        style = f'QDoubleSpinBox {{background-color: {color}; }}'
+        style = (f'QDoubleSpinBox {{'
+                 f' background-color: {color};'
+                 f' selection-background-color: {color}; }}')
         self.ui.value.setStyleSheet(style)
 
     @pyqtSlot(float)
