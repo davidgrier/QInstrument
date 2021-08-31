@@ -1,12 +1,13 @@
 from QInstrument.lib import QInstrumentInterface
-from QInstrument.instruments import SR830
+from .SR830 import SR830
 
 
 class QSR830(QInstrumentInterface):
     '''Stanford Research Systems SR830 Lockin Amplifier
     '''
-    def __init__(self, **kwargs):
-        super().__init__(uiFile='SR830Widget.ui',
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args,
+                         uiFile='SR830Widget.ui',
                          deviceClass=SR830,
                          **kwargs)
 

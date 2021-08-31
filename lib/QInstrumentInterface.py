@@ -67,8 +67,8 @@ class QInstrumentInterface(QWidget):
                'QRadioButton':   'toggled',
                'QSpinBox':       'valueChanged'}
 
-    def __init__(self, uiFile, deviceClass, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, *args, uiFile=None, deviceClass=None, **kwargs):
+        super().__init__(*args, **kwargs)
         self.ui = self._loadUi(uiFile)
         self.device = deviceClass().find()
         self._identifyProperties()

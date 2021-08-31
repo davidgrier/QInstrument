@@ -1,12 +1,13 @@
 from QInstrument.lib import QInstrumentInterface
-from QInstrument.instruments import DS345
+from .DS345 import DS345
 
 
 class QDS345(QInstrumentInterface):
     '''Stanford Research Systems DS345 Function Generator
     '''
-    def __init__(self, **kwargs):
-        super().__init__(uiFile='DS345Widget.ui',
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args,
+                         uiFile='DS345Widget.ui',
                          deviceClass=DS345,
                          **kwargs)
 
