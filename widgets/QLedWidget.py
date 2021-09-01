@@ -8,26 +8,57 @@ import sys
 
 
 class QLedWidget(QWidget):
+    '''LED indicator
 
-    Red = 1
-    Amber = 2
-    Green = 3
-    Blue = 4
-    Violet = 5
+    ...
 
-    Off = 1
-    On = 2
+    Inherits
+    --------
+    PyQt5.QtWidgets.QWidget
 
-    hexcodes = {Red:    {Off: ('#3f0000', '#a00000'),
-                         On:  ('#af0000', '#ff0f0f')},
-                Amber:  {Off: ('#aa4400', '#ad892c'),
-                         On:  ('#d45500', '#ffd42a')},
-                Green:  {Off: ('#001c00', '#008200'),
-                         On:  ('#009400', '#00d700')},
-                Blue:   {Off: ('#102151', '#0a163c'),
-                         On:  ('#082686', '#0342eb')},
-                Violet: {Off: ('#45098f', '#471b7d'),
-                         On:  ('#5a00cc', '#a65fff')}}
+    Properties
+    ==========
+
+    Colors
+    ------
+    RED, AMBER, GREEN, BLUE, VIOLET
+
+    States
+    ------
+    ON, OFF
+
+    color: Colors
+        Color of the LED indicator
+    state: States
+        ON: LED is bright
+        OFF: LED is dark
+    blink: bool
+        True: LED alternates between ON and OFF
+        False: LED returns to its initial state
+    interval: int
+        Duration of each state during blinking
+        in milliseconds
+    '''
+
+    RED = 1
+    AMBER = 2
+    GREEN = 3
+    BLUE = 4
+    VIOLET = 5
+
+    OFF = 1
+    ON = 2
+
+    hexcodes = {RED:    {OFF: ('#3f0000', '#a00000'),
+                         ON:  ('#af0000', '#ff0f0f')},
+                AMBER:  {OFF: ('#aa4400', '#ad892c'),
+                         ON:  ('#d45500', '#ffd42a')},
+                GREEN:  {OFF: ('#001c00', '#008200'),
+                         ON:  ('#009400', '#00d700')},
+                BLUE:   {OFF: ('#102151', '#0a163c'),
+                         ON:  ('#082686', '#0342eb')},
+                VIOLET: {OFF: ('#45098f', '#471b7d'),
+                         ON:  ('#5a00cc', '#a65fff')}}
 
     def __init__(self, *args,
                  color=None,
@@ -41,8 +72,8 @@ class QLedWidget(QWidget):
         self.template = self._get_template()
         self.renderer = QSvgRenderer()
         self.timer = QTimer()
-        self.color = color or self.Red
-        self.state = state or self.On
+        self.color = color or self.RED
+        self.state = state or self.ON
         self.blink = blink or False
         self.interval = interval or 400
         self._connectSignals()
@@ -69,7 +100,7 @@ class QLedWidget(QWidget):
     @pyqtProperty(bool)
     def blink(self):
         return self._blink
-    
+
     @blink.setter
     def blink(self, blink):
         self._blink = blink
@@ -79,10 +110,18 @@ class QLedWidget(QWidget):
             self.timer.stop()
             self.state = self._setstate
 
+    @pyqtProperty(int)
+    def interval(self):
+        return self._interval
+
+    @interval.setter
+    def interval(self, value):
+        self._interval = abs(value)
+
     @pyqtSlot()
     def flipState(self):
-        self.state = self.On if self.state is self.Off else self.Off
-            
+        self.state = self.ON if self.state is self.OFF else self.OFF
+
     def _get_template(self):
         file = sys.modules[self.__module__].__file__
         dir = os.path.dirname(os.path.abspath(file))
@@ -97,7 +136,6 @@ class QLedWidget(QWidget):
     def paintEvent(self, event):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing, True)
-        bounds = QRectF(0., 0., self.size().width(), self.size().height())
         hexcodes = self.hexcodes[self.color][self.state]
         _xml = self.template.format(*hexcodes).encode('utf-8')
         self.renderer.load(QByteArray(_xml))
@@ -107,7 +145,6 @@ class QLedWidget(QWidget):
         x, y = self.size().width()/2., self.size().height()/2.
         dim = min(x, y)
         return QRectF(QPointF(x-dim, y-dim), QPointF(x+dim, y+dim))
-        
 
 
 if __name__ == '__main__':
@@ -115,7 +152,7 @@ if __name__ == '__main__':
 
     app = QApplication(sys.argv)
     widget = QLedWidget()
-    widget.color = QLedWidget.Blue
+    widget.color = widget.VIOLET
     widget.blink = True
     widget.show()
     sys.exit(app.exec_())
