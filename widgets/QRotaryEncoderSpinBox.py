@@ -7,6 +7,68 @@ import numpy as np
 
 
 class QRotaryEncoderSpinBox(QWidget):
+    '''QDoubleSpinBox controlled by a rotary encoder widget
+
+    ...
+
+    Inherits
+    --------
+    PyQt5.QtWidgets.QWidget
+
+    Properties
+    ----------
+    colors: tuple or list [optional]
+        The SpinBox background color advances from
+        color[0] to color[1] as the value() increases
+        from minimum() to maximum()
+
+    QRotaryEncoderSpinBox inherits properties from QDoubleSpinBox:
+
+    decimals
+    maximum
+    minimum
+    range
+    prefix
+    suffix
+    singleStep
+    stepType
+    value
+
+    These properties are accessed through inherited methods:
+
+    Methods
+    -------
+    decimals(): int
+    setDecimals(number: int)
+
+    maximum(): float
+    setMaximum(value: float)
+
+    minimum(): float
+    setMinimum(value: float)
+
+    setRange(minimum: float, maximum: float)
+
+    prefix(): str
+    setPrefix(value: str)
+
+    suffix(): str
+    setSuffix(value: str)
+
+    singleStep(): float
+    setSingleStep(value: float)
+
+    stepType(): enum
+    setStepType(value: enum)
+
+    value(): float
+    setValue(value: float)
+
+    Signals
+    -------
+    valueChanged(float)
+
+    '''
 
     def __init__(self, *args, colors=None, **kwargs):
         super().__init__(*args, **kwargs)
