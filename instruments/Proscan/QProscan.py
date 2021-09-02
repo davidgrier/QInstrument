@@ -19,16 +19,15 @@ class QProscan(QInstrumentInterface):
                          deviceClass=Proscan,
                          **kwargs)
         self.ui.joystick.fullscale = 200.  # um/s
-        self.interval = interval or 200   # ms
+        self.interval = interval or 200    # ms
         self.timer = QTimer()
         self.connectSignals()
-        self._zvalue = self.ui.zdial.value()
+        self._zvalue = self.ui.z.value()
 
     def connectSignals(self):
         self.device.dataReady.connect(self.updatePosition)
         self.timer.timeout.connect(self.poll)
         self.ui.joystick.positionChanged.connect(self.updateVelocity)
-        self.ui.zdial.valueChanged.connect(self.stepFocus)
 
     def startPolling(self):
         if self.isEnabled():
@@ -56,20 +55,6 @@ class QProscan(QInstrumentInterface):
     def updateVelocity(self, velocity):
         logger.debug(f'velocity: {velocity}')
         self.device.set_velocity(velocity)
-
-    @pyqtSlot(int)
-    def stepFocus(self, zvalue):
-        if zvalue == self._zvalue:
-            return
-        delta = zvalue - self._zvalue
-        direction = np.sign(delta)
-        if np.abs(delta) > self.ui.zdial.maximum() / 2:
-            direction *= -1
-        if direction > 0:
-            logger.debug(f'{zvalue} step up')
-        else:
-            logger.debug(f'{zvalue} step down')
-        self._zvalue = zvalue
 
 
 def main():
