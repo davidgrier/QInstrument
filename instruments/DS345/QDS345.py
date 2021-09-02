@@ -1,10 +1,11 @@
 from QInstrument.lib import QInstrumentInterface
-from .DS345 import DS345
+from QInstrument.instruments.DS345.DS345 import DS345
 
 
 class QDS345(QInstrumentInterface):
     '''Stanford Research Systems DS345 Function Generator
     '''
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args,
                          uiFile='DS345Widget.ui',
@@ -24,4 +25,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-    

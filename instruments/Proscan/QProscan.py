@@ -1,5 +1,5 @@
 from QInstrument.lib import QInstrumentInterface
-from .Proscan import Proscan
+from QInstrument.instruments.Proscan.Proscan import Proscan
 from PyQt5.QtCore import (pyqtSlot, QTimer)
 import numpy as np
 import logging
