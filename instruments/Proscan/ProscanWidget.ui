@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>337</width>
-    <height>337</height>
+    <height>370</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -201,11 +201,43 @@
           <number>1</number>
          </property>
          <item>
-          <widget class="QRotaryEncoderSpinBox" name="z" native="true">
+          <widget class="QLCDNumber" name="z">
+           <property name="font">
+            <font>
+             <pointsize>13</pointsize>
+             <weight>50</weight>
+             <bold>false</bold>
+            </font>
+           </property>
+           <property name="toolTip">
+            <string>stage position: y</string>
+           </property>
+           <property name="autoFillBackground">
+            <bool>false</bool>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">background: lightyellow;</string>
+           </property>
+           <property name="frameShape">
+            <enum>QFrame::StyledPanel</enum>
+           </property>
+           <property name="frameShadow">
+            <enum>QFrame::Raised</enum>
+           </property>
+           <property name="digitCount">
+            <number>6</number>
+           </property>
+           <property name="segmentStyle">
+            <enum>QLCDNumber::Flat</enum>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QRotaryEncoder" name="zdial">
            <property name="minimumSize">
             <size>
              <width>100</width>
-             <height>0</height>
+             <height>95</height>
             </size>
            </property>
           </widget>
@@ -516,10 +548,13 @@
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>QRotaryEncoderSpinBox</class>
-   <extends>QWidget</extends>
-   <header>QInstrument.widgets.QRotaryEncoderSpinBox</header>
-   <container>1</container>
+   <class>QRotaryEncoder</class>
+   <extends>QDial</extends>
+   <header>QInstrument.widgets.QRotaryEncoder</header>
+   <slots>
+    <signal>stepUp()</signal>
+    <signal>stepDown()</signal>
+   </slots>
   </customwidget>
  </customwidgets>
  <tabstops>
