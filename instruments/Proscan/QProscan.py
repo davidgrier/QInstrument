@@ -28,6 +28,8 @@ class QProscan(QInstrumentInterface):
         self.device.dataReady.connect(self.updatePosition)
         self.timer.timeout.connect(self.poll)
         self.ui.joystick.positionChanged.connect(self.updateVelocity)
+        self.ui.zdial.stepUp.connect(self.device.stepUp)
+        self.ui.zdial.stepDown.connect(self.device.stepDown)
 
     def startPolling(self):
         if self.isEnabled():

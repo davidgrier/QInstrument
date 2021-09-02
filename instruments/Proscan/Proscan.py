@@ -210,6 +210,30 @@ class Proscan(SerialInstrument):
         '''Get and set the resolution for the stage in micrometers'''
         self.send(f'RES,s,{value}')
 
+    def stepLeft(self):
+        '''Step stage left'''
+        return self.expect('L', 'R')
+
+    def stepRight(self):
+        '''Step stage right'''
+        return self.expect('R', 'R')
+
+    def stepForward(self):
+        '''Step stage forward'''
+        return self.expect('F', 'R')
+
+    def stepBackward(self):
+        '''Step stage backward'''
+        return self.expect('B', 'R')
+
+    def stepUp(self):
+        '''Step focus up'''
+        return self.expect('U', 'R')
+
+    def stepDown(self):
+        '''Step focus down'''
+        return self.expect('D', 'R')
+
     def description(self):
         '''Description of Proscan hardware'''
         return self._read_lines('?')
