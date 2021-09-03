@@ -69,7 +69,7 @@ class opus(SerialInstrument):
         
     @power.setter
     def power(self, value):
-    '''Sets power (mW)'''
+        '''Sets power (mW)'''
         self.send('POWER={value}')
         
     @pyqtProperty(float)
@@ -78,17 +78,17 @@ class opus(SerialInstrument):
         
     @current.setter
     def current(self, value):
-    '''Sets current as percentage of maximum'''
+        '''Sets current as percentage of maximum'''
         self.send('CURRENT={value}')
         
     #@pyqtProperty(float)
     #def startPower(self)
-    #'''Get default start-up power (mW)'''
+        #'''Get default start-up power (mW)'''
         #return self.handshake('STPOW?')
     
     #@startPower.setter
     #def startPower(self, value)
-    #'''Set default start-up power (mW)'''
+        #'''Set default start-up power (mW)'''
         #self.send('STPOW={VALUE}')
         
             
@@ -99,5 +99,5 @@ class opus(SerialInstrument):
         self.handshake('PSUTEMP?')
         
     def get_timers(self)
-    '''Get the timers of the laser and PSU'''
+        '''Get the timers of the laser and PSU'''
         self.handshake('TIMERS?')
