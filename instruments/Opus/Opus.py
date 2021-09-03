@@ -101,7 +101,7 @@ class Opus(SerialInstrument):
         
             
     def get_lastemp(self):
-        self.handshake('LASTEMP?')
+        return self.handshake('LASTEMP?')
         
     def get_psutemp(self):
         self.handshake('PSUTEMP?')
