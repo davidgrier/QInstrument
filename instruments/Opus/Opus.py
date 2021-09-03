@@ -6,7 +6,7 @@ import logging
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
-class opus(SerialInstrument):
+class Opus(SerialInstrument):
     '''Quantum Opus 570nm Laser
 
     .....
@@ -106,3 +106,14 @@ class opus(SerialInstrument):
     def get_timers(self):
         '''Get the timers of the laser and PSU'''
         self.handshake('TIMERS?')
+        
+    @SerialInstrument.blocking
+    def _read_lines(self, query):
+        self.send(query)
+        response = []
+        while True:
+            this = self.read_until()
+            response.append(this)
+            if 'END' in this:
+                break
+        return response
