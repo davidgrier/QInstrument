@@ -1,6 +1,11 @@
-from PyQt5.QtCore import pyqtProperty
+from PyQt5.QtCore import (pyqtProperty, pyqtSignal, pyqtSlot)
 from QInstrument.lib import SerialInstrument
 import numpy as np
+import logging
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
 class opus(SerialInstrument):
     '''Quantum Opus 570nm Laser
 
