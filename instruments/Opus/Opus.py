@@ -98,6 +98,6 @@ class opus(SerialInstrument):
     def get_psutemp(self):
         self.handshake('PSUTEMP?')
         
-    def get_timers(self)
+    def get_timers(self):
         '''Get the timers of the laser and PSU'''
         self.handshake('TIMERS?')
