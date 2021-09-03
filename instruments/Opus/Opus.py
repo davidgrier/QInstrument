@@ -52,7 +52,6 @@ class Opus(SerialInstrument):
             self.expect(f'{cmd},{value}', res)
         return pyqtProperty(dtype, getter, setter)
     
-    @pyqtProperty(float)
     def keyswitch(self):
         return float(self.handshake('STATUS?'))
     
@@ -104,11 +103,11 @@ class Opus(SerialInstrument):
         return self.handshake('LASTEMP?')
         
     def get_psutemp(self):
-        self.handshake('PSUTEMP?')
+        return self.handshake('PSUTEMP?')
         
     def get_timers(self):
         '''Get the timers of the laser and PSU'''
-        self.handshake('TIMERS?')
+        return self.handshake('TIMERS?')
         
     @SerialInstrument.blocking
     def _read_lines(self, query):
