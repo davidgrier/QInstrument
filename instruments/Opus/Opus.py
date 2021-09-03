@@ -53,7 +53,7 @@ class Opus(SerialInstrument):
         return pyqtProperty(dtype, getter, setter)
     
     def keyswitch(self):
-        return float(self.handshake('STATUS?'))
+        return self.handshake('STATUS?')
     
     @pyqtProperty(bool)
     def status(self):
@@ -70,20 +70,16 @@ class Opus(SerialInstrument):
             self.send('ON')
             self._status = ON
             
-    @pyqtProperty(float)
     def power(self):
         return self.handshake('POWER?')
         
-    @power.setter
     def power(self, value):
         '''Sets power (mW)'''
         self.send('POWER={value}')
         
-    @pyqtProperty(float)
     def current(self):
         return self.handshake('CURRENT?')
         
-    @current.setter
     def current(self, value):
         '''Sets current as percentage of maximum'''
         self.send('CURRENT={value}')
