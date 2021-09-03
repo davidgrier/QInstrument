@@ -41,12 +41,15 @@ class Opus(SerialInstrument):
     def identify(self):
         return 'MPC-D-1.0.07A' in self.handshake('VERSION?')
     
-    def Property(pstr, dtype=float):      
+    def Property(cmd, dtype=int, res='0'):
         def getter(self):
-            return self.get_value(f'{pstr}?', dtype=dtype)
+            logger.debug('Getting')
+            return self.get_value(cmd, dtype=dtype)
+
         def setter(self, value):
-            value = int(value) if (dtype == bool) else dtype(value)
-            self.send(f'{pstr}{value}')
+            value = dtype(value)
+            logger.debug(f'Setting {value}')
+            self.expect(f'{cmd},{value}', res)
         return pyqtProperty(dtype, getter, setter)
     
     @pyqtProperty(float)
