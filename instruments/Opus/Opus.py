@@ -70,14 +70,14 @@ class Opus(SerialInstrument):
             self.send('ON')
             self._status = ON
             
-    def power(self):
+    def get_power(self):
         return self.handshake('POWER?')
         
     def power(self, value):
         '''Sets power (mW)'''
         self.send('POWER={value}')
         
-    def current(self):
+    def get_current(self):
         return self.handshake('CURRENT?')
         
     def current(self, value):
