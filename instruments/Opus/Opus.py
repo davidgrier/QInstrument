@@ -73,7 +73,7 @@ class opus(SerialInstrument):
         self.send('POWER={value}')
         
     @pyqtProperty(float)
-    def current(self)
+    def current(self):
         return self.handshake('CURRENT?')
         
     @current.setter
