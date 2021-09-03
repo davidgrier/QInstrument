@@ -36,7 +36,7 @@ class Opus(SerialInstrument):
                     eol='\r')
     def __init__(self, portName=None, **kwargs):
         super().__init__(portName, **self.settings, **kwargs)
-        self._status = false
+        self._status = False
 
     def identify(self):
         return 'MPC-D-1.0.07A' in self.handshake('VERSION?')
