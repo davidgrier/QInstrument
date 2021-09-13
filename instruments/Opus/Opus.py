@@ -103,7 +103,7 @@ class Opus(SerialInstrument):
         
     def get_timers(self):
         '''Get the timers of the laser and PSU'''
-        return self.handshake('TIMERS?')
+        return self._read_lines('TIMERS?')
         
     @SerialInstrument.blocking
     def _read_lines(self, query):
