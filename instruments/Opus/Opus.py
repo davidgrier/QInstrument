@@ -55,11 +55,9 @@ class Opus(SerialInstrument):
     def keyswitch(self):
         return self.handshake('STATUS?')
     
-    @pyqtProperty(bool)
-    def status(self):
+    def get_status(self):
         return self._status
     
-    @status.setter
     def status(self, value):
         if value == self._status:
             return
