@@ -56,17 +56,20 @@ class Opus(SerialInstrument):
         return self.handshake('STATUS?')
     
     def get_status(self):
-        return self._status
+        if self.status_ == False:
+            return 'Off'
+        if self.status_ == True:
+            return 'On'
     
     def status(self, value):
         if value == self._status:
             return
         if value == OFF:
             self.send('OFF')
-            self._status = OFF
+            self._status = False
         else:
             self.send('ON')
-            self._status = ON
+            self._status = True
             
     def get_power(self):
         return self.handshake('POWER?')
