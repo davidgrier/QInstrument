@@ -68,9 +68,9 @@ class Opus(SerialInstrument):
             return 'On'
     
     def status(self, value):
-        if value == Off:
+        if value == disable:
             self.send('OFF')
-        if value == On:
+        if value == enable:
             self.send('ON')
         else:
             return
