@@ -62,14 +62,19 @@ class Opus(SerialInstrument):
             return 'On'
     
     def status(self, value):
-        if value == self._status:
-            return
+        
         if value == OFF:
-            self.send('OFF')
-            self._status = False
+            if self._status == False:
+                return
+            else:
+                self.send('OFF')
+                self._status = False
         else:
-            self.send('ON')
-            self._status = True
+            if self._status == True:
+                return
+            else:
+                self.send('ON')
+                self._status = True
             
     def get_power(self):
         return self.handshake('POWER?')
@@ -116,16 +121,5 @@ class Opus(SerialInstrument):
             if 'Hours' in this:
                 pass
             else:
-                break
-        return response
-        
-    @SerialInstrument.blocking
-    def _read_lines(self, query):
-        self.send(query)
-        response = []
-        while True:
-            this = self.read_until()
-            response.append(this)
-            if 'END' in this:
                 break
         return response
