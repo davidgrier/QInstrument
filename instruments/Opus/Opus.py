@@ -112,7 +112,7 @@ class Opus(SerialInstrument):
         while True:
             this = self.read_until()
             response.append(this)
-            if 'Hours' in this:
+            if 'Hours' and 'Hours' and 'Hours' in this:
                 break
         return response
         
