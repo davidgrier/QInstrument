@@ -81,7 +81,7 @@ class Opus(SerialInstrument):
         
     def power(self, value):
         '''Sets power (mW)'''
-        self.send(f'POWER={value}')
+        self.expect(f'POWER={value}', '')
         
     def get_current(self):
         return self.handshake('CURRENT?')
