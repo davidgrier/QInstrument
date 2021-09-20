@@ -70,8 +70,10 @@ class Opus(SerialInstrument):
     def status(self, value):
         if value == disable:
             self.send('OFF')
+            self._status = False
         if value == enable:
             self.send('ON')
+            self._status = True
         else:
             return
        
