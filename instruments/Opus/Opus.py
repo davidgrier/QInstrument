@@ -36,7 +36,6 @@ class Opus(SerialInstrument):
                     eol='\r')
     def __init__(self, portName=None, **kwargs):
         super().__init__(portName, **self.settings, **kwargs)
-        self._status = False
 
     def identify(self):
         return 'MPC-D-1.0.07A' in self.handshake('VERSION?')
@@ -54,12 +53,6 @@ class Opus(SerialInstrument):
     
     def keyswitch(self):
         return self.handshake('STATUS?')
-    
-    def get_status(self):
-        if self._status == False:
-            return 'Off'
-        if self._status == True:
-            return 'On'
         
     def get_status(self):
         if self.handshake('POWER?') == '0000.0mW':
@@ -70,10 +63,8 @@ class Opus(SerialInstrument):
     def status(self, value):
         if value == disable:
             self.send('OFF')
-            self._status = False
         if value == enable:
             self.send('ON')
-            self._status = True
         else:
             return
        
