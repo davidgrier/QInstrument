@@ -81,7 +81,7 @@ class Opus(SerialInstrument):
         
     def current(self, value):
         '''Sets current as percentage of maximum'''
-        self.send(f'CURRENT={value}')
+        self.expect(f'CURRENT={value}', '')
         
     #@pyqtProperty(float)
     #def startPower(self)
