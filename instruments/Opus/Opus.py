@@ -60,7 +60,7 @@ class Opus(SerialInstrument):
         else:
             return 'On'
     
-    def status(self, 'value'):
+    def status(self, value):
         if value == 'disable':
             self.expect('OFF', '')
         if value == 'enable':
