@@ -1,2 +1,2 @@
 # QInstrument
-PyQt-compatible framework for scientific instrument control
+PyQt-compatible framework for controlling scientific instruments
