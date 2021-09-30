@@ -135,9 +135,10 @@ class DS345(SerialInstrument):
                     flowControl=SerialInstrument.NoFlowControl,
                     eol='\n')
 
-    def Property(pstr, dtype=float):      
+    def Property(pstr, dtype=float):
         def getter(self):
             return self.get_value(f'{pstr}?', dtype=dtype)
+
         def setter(self, value):
             value = int(value) if (dtype == bool) else dtype(value)
             self.send(f'{pstr}{value}')
@@ -192,7 +193,7 @@ class DS345(SerialInstrument):
     def mute(self, value):
         if value == self._muted:
             return
-        if value == True:
+        if value:
             self._saved_amplitude = self.amplitude
             self.amplitude = 0.
             self._muted = True
@@ -202,7 +203,7 @@ class DS345(SerialInstrument):
 
     def trigger(self):
         '''Trigger sweep or burst
-        
+
         Note: Effective if trigger_source=0 (single)
         '''
         self.send('*TRG')
@@ -212,7 +213,7 @@ class DS345(SerialInstrument):
 
     def set_sweep_span(self):
         self.send('SPMK')
-    
+
     def load_waveform(self, waveform):
         '''Load arbitrary waveform
 
@@ -222,25 +223,24 @@ class DS345(SerialInstrument):
         '''
         signal = np.round(np.clip(waveform, -2047, 2047)).astype('>i2')
         checksum = (np.sum(signal) & 0xFFFF).astype('>i2')
-        self.send('LDWF?0,{}'.format(len(signal)))
-        res = self.read_until()
+        self.send(f'LDWF?0,{len(signal)}')
+        self.read_until()
         self.send(signal.tobytes())
         self.send(checksum.tobytes())
 
     def amplitude_modulation(self, waveform):
-       '''Load arbitrary amplitude modulation
+        '''Load arbitrary amplitude modulation
 
-       Range: -1 (full off) to +1 (full on)
-       Maximum length: 10000 points
-       '''
-       signal = np.round(32767.*waveform).astype('>i2')
-       checksum = (np.sum(signal) & 0xFFFF).astype('>i2').tobytes()
-       npts = len(signal)
-       self.modulation = False
-       self.modulation_type = 2
-       self.modulation_waveform = 5
-       self.send(f'AMOD?{npts}')
-       res = self.read_until()
-       self.send(signal.tobytes())
-       self.send(checksum)
-       self.modulation = True
+        Range: -1 (full off) to +1 (full on)
+        Maximum length: 10000 points
+        '''
+        signal = np.round(32767.*waveform).astype('>i2')
+        checksum = (np.sum(signal) & 0xFFFF).astype('>i2').tobytes()
+        self.modulation = False
+        self.modulation_type = 2
+        self.modulation_waveform = 5
+        self.send(f'AMOD?{len(signal)}')
+        self.read_until()
+        self.send(signal.tobytes())
+        self.send(checksum)
+        self.modulation = True
