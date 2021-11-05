@@ -5,7 +5,7 @@ from PyQt5.QtCore import pyqtSlot
 
 
 
-class QOpusWidget(QWidget):
+class QOpusWidget(QInstrumentInterface):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args,
