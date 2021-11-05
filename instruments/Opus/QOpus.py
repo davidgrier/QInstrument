@@ -40,8 +40,9 @@ class QOpusWidget(QInstrumentInterface):
         self.ui.PowerDial.setValue(int(value))
 
 def main():
-    from PyQt5.QtWidgets import QApplication
     import sys
+    from PyQt5.QtWidgets import QApplication
+
 
     app = QApplication(sys.argv)
     widget = QOpusWidget()
