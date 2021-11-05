@@ -10,7 +10,7 @@ class QOpusWidget(QWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args,
                          uiFile='OpusWidget.ui',
-                         deviceClass=Opus
+                         deviceClass=Opus,
                          **kwargs)
         self.connectSignals()
 
