@@ -17,7 +17,7 @@ class QOpusWidget(QInstrumentInterface):
                          uiFile='OpusWidget.ui',
                          deviceClass=Opus,
                          **kwargs)
-	self.interval = interval or 200
+        self.interval = interval or 200
         self.connectSignals()
 
     def connectSignals(self):
