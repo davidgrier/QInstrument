@@ -34,6 +34,9 @@ class Opus(SerialInstrument):
                     parity=SerialInstrument.NoParity,
                     flowControl=SerialInstrument.NoFlowControl,
                     eol='\r')
+    
+    powerChanged = pyqtSignal(object)
+    
     def __init__(self, portName=None, **kwargs):
         super().__init__(portName, **self.settings, **kwargs)
 
@@ -69,10 +72,12 @@ class Opus(SerialInstrument):
             return
        
             
-    def get_power(self):
-        return self.handshake('POWER?')
+    def power(self):
+        power = self.handshake('POWER?')
+        self.powerChanged.emit(power)
+        return power
         
-    def power(self, value):
+    def set_power(self, value):
         '''Sets power (mW)'''
         self.expect(f'POWER={value}', '')
         
