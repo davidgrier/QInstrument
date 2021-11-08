@@ -81,10 +81,10 @@ class Opus(SerialInstrument):
         '''Sets power (mW)'''
         self.expect(f'POWER={value}', '')
         
-    def get_current(self):
+    def current(self):
         return self.handshake('CURRENT?')
         
-    def current(self, value):
+    def set_current(self, value):
         '''Sets current as percentage of maximum'''
         self.expect(f'CURRENT={value}', '')
         
@@ -99,13 +99,13 @@ class Opus(SerialInstrument):
         #self.send('STPOW={VALUE}')
         
             
-    def get_lastemp(self):
+    def lastemp(self):
         return self.handshake('LASTEMP?')
         
-    def get_psutemp(self):
+    def psutemp(self):
         return self.handshake('PSUTEMP?')
         
-    def get_timers(self):
+    def timers(self):
         '''Get the timers of the laser and PSU'''
         return self._read_timers('TIMERS?')
     
