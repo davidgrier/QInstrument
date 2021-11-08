@@ -1,8 +1,6 @@
 from QInstrument.lib import QInstrumentInterface
 from QInstrument.instruments.Opus.Opus import Opus
-from PyQt5.QtWidgets import QWidget
 from PyQt5.QtCore import (pyqtSlot, QTimer)
-import numpy as np
 import logging
 
 logging.basicConfig()
