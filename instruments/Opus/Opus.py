@@ -71,7 +71,7 @@ class Opus(SerialInstrument):
         else:
             return
        
-            
+    @pyqtSlot()       
     def power(self):
         power = self.handshake('POWER?')
         self.powerChanged.emit(power)
