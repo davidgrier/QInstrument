@@ -46,8 +46,8 @@ class QOpusWidget(QInstrumentInterface):
         self.ui.Power.setValue(value)
 	
     @pyqtSlot(str)
-    def updateActualPower(self, value):
-        p = float(value)
+    def updateActualPower(self, data):
+        p = float(data.strip())
         self.ui.ActualPower.setValue(p)
 
     @pyqtSlot()
