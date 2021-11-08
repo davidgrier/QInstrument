@@ -1,17 +1,23 @@
 from QInstrument.lib import QInstrumentInterface
 from QInstrument.instruments.Opus.Opus import Opus
 from PyQt5.QtWidgets import QWidget
-from PyQt5.QtCore import pyqtSlot
+from PyQt5.QtCore import (pyqtSlot, QTimer)
+import numpy as np
+import logging
 
+logging.basicConfig()
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 
 class QOpusWidget(QInstrumentInterface):
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, interval=None, **kwargs):
         super().__init__(*args,
                          uiFile='OpusWidget.ui',
                          deviceClass=Opus,
                          **kwargs)
+	self.interval = interval or 200
         self.connectSignals()
 
     def connectSignals(self):
