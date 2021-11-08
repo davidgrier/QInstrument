@@ -21,7 +21,7 @@ class QOpusWidget(QInstrumentInterface):
         self.connectSignals()
 
     def connectSignals(self):
-	self.timer.timeout.connect(self.poll)
+        self.timer.timeout.connect(self.poll)
         self.ui.PowerDial.valueChanged.connect(self.updatePower)
         self.ui.Power.editingFinished.connect(self.updatePowerDial)
         self.ui.PowerDial.valueChanged.connect(self.uncheck)
@@ -29,16 +29,16 @@ class QOpusWidget(QInstrumentInterface):
         #self.device.get_power.connect(self.updateActualPower)
 	
     def startPolling(self):
-	if self.isEnabled():
+        if self.isEnabled():
 	    self.timer.start(self.interval)
-	return self
+        return self
 
     def stopPolling(self):
-	self.timer.stop()
+        self.timer.stop()
 	
     @pyqtSlot()
     def poll(self):
-	self.device.send('P')
+        self.device.send('P')
 	
 
     @pyqtSlot(int)
