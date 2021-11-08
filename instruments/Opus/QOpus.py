@@ -51,7 +51,7 @@ class QOpusWidget(QInstrumentInterface):
         try:
             p = float(data)
         except ValueError:
-	    return
+            return
         self.ui.ActualPower.display(p)
 
     @pyqtSlot()
