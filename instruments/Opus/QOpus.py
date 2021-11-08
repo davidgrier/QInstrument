@@ -30,7 +30,7 @@ class QOpusWidget(QInstrumentInterface):
 	
     def startPolling(self):
         if self.isEnabled():
-	    self.timer.start(self.interval)
+            self.timer.start(self.interval)
         return self
 
     def stopPolling(self):
