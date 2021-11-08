@@ -18,7 +18,7 @@ class QOpusWidget(QInstrumentInterface):
                          deviceClass=Opus,
                          **kwargs)
         self.interval = interval or 200
-	self.timer = QTimer()
+        self.timer = QTimer()
         self.connectSignals()
 
     def connectSignals(self):
