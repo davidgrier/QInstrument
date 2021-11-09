@@ -40,6 +40,7 @@ class QOpusWidget(QInstrumentInterface):
     def poll(self):
         self.device.send('POWER?')
         self.device.send('CURRENT?')
+        self.device.sent('STATUS?')
 	
     @pyqtSlot(int)
     def updatePower(self, value):
@@ -55,6 +56,10 @@ class QOpusWidget(QInstrumentInterface):
             numeric_filter = filter(str.isdigit, data)
             p = float((int("".join(numeric_filter))/10))
             self.ui.CurrentBox.setValue(p)
+        if 'ENABLED' in data:
+            self.EnableSwitch.setChecked(True)
+        if 'DISABLED' in data:
+            self.EnableSwitch.setChecked(False)
 
     @pyqtSlot()
     def check(self):
