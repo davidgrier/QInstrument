@@ -38,7 +38,8 @@ class QOpusWidget(QInstrumentInterface):
 	
     @pyqtSlot()
     def poll(self):
-        self.device.power()
+        self.device.send('POWER?')
+        self.device.send('CURRENT?')
 	
     @pyqtSlot(int)
     def updatePower(self, value):
