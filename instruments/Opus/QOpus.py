@@ -51,7 +51,7 @@ class QOpusWidget(QInstrumentInterface):
             numeric_filter = filter(str.isdigit, data)
             p = float((int("".join(numeric_filter))/10))
             self.ui.ActualPower.setValue(p)
-        if '%' in data:
+        else:
             numeric_filter = filter(str.isdigit, data)
             p = float((int("".join(numeric_filter))/10))
             self.ui.CurrentBox.setValue(p)
