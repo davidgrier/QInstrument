@@ -50,10 +50,10 @@ class QOpusWidget(QInstrumentInterface):
     def updateActualPower(self, data):
         if 'mW' in data:
             numeric_filter = filter(str.isdigit, data)
-                if numeric_filter == 0000:
-                    self.ui.EnableSwitch.setChecked(False)
-                else:
-                    self.ui.EnableSwitch.setChecked(Talse)
+            if numeric_filter == 0000:
+                self.ui.EnableSwitch.setChecked(False)
+            else:
+                self.ui.EnableSwitch.setChecked(Talse)
             p = float((int("".join(numeric_filter))/10))
             self.ui.ActualPower.setValue(p)
         if '%' in data:
