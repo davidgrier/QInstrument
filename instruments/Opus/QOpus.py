@@ -51,6 +51,10 @@ class QOpusWidget(QInstrumentInterface):
             numeric_filter = filter(str.isdigit, data)
             p = float((int("".join(numeric_filter))/10))
             self.ui.ActualPower.setValue(p)
+        if '%' in data:
+            numeric_filter = filter(str.isdigit, data)
+            p = float((int("".join(numeric_filter))/10))
+            self.ui.CurrentBox.setValue(p)
 
     @pyqtSlot()
     def check(self):
