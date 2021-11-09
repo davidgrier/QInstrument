@@ -53,7 +53,7 @@ class QOpusWidget(QInstrumentInterface):
             if numeric_filter == 0000:
                 self.ui.EnableSwitch.setChecked(False)
             else:
-                self.ui.EnableSwitch.setChecked(Talse)
+                self.ui.EnableSwitch.setChecked(False)
             p = float((int("".join(numeric_filter))/10))
             self.ui.ActualPower.setValue(p)
         if '%' in data:
