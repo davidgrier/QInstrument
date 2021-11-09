@@ -19,8 +19,6 @@ class QOpusWidget(QInstrumentInterface):
         self.timer = QTimer()
         self.connectSignals()
         self.startPolling()
-        a = self.ui.Power.value()
-        print(a)
 
     def connectSignals(self):
         self.timer.timeout.connect(self.poll)
@@ -55,6 +53,8 @@ class QOpusWidget(QInstrumentInterface):
     @pyqtSlot()
     def check(self):
         self.ui.sentCheck.setChecked(True)
+        a = self.ui.Power.value()
+        self.device.set_power(a)
 
     @pyqtSlot()
     def uncheck(self):
