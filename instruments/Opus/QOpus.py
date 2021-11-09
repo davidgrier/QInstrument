@@ -18,6 +18,7 @@ class QOpusWidget(QInstrumentInterface):
         self.interval = interval or 200
         self.timer = QTimer()
         self.connectSignals()
+        self.startPolling()
 
     def connectSignals(self):
         self.timer.timeout.connect(self.poll)
@@ -26,8 +27,6 @@ class QOpusWidget(QInstrumentInterface):
         self.ui.PowerDial.valueChanged.connect(self.uncheck)
         self.ui.SendPower.clicked.connect(self.check)
         self.device.dataReady.connect(self.updateActualPower)
-        self.ui.ActualPower.setValue(5)
-        self.startPolling
 	
     def startPolling(self):
         if self.isEnabled():
