@@ -52,8 +52,8 @@ class QOpusWidget(QInstrumentInterface):
             numeric_filter = filter(str.isdigit, data)
             if numeric_filter == 0000:
                 self.ui.EnableSwitch.setChecked(False)
-            else:
-                self.ui.EnableSwitch.setChecked(False)
+            if numeric_filter != 0000:
+                self.ui.EnableSwitch.setChecked(True)
             p = float((int("".join(numeric_filter))/10))
             self.ui.ActualPower.setValue(p)
         if '%' in data:
