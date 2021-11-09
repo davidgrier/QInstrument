@@ -26,6 +26,7 @@ class QOpusWidget(QInstrumentInterface):
         self.ui.PowerDial.valueChanged.connect(self.uncheck)
         self.ui.SendPower.clicked.connect(self.check)
         self.device.dataReady.connect(self.updateActualPower)
+        self.ui.ActualPower.setValue(5)
         self.startPolling
 	
     def startPolling(self):
