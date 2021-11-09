@@ -50,6 +50,10 @@ class QOpusWidget(QInstrumentInterface):
     def updateActualPower(self, data):
         if 'mW' in data:
             numeric_filter = filter(str.isdigit, data)
+                if numeric_filter == 0000:
+                    self.ui.EnableSwitch.setChecked(False)
+                else:
+                    self.ui.EnableSwitch.setChecked(Talse)
             p = float((int("".join(numeric_filter))/10))
             self.ui.ActualPower.setValue(p)
         if '%' in data:
@@ -57,9 +61,9 @@ class QOpusWidget(QInstrumentInterface):
             p = float((int("".join(numeric_filter))/10))
             self.ui.CurrentBox.setValue(p)
         if 'ENABLED' in data:
-            self.ui.EnableSwitch.setChecked(True)
+            self.ui.Keyswitch.setChecked(True)
         if 'DISABLED' in data:
-            self.ui.EnableSwitch.setChecked(False)
+            self.ui.Keyswitch.setChecked(False)
 
     @pyqtSlot()
     def check(self):
