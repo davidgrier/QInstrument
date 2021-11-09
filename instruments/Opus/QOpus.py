@@ -19,7 +19,7 @@ class QOpusWidget(QInstrumentInterface):
         self.timer = QTimer()
         self.connectSignals()
         self.startPolling()
-	print(self.device.handshake('CURRENT?'))
+        print(self.device.handshake('CURRENT?'))
 
     def connectSignals(self):
         self.timer.timeout.connect(self.poll)
