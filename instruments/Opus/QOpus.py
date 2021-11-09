@@ -19,6 +19,8 @@ class QOpusWidget(QInstrumentInterface):
         self.timer = QTimer()
         self.connectSignals()
         self.startPolling()
+        a = self.ui.Power.value
+        print(a)
 
     def connectSignals(self):
         self.timer.timeout.connect(self.poll)
