@@ -26,7 +26,8 @@ class QOpusWidget(QInstrumentInterface):
         self.ui.Power.editingFinished.connect(self.updatePowerDial)
         self.ui.PowerDial.valueChanged.connect(self.uncheck)
         self.ui.SendPower.clicked.connect(self.check)
-        self.device.dataReady.connect(self.updateActualPower)
+        self.device.dataReady.connect(self.updateValues)
+        self.ui.Disable.clicked.connect(self.disable)
 	
     def startPolling(self):
         if self.isEnabled():
@@ -47,7 +48,7 @@ class QOpusWidget(QInstrumentInterface):
         self.ui.Power.setValue(value)
 	
     @pyqtSlot(str)
-    def updateActualPower(self, data):
+    def updateValues(self, data):
 
         if 'mW' in data:
             numeric_filter = filter(str.isdigit, data)
@@ -80,6 +81,9 @@ class QOpusWidget(QInstrumentInterface):
     def updatePowerDial(self):
         value = self.ui.Power.value()
         self.ui.PowerDial.setValue(int(value))
+	
+    def disable(self):
+        self.device.send('OFF')
 
 def main():
     import sys
