@@ -86,10 +86,10 @@ class Opus(SerialInstrument):
         numeric_filter = filter(str.isdigit, power)
         p = float((int("".join(numeric_filter))/10))
         return p
-        #if numeric_filter == '00000':
-                #return 'OFF'
-        #if numeric_filter != '00000':
-                #return 'ON'
+        if p == '0.0':
+                return 'OFF'
+        if p != '0.0':
+                return 'ON'
         
     def current(self):
         return self.handshake('CURRENT?')
