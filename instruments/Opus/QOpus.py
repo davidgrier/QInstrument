@@ -49,14 +49,13 @@ class QOpusWidget(QInstrumentInterface):
     @pyqtSlot(str)
     def updateActualPower(self, data):
 
-
         if 'mW' in data:
             numeric_filter = filter(str.isdigit, data)
-            if numeric_filter == 00000:
+            p = float((int("".join(numeric_filter))/10))	
+            if p == 0.0:
                 self.ui.EnableSwitch.setChecked(False)
-            if numeric_filter != 00000:
+            if p != 0.0:
                 self.ui.EnableSwitch.setChecked(True)
-            p = float((int("".join(numeric_filter))/10))
             self.ui.ActualPower.setValue(p)
         if '%' in data:
             numeric_filter = filter(str.isdigit, data)
