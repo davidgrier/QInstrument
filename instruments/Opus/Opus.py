@@ -35,8 +35,6 @@ class Opus(SerialInstrument):
                     flowControl=SerialInstrument.NoFlowControl,
                     eol='\r')
     
-    powerChanged = pyqtSignal(object)
-    
     def __init__(self, portName=None, **kwargs):
         super().__init__(portName, **self.settings, **kwargs)
 
@@ -74,7 +72,6 @@ class Opus(SerialInstrument):
     @pyqtSlot()       
     def power(self):
         power = self.handshake('POWER?')
-        self.powerChanged.emit(power)
         return power
         
     def set_power(self, value):
@@ -87,18 +84,7 @@ class Opus(SerialInstrument):
     def set_current(self, value):
         '''Sets current as percentage of maximum'''
         self.expect(f'CURRENT={value}', '')
-        
-    #@pyqtProperty(float)
-    #def startPower(self)
-        #'''Get default start-up power (mW)'''
-        #return self.handshake('STPOW?')
-    
-    #@startPower.setter
-    #def startPower(self, value)
-        #'''Set default start-up power (mW)'''
-        #self.send('STPOW={VALUE}')
-        
-            
+                   
     def lastemp(self):
         return self.handshake('LASTEMP?')
         
