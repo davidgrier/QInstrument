@@ -84,7 +84,8 @@ class Opus(SerialInstrument):
     def test(self):
         power = self.handshake('POWER?')
         numeric_filter = filter(str.isdigit, power)
-        return numeric_filter
+        p = float((int("".join(numeric_filter))/10))
+        return p
         #if numeric_filter == '00000':
                 #return 'OFF'
         #if numeric_filter != '00000':
