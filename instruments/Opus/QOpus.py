@@ -62,10 +62,6 @@ class QOpusWidget(QInstrumentInterface):
             numeric_filter = filter(str.isdigit, data)
             p = float((int("".join(numeric_filter))/10))
             self.ui.CurrentBox.setValue(p)
-        if 'ENABLED' in data:
-            self.ui.Keyswitch.setChecked(True)
-        if 'DISABLED' in data:
-            self.ui.Keyswitch.setChecked(False)
 
     @pyqtSlot()
     def check(self):
