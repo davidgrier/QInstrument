@@ -20,7 +20,7 @@ class QInstrumentInterface(QWidget):
 
     While QInstrumentInterface() can be used to create a hardware-enabled
     GUI directly, a better choice is to subclass QInstrumentInterface,
-    providing both the name of the UI file and the class for the 
+    providing both the name of the UI file and the class for the
     hardware implementation.
 
     ...
@@ -125,14 +125,16 @@ class QInstrumentInterface(QWidget):
         return None
 
     def set(self, key, value=None):
-        '''Set value of named property
+        '''Set value of named widget
 
-        This method explicitly sets the value of the named
-        widget in the UI and relies on the widget to emit a
+        This method sets the value of the named widget
+        in the UI and relies on the widget to emit a
         signal that will set the corresponding device value.
 
-        If no value is provided, the method set the widget
-        to the value obtained from the device.
+        If no value is provided, the method gets the current
+        value from the device and sets the widget to that value.
+        The widget's signal is blocked during this process
+        to avoid a loop.
 
         Arguments
         ---------
@@ -141,10 +143,6 @@ class QInstrumentInterface(QWidget):
         value: bool | int | float | str [optional]
             Value of property
             Default: update widget value with device value
-
-        Note
-        ----
-
         '''
         if hasattr(self.ui, key):
             widget = getattr(self.ui, key)
@@ -174,6 +172,14 @@ class QInstrumentInterface(QWidget):
         return ui
 
     def _identifyProperties(self):
+        '''Identify properties and methods used to control device
+
+        This method seeks out UI widgets that have the same
+        name as device properties. Properties of the type
+        pyqtProperty are stored in self._properties. Those
+        of types.FunctionType are stored in self._methods.
+        '''
+
         uiprops = vars(self.ui).keys()
         self._properties = []
         self._methods = []
@@ -186,6 +192,7 @@ class QInstrumentInterface(QWidget):
                 self._methods.append(k)
 
     def _syncProperties(self):
+        '''Set UI widgets to device values'''
         for prop in self.properties:
             self.set(prop)
 
