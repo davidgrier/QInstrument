@@ -34,6 +34,7 @@ class Opus(SerialInstrument):
                     parity=SerialInstrument.NoParity,
                     flowControl=SerialInstrument.NoFlowControl,
                     eol='\r')
+    
     def __init__(self, portName=None, **kwargs):
         super().__init__(portName, **self.settings, **kwargs)
 
@@ -68,39 +69,29 @@ class Opus(SerialInstrument):
         else:
             return
        
-            
-    def get_power(self):
-        return self.handshake('POWER?')
+    @pyqtSlot()       
+    def power(self):
+        power = self.handshake('POWER?')
+        return power
         
-    def power(self, value):
+    def set_power(self, value):
         '''Sets power (mW)'''
         self.expect(f'POWER={value}', '')
         
-    def get_current(self):
+    def current(self):
         return self.handshake('CURRENT?')
         
-    def current(self, value):
+    def set_current(self, value):
         '''Sets current as percentage of maximum'''
         self.expect(f'CURRENT={value}', '')
-        
-    #@pyqtProperty(float)
-    #def startPower(self)
-        #'''Get default start-up power (mW)'''
-        #return self.handshake('STPOW?')
-    
-    #@startPower.setter
-    #def startPower(self, value)
-        #'''Set default start-up power (mW)'''
-        #self.send('STPOW={VALUE}')
-        
-            
-    def get_lastemp(self):
+                   
+    def lastemp(self):
         return self.handshake('LASTEMP?')
         
-    def get_psutemp(self):
+    def psutemp(self):
         return self.handshake('PSUTEMP?')
         
-    def get_timers(self):
+    def timers(self):
         '''Get the timers of the laser and PSU'''
         return self._read_timers('TIMERS?')
     
