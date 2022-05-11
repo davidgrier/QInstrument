@@ -169,6 +169,27 @@ class SerialInstrument(QSerialPort):
             return buffer
         return buffer.decode('utf-8').strip()
 
+    def readn(self, n=1):
+        '''Receive n bytes of data from the instrument
+
+        Keywords
+        --------
+        n: int
+            Number of bytes to receive
+
+        Returns
+        -------
+        response: bytes
+            Data received from the instrument
+        '''
+        buffer = b''
+        while self.bytesAvailable() or self.waitForReadyRead(self.timeout):
+            char = bytes(self.read(1))
+            buffer += char
+            if len(buffer) >= n:
+                break
+        return buffer
+
     @blocking
     def handshake(self, query, raw=False):
         '''Send command to the instrument and receive its response
