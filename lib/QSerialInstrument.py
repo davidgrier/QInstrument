@@ -7,7 +7,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.ERROR)
 
 
-class SerialInstrument(QSerialPort):
+class QSerialInstrument(QSerialPort):
     '''Base class for instruments connected to serial ports
 
     ........

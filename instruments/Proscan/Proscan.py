@@ -1,12 +1,12 @@
 from PyQt5.QtCore import (pyqtProperty, pyqtSignal, pyqtSlot)
-from QInstrument.lib import SerialInstrument
+from QInstrument.lib import QSerialInstrument
 import logging
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 
-class Proscan(SerialInstrument):
+class Proscan(QSerialInstrument):
     '''Prior Proscan Microscope Stage Controller
 
     .....
@@ -61,13 +61,13 @@ class Proscan(SerialInstrument):
             self.expect(f'{cmd},{value}', res)
         return pyqtProperty(dtype, getter, setter)
 
-    speed         = Property('SMS')
-    acceleration  = Property('SAS')
-    scurve        = Property('SCS')
-    zstepsize     = Property('C', dtype=float)
-    zspeed        = Property('SMZ')
+    speed = Property('SMS')
+    acceleration = Property('SAS')
+    scurve = Property('SCS')
+    zstepsize = Property('C', dtype=float)
+    zspeed = Property('SMZ')
     zacceleration = Property('SAZ')
-    zscurve       = Property('SCZ')
+    zscurve = Property('SCZ')
 
     def __init__(self, portName=None, **kwargs):
         super().__init__(portName, **self.settings, **kwargs)

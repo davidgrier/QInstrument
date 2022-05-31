@@ -1,9 +1,9 @@
 from PyQt5.QtCore import pyqtProperty
-from QInstrument.lib import SerialInstrument
+from QInstrument.lib import QSerialInstrument
 import numpy as np
 
 
-class DS345(SerialInstrument):
+class DS345(QSerialInstrument):
     '''SRS DS345 Function Generator
 
     .....
@@ -53,7 +53,7 @@ class DS345(SerialInstrument):
         3: ramp
         4: noise
         5: arbitrary waveform
-    
+
     Output Modulation
     -----------------
     modulation: bool
@@ -145,26 +145,26 @@ class DS345(SerialInstrument):
         return pyqtProperty(dtype, getter, setter)
 
     # Function output controls
-    frequency              = Property('FREQ')
-    offset                 = Property('OFFS')
-    phase                  = Property('PHSE')
-    waveform               = Property('FUNC', int)
-    sampling_frequency     = Property('FSMP')
+    frequency = Property('FREQ')
+    offset = Property('OFFS')
+    phase = Property('PHSE')
+    waveform = Property('FUNC', int)
+    sampling_frequency = Property('FSMP')
     # Modulation controls
-    modulation             = Property('MENA', bool)
-    modulation_rate        = Property('RATE')
-    modulation_type        = Property('MTYP', int)
-    modulation_waveform    = Property('MDWF', int)
-    burst_count            = Property('BCNT', int)
-    am_depth               = Property('DPTH', int)
-    fm_span                = Property('FDEV')
-    pm_span                = Property('PDEV')
-    sweep_span             = Property('SPAN')
+    modulation = Property('MENA', bool)
+    modulation_rate = Property('RATE')
+    modulation_type = Property('MTYP', int)
+    modulation_waveform = Property('MDWF', int)
+    burst_count = Property('BCNT', int)
+    am_depth = Property('DPTH', int)
+    fm_span = Property('FDEV')
+    pm_span = Property('PDEV')
+    sweep_span = Property('SPAN')
     sweep_center_frequency = Property('SPCF')
-    sweep_start_frequency  = Property('STFR')
-    sweep_stop_frequency   = Property('SPFR')
-    trigger_rate           = Property('TRAT')
-    trigger_source         = Property('TSRC', int)
+    sweep_start_frequency = Property('STFR')
+    sweep_stop_frequency = Property('SPFR')
+    trigger_rate = Property('TRAT')
+    trigger_source = Property('TSRC', int)
 
     def __init__(self, portName=None, **kwargs):
         super().__init__(portName, **self.settings, **kwargs)

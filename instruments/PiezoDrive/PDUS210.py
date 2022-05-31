@@ -1,4 +1,4 @@
-from QInstrument.lib import SerialInstrument
+from QInstrument.lib import QSerialInstrument
 from PyQt5.QtCore import pyqtProperty
 from struct import unpack
 import logging
@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.WARNING)
 
 
-class PDUS210(SerialInstrument):
+class PDUS210(QSerialInstrument):
     settings = dict(baudRate=SerialInstrument.Baud9600,
                     dataBits=SerialInstrument.Data8,
                     stopBits=SerialInstrument.OneStop,
@@ -59,34 +59,34 @@ class PDUS210(SerialInstrument):
         return pyqtProperty(dtype, getter, fset=None)
 
     # Setpoints
-    frequency     = Property('FREQ', dtype=float)  # Hz
+    frequency = Property('FREQ', dtype=float)  # Hz
     targetVoltage = Property('VOLT')    # Volts pp
-    maxFrequency  = Property('MAXFREQ') 
-    minFrequency  = Property('MINFREQ')
-    targetPhase   = Property('PHASE')
-    maxLoadPower  = Property('MAXLPOW')
-    targetPower   = Property('TARPOW')
+    maxFrequency = Property('MAXFREQ')
+    minFrequency = Property('MINFREQ')
+    targetPhase = Property('PHASE')
+    maxLoadPower = Property('MAXLPOW')
+    targetPower = Property('TARPOW')
     targetCurrent = Property('CURRENT')
 
     # Gain properties
-    phaseGain     = GainProperty('PHASEGAIN', 'GAINPHASE')
-    powerGain     = GainProperty('POWERGAIN', 'GAINPOWER')
-    currentGain   = GainProperty('CURRENTGAIN','GAINCURRENT')
+    phaseGain = GainProperty('PHASEGAIN', 'GAINPHASE')
+    powerGain = GainProperty('POWERGAIN', 'GAINPOWER')
+    currentGain = GainProperty('CURRENTGAIN', 'GAINCURRENT')
 
     # Toggleable Settings
-    phaseTracking     = Toggle('PHASE')
-    powerTracking     = Toggle('POWER')
-    currentTracking   = Toggle('CURRENT')
+    phaseTracking = Toggle('PHASE')
+    powerTracking = Toggle('POWER')
+    currentTracking = Toggle('CURRENT')
     frequencyWrapping = Toggle('WRAP')
-    enabled           = Toggle('ENABLE')
+    enabled = Toggle('ENABLE')
 
     # Measurable Values
-    phase          = Measured('PHASE')
-    impedance      = Measured('IMP')
-    loadPower      = Measured('LPOW')
+    phase = Measured('PHASE')
+    impedance = Measured('IMP')
+    loadPower = Measured('LPOW')
     amplifierPower = Measured('APOW')
-    current        = Measured('CURRENT')
-    temperature    = Measured('TEMP', dtype=float) # Celsius
+    current = Measured('CURRENT')
+    temperature = Measured('TEMP', dtype=float)  # Celsius
 
     def __init__(self, portName=None, **kwargs):
         super().__init__(portName, **self.settings, **kwargs)

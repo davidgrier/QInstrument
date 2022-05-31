@@ -1,8 +1,8 @@
 from PyQt5.QtCore import pyqtProperty
-from QInstrument.lib import SerialInstrument
+from QInstrument.lib import QSerialInstrument
 
 
-class SR830(SerialInstrument):
+class SR830(QSerialInstrument):
     '''SRS SR830 Lockin Amplifier
 
     .....
@@ -42,7 +42,7 @@ class SR830(SerialInstrument):
         1: TTL rising edge
         2: TTL falling edge
         Must be set to either 1 or 2 when frequency < 1 Hz.
-    
+
     Input and Filter
     ----------------
     dc_coupling: bool
@@ -117,9 +117,10 @@ class SR830(SerialInstrument):
                     flowControl=SerialInstrument.NoFlowControl,
                     eol='\n')
 
-    def Property(pstr, dtype=int):      
+    def Property(pstr, dtype=int):
         def getter(self):
             return self.get_value(f'{pstr}?', dtype=dtype)
+
         def setter(self, value):
             if dtype == bool:
                 value = int(value)
@@ -127,23 +128,23 @@ class SR830(SerialInstrument):
         return pyqtProperty(dtype, getter, setter)
 
     # Reference and Phase
-    amplitude           = Property('SLVL', float)
-    frequency           = Property('FREQ', float)
-    harmonic            = Property('HARM')
-    internal_reference  = Property('FMOD', bool)
-    phase               = Property('PHAS', float)
-    reference_trigger   = Property('RSLP')
+    amplitude = Property('SLVL', float)
+    frequency = Property('FREQ', float)
+    harmonic = Property('HARM')
+    internal_reference = Property('FMOD', bool)
+    phase = Property('PHAS', float)
+    reference_trigger = Property('RSLP')
     # Input and Filter
-    dc_coupling         = Property('ICPL', bool)
+    dc_coupling = Property('ICPL', bool)
     input_configuration = Property('ISRC')
-    line_filter         = Property('ILIN')    
-    shield_grounding    = Property('IGND', bool)
+    line_filter = Property('ILIN')
+    shield_grounding = Property('IGND', bool)
     # Gain and Time Constant
-    dynamic_reserve     = Property('RMOD')
-    low_pass_slope      = Property('OFSL')
-    sensitivity         = Property('SENS')
-    synchronous_filter  = Property('SYNC', bool)
-    time_contant        = Property('OFLT')
+    dynamic_reserve = Property('RMOD')
+    low_pass_slope = Property('OFSL')
+    sensitivity = Property('SENS')
+    synchronous_filter = Property('SYNC', bool)
+    time_contant = Property('OFLT')
 
     def __init__(self, portName=None, **kwargs):
         super().__init__(portName, **self.settings, **kwargs)

@@ -1,12 +1,13 @@
 from PyQt5.QtCore import (pyqtProperty, pyqtSignal, pyqtSlot)
-from QInstrument.lib import SerialInstrument
+from QInstrument.lib import QSerialInstrument
 import numpy as np
 import logging
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
-class Opus(SerialInstrument):
+
+class Opus(QSerialInstrument):
     '''Quantum Opus 570nm Laser
 
     .....
@@ -34,13 +35,13 @@ class Opus(SerialInstrument):
                     parity=SerialInstrument.NoParity,
                     flowControl=SerialInstrument.NoFlowControl,
                     eol='\r')
-    
+
     def __init__(self, portName=None, **kwargs):
         super().__init__(portName, **self.settings, **kwargs)
 
     def identify(self):
         return 'MPC-D-1.0.07A' in self.handshake('VERSION?')
-    
+
     def Property(cmd, dtype=int, res='0'):
         def getter(self):
             logger.debug('Getting')
@@ -51,16 +52,16 @@ class Opus(SerialInstrument):
             logger.debug(f'Setting {value}')
             self.expect(f'{cmd},{value}', res)
         return pyqtProperty(dtype, getter, setter)
-    
+
     def keyswitch(self):
         return self.handshake('STATUS?')
-        
+
     def get_status(self):
         if self.handshake('POWER?') == '0000.0mW':
             return 'Off'
         else:
             return 'On'
-    
+
     def status(self, value):
         if value == 'disable':
             self.expect('OFF', '')
@@ -68,33 +69,33 @@ class Opus(SerialInstrument):
             self.expect('ON', '')
         else:
             return
-       
-    @pyqtSlot()       
+
+    @pyqtSlot()
     def power(self):
         power = self.handshake('POWER?')
         return power
-        
+
     def set_power(self, value):
         '''Sets power (mW)'''
         self.expect(f'POWER={value}', '')
-        
+
     def current(self):
         return self.handshake('CURRENT?')
-        
+
     def set_current(self, value):
         '''Sets current as percentage of maximum'''
         self.expect(f'CURRENT={value}', '')
-                   
+
     def lastemp(self):
         return self.handshake('LASTEMP?')
-        
+
     def psutemp(self):
         return self.handshake('PSUTEMP?')
-        
+
     def timers(self):
         '''Get the timers of the laser and PSU'''
         return self._read_timers('TIMERS?')
-    
+
     @SerialInstrument.blocking
     def _read_timers(self, query):
         self.send(query)
