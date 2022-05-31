@@ -3,7 +3,7 @@ from QInstrument.instruments.PiezoDrive.PDUS210 import PDUS210
 from PyQt5.QtCore import (pyqtProperty, pyqtSlot, QTimer)
 
 
-class QPDS210(QInstrumentInterface):
+class QPDUS210(QInstrumentInterface):
     '''PiezoDrive 210 Ultrasonic Amplifier
     '''
 

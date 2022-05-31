@@ -1,6 +1,5 @@
-from PyQt5.QtCore import (pyqtProperty, pyqtSignal, pyqtSlot)
+from PyQt5.QtCore import (pyqtProperty, pyqtSlot)
 from QInstrument.lib import QSerialInstrument
-import numpy as np
 import logging
 
 logger = logging.getLogger(__name__)
@@ -29,11 +28,11 @@ class Opus(QSerialInstrument):
          Set Power [mW]
     '''
 
-    settings = dict(baudRate=SerialInstrument.Baud19200,
-                    dataBits=SerialInstrument.Data8,
-                    stopBits=SerialInstrument.OneStop,
-                    parity=SerialInstrument.NoParity,
-                    flowControl=SerialInstrument.NoFlowControl,
+    settings = dict(baudRate=QSerialInstrument.Baud19200,
+                    dataBits=QSerialInstrument.Data8,
+                    stopBits=QSerialInstrument.OneStop,
+                    parity=QSerialInstrument.NoParity,
+                    flowControl=QSerialInstrument.NoFlowControl,
                     eol='\r')
 
     def __init__(self, portName=None, **kwargs):

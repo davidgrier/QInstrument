@@ -41,11 +41,11 @@ class Proscan(QSerialInstrument):
 
     '''
 
-    settings = dict(baudRate=SerialInstrument.Baud9600,
-                    dataBits=SerialInstrument.Data8,
-                    stopBits=SerialInstrument.OneStop,
-                    parity=SerialInstrument.NoParity,
-                    flowControl=SerialInstrument.NoFlowControl,
+    settings = dict(baudRate=QSerialInstrument.Baud9600,
+                    dataBits=QSerialInstrument.Data8,
+                    stopBits=QSerialInstrument.OneStop,
+                    parity=QSerialInstrument.NoParity,
+                    flowControl=QSerialInstrument.NoFlowControl,
                     eol='\r')
 
     positionChanged = pyqtSignal(object)
@@ -246,7 +246,7 @@ class Proscan(QSerialInstrument):
         '''Description of focus system'''
         return self._read_lines('FOCUS')
 
-    @SerialInstrument.blocking
+    @QSerialInstrument.blocking
     def _read_lines(self, query):
         self.send(query)
         response = []

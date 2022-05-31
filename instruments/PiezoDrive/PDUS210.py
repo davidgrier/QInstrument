@@ -9,11 +9,11 @@ logger.setLevel(logging.WARNING)
 
 
 class PDUS210(QSerialInstrument):
-    settings = dict(baudRate=SerialInstrument.Baud9600,
-                    dataBits=SerialInstrument.Data8,
-                    stopBits=SerialInstrument.OneStop,
-                    parity=SerialInstrument.NoParity,
-                    flowControl=SerialInstrument.NoFlowControl,
+    settings = dict(baudRate=QSerialInstrument.Baud9600,
+                    dataBits=QSerialInstrument.Data8,
+                    stopBits=QSerialInstrument.OneStop,
+                    parity=QSerialInstrument.NoParity,
+                    flowControl=QSerialInstrument.NoFlowControl,
                     timeout=1000.,
                     eol='\r')
 
