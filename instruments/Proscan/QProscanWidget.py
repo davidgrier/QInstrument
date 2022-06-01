@@ -1,5 +1,5 @@
-from QInstrument.lib import QInstrumentInterface
-from QInstrument.instruments.Proscan.Proscan import Proscan
+from QInstrument.lib import QInstrumentWidget
+from QInstrument.instruments.Proscan.QProscan import QProscan
 from PyQt5.QtCore import (pyqtSlot, QTimer)
 import logging
 
@@ -8,14 +8,14 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 
-class QProscan(QInstrumentInterface):
+class QProscanWidget(QInstrumentWidget):
     '''Prior Proscan Microscope Controller
     '''
 
     def __init__(self, *args, interval=None, **kwargs):
         super().__init__(*args,
                          uiFile='ProscanWidget.ui',
-                         deviceClass=Proscan,
+                         deviceClass=QProscan,
                          **kwargs)
         self.ui.joystick.fullscale = 200.  # um/s
         self.interval = interval or 200    # ms

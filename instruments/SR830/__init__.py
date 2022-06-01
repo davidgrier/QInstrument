@@ -1,5 +1,5 @@
-from .SR830 import SR830
 from .QSR830 import QSR830
+from .QSR830Widget import QSR830Widget
 
 
-__all__ = ['SR830', 'QSR830']
+__all__ = ['QSR830', 'QSR830Widget']

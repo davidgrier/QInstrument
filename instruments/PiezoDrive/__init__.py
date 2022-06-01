@@ -1,5 +1,5 @@
-from .PDUS210 import PDUS210
 from .QPDUS210 import QPDUS210
+from .QPDUS210Widget import QPDUS210Widget
 
 
-__all__ = ['PDUS210', 'QPDUS210']
+__all__ = ['QPDUS210', 'QPDUS210Widget']

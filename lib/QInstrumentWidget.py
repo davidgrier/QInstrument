@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.WARNING)
 
 
-class QInstrumentInterface(QWidget):
+class QInstrumentWidget(QWidget):
     '''Glue class to attach a PyQt5 GUI to an instrument interface
 
     A widget in the UI that is intended to control a device property

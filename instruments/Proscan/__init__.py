@@ -1,5 +1,5 @@
-from .Proscan import Proscan
 from .QProscan import QProscan
+from .QProscanWidget import QProscanWidget
 
 
-__all__ = ['Proscan', 'QProscan']
+__all__ = ['QProscan', 'QProscanWidget']

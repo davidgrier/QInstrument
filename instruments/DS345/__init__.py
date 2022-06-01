@@ -1,5 +1,5 @@
-from .DS345 import DS345
 from .QDS345 import QDS345
+from .QDS345Widget import QDS345Widget
 
 
-__all__ = ['DS345', 'QDS345']
+__all__ = ['QDS345', 'QDS345Widget']

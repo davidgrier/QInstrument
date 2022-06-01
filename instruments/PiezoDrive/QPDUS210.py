@@ -1,51 +1,120 @@
-from QInstrument.lib import QInstrumentInterface
-from QInstrument.instruments.PiezoDrive.PDUS210 import PDUS210
-from PyQt5.QtCore import (pyqtProperty, pyqtSlot, QTimer)
+from QInstrument.lib import QSerialInstrument
+from PyQt5.QtCore import pyqtProperty
+from struct import unpack
+import logging
+
+logging.basicConfig()
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.WARNING)
 
 
-class QPDUS210(QInstrumentInterface):
-    '''PiezoDrive 210 Ultrasonic Amplifier
-    '''
+class QPDUS210(QSerialInstrument):
+    settings = dict(baudRate=QSerialInstrument.Baud9600,
+                    dataBits=QSerialInstrument.Data8,
+                    stopBits=QSerialInstrument.OneStop,
+                    parity=QSerialInstrument.NoParity,
+                    flowControl=QSerialInstrument.NoFlowControl,
+                    timeout=1000.,
+                    eol='\r')
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args,
-                         uiFile='PDUS210Widget.ui',
-                         deviceClass=PDUS210,
-                         **kwargs)
-        self.setupTimer()
-        self.interval = 0.2
+    def Property(pstr, dtype=int):
+        def getter(self):
+            return self.get_value(f'get{pstr}', dtype=dtype)
 
-    def setupTimer(self):
-        self.timer = QTimer()
-        self.timer.timeout.connect(self.poll)
-        self.start = self.timer.start
-        self.stop = self.timer.stop
+        def setter(self, value):
+            value = int(value) if (dtype == bool) else dtype(value)
+            self.send(f'set{pstr}{value}')
 
-    @pyqtSlot()
-    def poll(self):
-        for p in ['current', 'voltage', 'frequency', 'impedance', 'phase',
-                  'loadPower', 'amplifierPower', 'temperature',
-                  'targetCurrent']:
-            self.set(p)
+        return pyqtProperty(dtype, getter, setter)
 
-    @pyqtProperty(int)
-    def interval(self):
-        return self.timer.interval()
+    def GainProperty(gstr, sstr, dtype=int):
+        def getter(self):
+            return self.get_value(f'get{gstr}', dtype=dtype)
 
-    @interval.setter
-    def interval(self, interval):
-        self.time.setInterval(interval)
+        def setter(self, value):
+            value = int(value) if (dtype == bool) else dtype(value)
+            self.send(f'set{sstr}{value}')
 
+        return pyqtProperty(dtype, getter, setter)
 
-def main():
-    import sys
-    from PyQt5.QtWidgets import QApplication
+    def Toggle(pstr):
+        def getter(self):
+            response = self.get_value(f'is{pstr}', dtype=str)
+            return (response == 'TRUE')
 
-    app = QApplication(sys.argv)
-    widget = QPDS210()
-    widget.show()
-    sys.exit(app.exec_())
+        def setter(self, enable):
+            if enable:
+                cmd = 'ENABLE' if (pstr == 'ENABLE') else f'en{pstr}'
+            else:
+                cmd = 'DISABLE' if (pstr == 'ENABLE') else f'dis{pstr}'
+            self.send(cmd)
 
+        return pyqtProperty(int, getter, setter)
 
-if __name__ == '__main__':
-    main()
+    def Measured(pstr, dtype=int):
+        def getter(self):
+            result = self.get_value(f'read{pstr}', dtype=dtype)
+            return result
+
+        return pyqtProperty(dtype, getter, fset=None)
+
+    # Setpoints
+    frequency = Property('FREQ', dtype=float)  # Hz
+    targetVoltage = Property('VOLT')    # Volts pp
+    maxFrequency = Property('MAXFREQ')
+    minFrequency = Property('MINFREQ')
+    targetPhase = Property('PHASE')
+    maxLoadPower = Property('MAXLPOW')
+    targetPower = Property('TARPOW')
+    targetCurrent = Property('CURRENT')
+
+    # Gain properties
+    phaseGain = GainProperty('PHASEGAIN', 'GAINPHASE')
+    powerGain = GainProperty('POWERGAIN', 'GAINPOWER')
+    currentGain = GainProperty('CURRENTGAIN', 'GAINCURRENT')
+
+    # Toggleable Settings
+    phaseTracking = Toggle('PHASE')
+    powerTracking = Toggle('POWER')
+    currentTracking = Toggle('CURRENT')
+    frequencyWrapping = Toggle('WRAP')
+    enabled = Toggle('ENABLE')
+
+    # Measurable Values
+    phase = Measured('PHASE')
+    impedance = Measured('IMP')
+    loadPower = Measured('LPOW')
+    amplifierPower = Measured('APOW')
+    current = Measured('CURRENT')
+    temperature = Measured('TEMP', dtype=float)  # Celsius
+
+    def __init__(self, portName=None, **kwargs):
+        super().__init__(portName, **self.settings, **kwargs)
+
+    def identify(self):
+        '''DISABLE returns FALSE to confirm the driver has been disabled, 
+        and also defaults the driver to its (safer) disabled state'''
+        return 'FALSE' in self.handshake('DISABLE')
+
+    def save(self):
+        '''Saves current parameters to permanent storage'''
+        return self.handshake('SAVE')
+
+    @pyqtProperty(dict)
+    def state(self):
+        '''Uses built-in feature to get all info from PDUS210 
+        in one serial command'''
+        self.blockSignals(True)
+        self.send('getSTATE')
+        data = self.readn(80)
+        self.blockSignals(False)
+        keys = ['enabled', 'phaseTracking', 'currentTracking', 'powerTracking',
+                'errorAmp', 'errorLoad', 'errorTemperature',
+                'voltage', 'frequency', 'minFrequency', 'maxFrequency',
+                'targetPhase', 'phaseControlGain',
+                'maxLoadPower', 'amplifierPower', 'loadPower',
+                'temperature', 'measuredPhase', 'measuredCurrent',
+                'impedance', 'transformerTurns']
+        vals = unpack(data, '<7cx18f')
+        state = dict(zip(keys, vals))
+        return state

@@ -1,96 +1,109 @@
-from QInstrument.lib import QInstrumentInterface
-from QInstrument.instruments.Opus.Opus import Opus
-from PyQt5.QtCore import (pyqtSlot, QTimer)
+from PyQt5.QtCore import (pyqtProperty, pyqtSlot)
+from QInstrument.lib import QSerialInstrument
 import logging
 
-logging.basicConfig()
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 
-class QOpusWidget(QInstrumentInterface):
+class QOpus(QSerialInstrument):
+    '''Quantum Opus 570nm Laser
 
-    def __init__(self, *args, interval=None, **kwargs):
-        super().__init__(*args,
-                         uiFile='OpusWidget.ui',
-                         deviceClass=Opus,
-                         **kwargs)
-        self.interval = interval or 200
-        self.timer = QTimer()
-        self.connectSignals()
-        self.startPolling()
+    .....
 
-    def connectSignals(self):
-        self.timer.timeout.connect(self.poll)
-        self.ui.PowerDial.valueChanged.connect(self.updatePower)
-        self.ui.Power.editingFinished.connect(self.updatePowerDial)
-        self.ui.PowerDial.valueChanged.connect(self.uncheck)
-        self.ui.SendPower.clicked.connect(self.check)
-        self.device.dataReady.connect(self.updateValues)
-        self.ui.Disable.clicked.connect(self.disable)
-	
-    def startPolling(self):
-        if self.isEnabled():
-            self.timer.start(self.interval)
-        return self
+    Inherits
+    --------
+    SerialInstrument
 
-    def stopPolling(self):
-        self.timer.stop()
-	
-    @pyqtSlot()
-    def poll(self):
-        self.device.send('POWER?')
-        self.device.send('CURRENT?')
-        self.device.send('STATUS?')
-	
-    @pyqtSlot(int)
-    def updatePower(self, value):
-        self.ui.Power.setValue(value)
-	
-    @pyqtSlot(str)
-    def updateValues(self, data):
+    Properties
+    ----------
+    portName: str
+        Name of the serial port to which the laser is attached
 
-        if 'mW' in data:
-            numeric_filter = filter(str.isdigit, data)
-            p = float((int("".join(numeric_filter))/10))	
-            if p == 0.0:
-                self.ui.EnableSwitch.setChecked(False)
-            if p != 0.0:
-                self.ui.EnableSwitch.setChecked(True)
-            self.ui.ActualPower.setValue(p)
-        if '%' in data:
-            numeric_filter = filter(str.isdigit, data)
-            p = float((int("".join(numeric_filter))/10))
-            self.ui.CurrentBox.setValue(p)
+    Methods
+    -------
+    get_power(): float
+         Power of laser output [mW]
+    set_power(float):
+         Set Power [mW]
+    '''
 
-    @pyqtSlot()
-    def check(self):
-        self.ui.sentCheck.setChecked(True)
-        a = self.ui.Power.value()
-        self.device.set_power(a)
+    settings = dict(baudRate=QSerialInstrument.Baud19200,
+                    dataBits=QSerialInstrument.Data8,
+                    stopBits=QSerialInstrument.OneStop,
+                    parity=QSerialInstrument.NoParity,
+                    flowControl=QSerialInstrument.NoFlowControl,
+                    eol='\r')
 
-    @pyqtSlot()
-    def uncheck(self):
-        self.ui.sentCheck.setChecked(False)
+    def __init__(self, portName=None, **kwargs):
+        super().__init__(portName, **self.settings, **kwargs)
+
+    def identify(self):
+        return 'MPC-D-1.0.07A' in self.handshake('VERSION?')
+
+    def Property(cmd, dtype=int, res='0'):
+        def getter(self):
+            logger.debug('Getting')
+            return self.get_value(cmd, dtype=dtype)
+
+        def setter(self, value):
+            value = dtype(value)
+            logger.debug(f'Setting {value}')
+            self.expect(f'{cmd},{value}', res)
+        return pyqtProperty(dtype, getter, setter)
+
+    def keyswitch(self):
+        return self.handshake('STATUS?')
+
+    def get_status(self):
+        if self.handshake('POWER?') == '0000.0mW':
+            return 'Off'
+        else:
+            return 'On'
+
+    def status(self, value):
+        if value == 'disable':
+            self.expect('OFF', '')
+        if value == 'enable':
+            self.expect('ON', '')
+        else:
+            return
 
     @pyqtSlot()
-    def updatePowerDial(self):
-        value = self.ui.Power.value()
-        self.ui.PowerDial.setValue(int(value))
-	
-    def disable(self):
-        self.device.send('OFF')
+    def power(self):
+        power = self.handshake('POWER?')
+        return power
 
-def main():
-    import sys
-    from PyQt5.QtWidgets import QApplication
+    def set_power(self, value):
+        '''Sets power (mW)'''
+        self.expect(f'POWER={value}', '')
 
+    def current(self):
+        return self.handshake('CURRENT?')
 
-    app = QApplication(sys.argv)
-    widget = QOpusWidget()
-    widget.show()
-    sys.exit(app.exec_())
+    def set_current(self, value):
+        '''Sets current as percentage of maximum'''
+        self.expect(f'CURRENT={value}', '')
 
+    def lastemp(self):
+        return self.handshake('LASTEMP?')
 
-if __name__ == '__main__':
-    main()
+    def psutemp(self):
+        return self.handshake('PSUTEMP?')
+
+    def timers(self):
+        '''Get the timers of the laser and PSU'''
+        return self._read_timers('TIMERS?')
+
+    @QSerialInstrument.blocking
+    def _read_timers(self, query):
+        self.send(query)
+        response = []
+        while True:
+            this = self.read_until()
+            response.append(this)
+            if 'Hours' in this:
+                pass
+            else:
+                break
+        return response
