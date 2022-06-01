@@ -1,10 +1,10 @@
-from .DS345 import (DS345, QDS345)
-from .SR830 import (SR830, QSR830)
-from .Proscan import (Proscan, QProscan)
-from .PiezoDrive import (PDUS210, QPDUS210)
+from .DS345 import (QDS345, QDS345Widget)
+from .SR830 import (QSR830, QSR830Widget)
+from .Proscan import (QProscan, QProscanWidget)
+from .PiezoDrive import (QPDUS210, QPDUS210Widget)
 
 
-__all__ = ['DS345', 'SR830',
-           'QDS345', 'QSR830',
-           'Proscan', 'QProscan',
-           'PDUS210', 'QPDUS210']
+__all__ = ['QDS345', 'QDS345Widget',
+           'QSR830', 'QSR830Widget',
+           'QProscan', 'QProscanWidget',
+           'QPDUS210', 'QPDUS210Widget']
