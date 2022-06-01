@@ -18,8 +18,8 @@ class QInstrumentWidget(QWidget):
     must have the same name and data type as the corresponding
     device property.
 
-    While QInstrumentInterface() can be used to create a hardware-enabled
-    GUI directly, a better choice is to subclass QInstrumentInterface,
+    While QInstrumentWidget() can be used to create a hardware-enabled
+    GUI directly, a better choice is to subclass QInstrumentWidget,
     providing both the name of the UI file and the class for the
     hardware implementation.
 
@@ -34,7 +34,7 @@ class QInstrumentWidget(QWidget):
     uiFile: str
         Name of the ui file that defines the GUI. The base class
         for the widget should be QWidget.
-    deviceClass: SerialInstrument
+    deviceClass: QSerialInstrument
         Hardware interface to the instrument.
     '''
 
