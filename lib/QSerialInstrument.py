@@ -26,6 +26,11 @@ class QSerialInstrument(QSerialPort):
         Time to wait for characters from device [ms]
         Default: 100.
 
+    Methods
+    -------
+    find(): QSerialInstrument
+        Poll serial ports to find the device.
+
     Signals
     -------
     dataReady(str):
@@ -37,11 +42,11 @@ class QSerialInstrument(QSerialPort):
     -----
     set_value(value):
         Intended as a slot for instrument widgets that
-        subclass SerialInstrument.
+        subclass QSerialInstrument.
 
     Example
     -------
-    >>> instrument = SerialInstrument().find()
+    >>> instrument = QSerialInstrument().find()
 
     '''
 
@@ -134,6 +139,9 @@ class QSerialInstrument(QSerialPort):
             Data provided as bytes are transmitted
             without eol termination.
         '''
+        if not self.isOpen():
+            logger.warn('Cannot send data: Device is not open.')
+            return
         if type(data) == str:
             data = data.encode() + self.eol
         self.write(data)
@@ -157,6 +165,9 @@ class QSerialInstrument(QSerialPort):
         response: str | bytes
             Data received from the instrument.
         '''
+        if not self.isOpen():
+            logger.warn('Cannot read data: Device is not open.')
+            return ''
         eol = eol or self.eol
         buffer = b''
         while self.bytesAvailable() or self.waitForReadyRead(self.timeout):
@@ -182,6 +193,9 @@ class QSerialInstrument(QSerialPort):
         response: bytes
             Data received from the instrument
         '''
+        if not self.isOpen():
+            logger.warn('Cannot read data: Device is not open.')
+            return ''
         buffer = b''
         while self.bytesAvailable() or self.waitForReadyRead(self.timeout):
             char = bytes(self.read(1))
@@ -259,6 +273,9 @@ class QSerialInstrument(QSerialPort):
     @pyqtSlot()
     def receive(self):
         '''Slot for nonblocking data communication'''
+        if not self.isOpen():
+            logger.warning('Cannot receive data: Device is not open.')
+            return
         self.buffer.append(self.readAll())
         if self.buffer.contains(self.eol):
             len = self.buffer.indexOf(self.eol) + 1

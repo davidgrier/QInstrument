@@ -12,11 +12,18 @@ logger.setLevel(logging.WARNING)
 
 
 class QInstrumentWidget(QWidget):
-    '''Glue class to attach a PyQt5 GUI to an instrument interface
+    '''Glue class to attach a PyQt5 GUI to a device interface
 
-    A widget in the UI that is intended to control a device property
-    must have the same name and data type as the corresponding
-    device property.
+    A widget in the UI is linked to a pyqtProperty in the
+    device interface if the widget and the property have
+    the same name and the same data type.
+
+    Linked properties are dynamically added to the 
+    properties of the QInstrumentWidget.
+
+    User interaction with a linked widget updates the corresponding
+    property of the device. Programmatically changing the value of
+    a linked property updates both the device and the UI.
 
     While QInstrumentWidget() can be used to create a hardware-enabled
     GUI directly, a better choice is to subclass QInstrumentWidget,
