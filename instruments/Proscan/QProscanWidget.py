@@ -13,9 +13,10 @@ class QProscanWidget(QInstrumentWidget):
     '''
 
     def __init__(self, *args, interval=None, **kwargs):
+        device = QProscan().find()
         super().__init__(*args,
                          uiFile='ProscanWidget.ui',
-                         deviceClass=QProscan,
+                         device=device,
                          **kwargs)
         self.ui.joystick.fullscale = 200.  # um/s
         self.interval = interval or 200    # ms

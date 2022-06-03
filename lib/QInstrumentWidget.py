@@ -41,7 +41,7 @@ class QInstrumentWidget(QWidget):
     uiFile: str
         Name of the ui file that defines the GUI. The base class
         for the widget should be QWidget.
-    deviceClass: QSerialInstrument
+    device: QSerialInstrument
         Hardware interface to the instrument.
     '''
 
@@ -74,12 +74,22 @@ class QInstrumentWidget(QWidget):
                'QRadioButton':   'toggled',
                'QSpinBox':       'valueChanged'}
 
-    def __init__(self, *args, uiFile=None, deviceClass=None, **kwargs):
+    def __init__(self, *args, uiFile=None, device=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.ui = self._loadUi(uiFile)
-        self.device = deviceClass().find()
+        self.device = device
+
+    @pyqtProperty(object)
+    def device(self):
+        return self._device
+
+    @device.setter
+    def device(self, device):
+        if device is None:
+            return
+        self._device = device
         self._identifyProperties()
-        if self.device.isOpen():
+        if self._device.isOpen():
             self._syncProperties()
             self._connectSignals()
         else:

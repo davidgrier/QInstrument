@@ -11,9 +11,10 @@ logger.setLevel(logging.DEBUG)
 class QOpusWidget(QInstrumentWidget):
 
     def __init__(self, *args, interval=None, **kwargs):
+        device = QOpus().find()
         super().__init__(*args,
                          uiFile='OpusWidget.ui',
-                         deviceClass=QOpus,
+                         device=device,
                          **kwargs)
         self.interval = interval or 200
         self.timer = QTimer()

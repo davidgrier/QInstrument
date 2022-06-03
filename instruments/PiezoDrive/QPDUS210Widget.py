@@ -8,9 +8,10 @@ class QPDUS210Widget(QInstrumentWidget):
     '''
 
     def __init__(self, *args, **kwargs):
+        device = QPDUS210().find()
         super().__init__(*args,
                          uiFile='PDUS210Widget.ui',
-                         deviceClass=QPDUS210,
+                         device=device,
                          **kwargs)
         self.setupTimer()
         self.interval = 0.2

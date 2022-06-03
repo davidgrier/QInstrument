@@ -7,9 +7,10 @@ class QDS345Widget(QInstrumentWidget):
     '''
 
     def __init__(self, *args, **kwargs):
+        device = QDS345().find()
         super().__init__(*args,
                          uiFile='DS345Widget.ui',
-                         deviceClass=QDS345,
+                         device=device,
                          **kwargs)
 
 
