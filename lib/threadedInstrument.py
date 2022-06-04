@@ -4,6 +4,10 @@ from PyQt5.QtCore import QThread
 def threadedInstrument(cls):
 
     class ThreadedInstrument(cls):
+        __name__ = cls.__name__
+        __qualname__ = cls.__qualname__
+        __doc__ = cls.__doc__
+
         def __init__(self, *args, **kwargs):
             super().__init__(*args, *kwargs)
             self._thread = QThread(self)
