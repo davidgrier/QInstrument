@@ -18,9 +18,6 @@ class QInstrumentWidget(QWidget):
     device interface if the widget and the property have
     the same name and the same data type.
 
-    Linked properties are dynamically added to the 
-    properties of the QInstrumentWidget.
-
     User interaction with a linked widget updates the corresponding
     property of the device. Programmatically changing the value of
     a linked property updates both the device and the UI.
@@ -43,6 +40,20 @@ class QInstrumentWidget(QWidget):
         for the widget should be QWidget.
     device: QSerialInstrument
         Hardware interface to the instrument.
+    properties: list of str
+        Names of device properties that are managed by the ui
+    methods: list of str
+        Names of device methods that are managed by the ui
+    settings: dict
+        Dictionary of properties and current values
+
+    Methods
+    -------
+    get(pname): value
+        Returns value of property with name pname
+    set(pname, value):
+        Set property pname to value
+
     '''
 
     wsetter = {'QCheckBox':      'setChecked',
