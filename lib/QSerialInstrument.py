@@ -178,7 +178,7 @@ class QSerialInstrument(QSerialPort):
         logger.debug(f' received: {buffer}')
         if raw:
             return buffer
-        return buffer.decode('utf-8').strip()
+        return buffer.decode().strip()
 
     def readn(self, n=1):
         '''Receive n bytes of data from the instrument
