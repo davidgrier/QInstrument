@@ -1,6 +1,6 @@
 from PyQt5 import uic
 from PyQt5.QtWidgets import (QWidget, QPushButton)
-from PyQt5.QtCore import (pyqtSlot, pyqtProperty)
+from PyQt5.QtCore import (pyqtProperty, pyqtSlot, pyqtSignal)
 import types
 import logging
 
@@ -82,6 +82,8 @@ class QInstrumentWidget(QWidget):
                'QPushButton':    'toggled',
                'QRadioButton':   'toggled',
                'QSpinBox':       'valueChanged'}
+
+    propertyChanged = pyqtSignal(str, object)
 
     def __init__(self, *args, uiFile=None, device=None, **kwargs):
         super().__init__(*args, **kwargs)
@@ -238,9 +240,10 @@ class QInstrumentWidget(QWidget):
     def _setDeviceProperty(self, value):
         name = self.sender().objectName()
         if hasattr(self.device, name):
+            logger.debug(f'Setting device: {name}: {value}')
             setattr(self.device, name, value)
             self.waitForDevice()
-            logger.debug(f'Setting device: {name}: {value}')
+            self.propertyChanged.emit(name, value)
 
     def waitForDevice(self):
         '''Method called when setting a device property to ensure
