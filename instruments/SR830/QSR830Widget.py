@@ -19,7 +19,7 @@ def main():
     from PyQt5.QtWidgets import QApplication
 
     app = QApplication(sys.argv)
-    widget = QSR830()
+    widget = QSR830Widget()
     widget.show()
     sys.exit(app.exec_())
 
