@@ -1,4 +1,4 @@
-from PyQt5.QtCore import pyqtProperty
+from PyQt5.QtCore import (pyqtProperty, pyqtSlot)
 from QInstrument.lib import QSerialInstrument
 import numpy as np
 
@@ -79,7 +79,7 @@ class QDS345(QSerialInstrument):
         amplitude modulation (AM), frequency modulation (FM)
         or phase modulation (PM). The waveform must be
         loaded before setting modulation_waveform=5 and
-        modulation=True or else an error will be produced.       
+        modulation=True or else an error will be produced.
     modulation_rate: float
         Modulation rate [Hz]
         Range: 0.001 Hz <= modulation_rate <= 10 kHz
@@ -173,6 +173,7 @@ class QDS345(QSerialInstrument):
     def identify(self):
         return 'DS345' in self.handshake('*IDN?')
 
+    @pyqtSlot()
     def reset(self):
         '''Rest DS345 to default settings'''
         self.send('*RST')
@@ -201,6 +202,7 @@ class QDS345(QSerialInstrument):
             self._muted = False
             self.amplitude = self._saved_amplitude
 
+    @pyqtSlot()
     def trigger(self):
         '''Trigger sweep or burst
 

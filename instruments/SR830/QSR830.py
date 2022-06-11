@@ -1,4 +1,4 @@
-from PyQt5.QtCore import pyqtProperty
+from PyQt5.QtCore import (pyqtProperty, pyqtSlot)
 from QInstrument.lib import QSerialInstrument
 
 
@@ -22,7 +22,7 @@ class QSR830(QSerialInstrument):
     amplitude: int
         Amplitude of reference sine output [V]
         Rounted to 0.002V.
-        Range: 0.004V <= output_amplitude <= 5.000V    
+        Range: 0.004V <= output_amplitude <= 5.000V
     frequency: float
         Reference frequency for internal oscillator [Hz]
         Rounded to 5 digits or 0.0001 Hz, whichever is greater.
@@ -152,25 +152,30 @@ class QSR830(QSerialInstrument):
     def identify(self):
         return 'SR830' in self.handshake('*IDN?')
 
-    def reset(self):
-        self.send('*RST')
-
     def report(self):
         response = self.handshake('SNAP?9,3,4')
         return list(map(float, response.split(',')))
 
+    @pyqtSlot()
+    def reset(self):
+        self.send('*RST')
+
+    @pyqtSlot()
     def auto_gain(self):
         '''Autorange gain'''
         self.send('AGAN')
 
+    @pyqtSlot()
     def auto_reserve(self):
         '''Autorange dynamic reserve'''
         self.send('ARSV')
 
+    @pyqtSlot()
     def auto_phase(self):
         '''Autorange phase'''
         self.send('APHS')
 
+    @pyqtSlot()
     def auto_offset(self, channel):
         '''Autorange offset'''
         self.send('AOFF{channel}')

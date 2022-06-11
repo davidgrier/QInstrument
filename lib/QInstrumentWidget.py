@@ -87,7 +87,10 @@ class QInstrumentWidget(QWidget):
 
     propertyChanged = pyqtSignal(str, object)
 
-    def __init__(self, *args, uiFile=None, device=None, **kwargs):
+    def __init__(self, *args,
+                 uiFile=None,
+                 device=None,
+                 **kwargs):
         super().__init__(*args, **kwargs)
         self.ui = self._loadUi(uiFile)
         self.device = device
