@@ -8,7 +8,7 @@ import logging
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.WARNING)
+logger.setLevel(logging.DEBUG)
 
 
 class QInstrumentWidget(QWidget):
@@ -222,8 +222,10 @@ class QInstrumentWidget(QWidget):
             if k not in uiprops:
                 continue
             if isinstance(v, pyqtProperty):
+                logger.debug(f'registering property: {k}')
                 self._properties.append(k)
             elif isinstance(v, types.FunctionType):
+                logger.debug(f'registering method: {k}')
                 self._methods.append(k)
 
     def _syncProperties(self):
