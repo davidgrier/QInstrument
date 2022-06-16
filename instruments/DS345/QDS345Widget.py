@@ -6,8 +6,8 @@ class QDS345Widget(QInstrumentWidget):
     '''Stanford Research Systems DS345 Function Generator
     '''
 
-    def __init__(self, *args, **kwargs):
-        device = QDS345().find()
+    def __init__(self, *args, device=None, **kwargs):
+        device = device or QDS345().find()
         super().__init__(*args,
                          uiFile='DS345Widget.ui',
                          device=device,
