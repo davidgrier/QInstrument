@@ -1,20 +1,39 @@
 from PyQt5.QtCore import (QObject, pyqtProperty)
+import logging
 
 
-class QFakeInstrument(QObject):
+logging.basicConfig()
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
-    def Property(pstr, default=0.):
-        name = f'_{pstr}'
-        vars()[name] = default
-        dtype = type(default)
 
-        def getter(self):
-            return getattr(self, name)
+class Property(pyqtProperty):
 
-        def setter(self, value):
-            setattr(self, name, value)
+    def __init__(self, value, name=''):
+        super().__init__(type(value), self.getter, self.setter)
+        self.value = value
+        self.name = name
 
-        return pyqtProperty(dtype, getter, setter)
+    def getter(self, inst=None):
+        return self.value
+
+    def setter(self, value=None, inst=None):
+        logger.debug(f'Setting {self.name}: {value}')
+        self.value = value
+
+
+class PropertyMeta(type(QObject)):
+    def __new__(mcs, name, bases, attrs):
+        for key in list(attrs.keys()):
+            attr = attrs[key]
+            if not isinstance(attr, Property):
+                continue
+            value = attr.value
+            attrs[key] = Property(value, key)
+        return super().__new__(mcs, name, bases, attrs)
+
+
+class QFakeInstrument(QObject, metaclass=PropertyMeta):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -22,3 +41,6 @@ class QFakeInstrument(QObject):
 
     def busy(self):
         return False
+
+    def isOpen(self):
+        return True
