@@ -6,8 +6,8 @@ class QSR830Widget(QInstrumentWidget):
     '''Stanford Research Systems SR830 Lockin Amplifier
     '''
 
-    def __init__(self, *args, **kwargs):
-        device = QSR830().find()
+    def __init__(self, *args, device=None, **kwargs):
+        device = device or QSR830().find()
         super().__init__(*args,
                          uiFile='SR830Widget.ui',
                          device=device,
