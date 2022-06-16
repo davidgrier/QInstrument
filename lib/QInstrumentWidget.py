@@ -189,6 +189,7 @@ class QInstrumentWidget(QWidget):
             logger.error(f'Unknown property {key}')
 
     def _wmethod(self, widget, method):
+        '''Return method used by widget'''
         typeName = type(widget).__name__.split('.')[-1]
         return getattr(widget, method[typeName])
 

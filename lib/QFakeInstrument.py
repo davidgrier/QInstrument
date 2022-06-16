@@ -17,7 +17,7 @@ class Property(pyqtProperty):
     def getter(self, inst=None):
         return self.value
 
-    def setter(self, value=None, inst=None):
+    def setter(self, inst=None, value=None):
         logger.debug(f'Setting {self.name}: {value}')
         self.value = value
 
