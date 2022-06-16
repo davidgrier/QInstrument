@@ -3,7 +3,6 @@ from PyQt5.QtWidgets import QMessageBox
 import json
 import os
 import io
-# import platform
 from datetime import datetime
 
 import logging
@@ -52,14 +51,14 @@ class Configure(QObject):
         '''Returns string representing the current date and time'''
         return datetime.now().strftime('_%Y%b%d_%H%M%S')
 
-    def filename(self, prefix='qacam', suffix=None):
+    def filename(self, prefix=None, suffix=None):
         '''Returns a file name, including timestamp
 
         Arguments
         ---------
         prefix : str, optional
             String prefix for the filename.
-            Default: qacam
+            Default: QInstrument
         suffix : str, optional
             String suffix to append to filename.
             Default: None
