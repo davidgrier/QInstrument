@@ -24,4 +24,7 @@ class QFakeSR830(QFakeInstrument):
         self.identification = 'Fake SR830 Lockin Amplifier'
 
     def report(self):
-        return np.random.rand(3).tolist()
+        '''Return [frequency, amplitude, phase]'''
+        data = np.random.rand(3)
+        data[2] *= 360.
+        return data.tolist()
