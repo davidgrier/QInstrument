@@ -194,9 +194,6 @@ class QInstrumentWidget(QWidget):
         return getattr(widget, method[typeName])
 
     def _loadUi(self, uiFile):
-        # package = self.__module__.split('.')[0] or '.'
-        # form, _ = uic.loadUiType(uiFile, import_from=package)
-        # filename = os.path.join(os.path.dirname(__file__), uiFile)
         path = os.path.dirname(sys.modules[self.__module__].__file__)
         filename = os.path.join(path, uiFile)
         form, _ = uic.loadUiType(filename)
@@ -216,9 +213,10 @@ class QInstrumentWidget(QWidget):
         uiprops = vars(self.ui).keys()
         self._properties = []
         self._methods = []
-        for k, v in vars(type(self.device)).items():
+        for k in dir(self.device):
             if k not in uiprops:
                 continue
+            v = getattr(type(self.device), k)
             if isinstance(v, pyqtProperty):
                 logger.debug(f'registering property: {k}')
                 self._properties.append(k)
