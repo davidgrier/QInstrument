@@ -24,8 +24,8 @@ class QInstrumentWidget(QWidget):
 
     While QInstrumentWidget() can be used to create a hardware-enabled
     GUI directly, a better choice is to subclass QInstrumentWidget,
-    providing both the name of the UI file and the class for the
-    hardware implementation.
+    providing both the name of the UI file and an object reference
+    for the hardware implementation.
 
     ...
 
@@ -53,6 +53,11 @@ class QInstrumentWidget(QWidget):
         Returns value of property with name pname
     set(pname, value):
         Set property pname to value
+
+    Signals
+    -------
+    propertyChanged(pname, value)
+        Emitted when a managed property changes
 
     '''
 
@@ -190,7 +195,7 @@ class QInstrumentWidget(QWidget):
 
     def _wmethod(self, widget, method):
         '''Return method used by widget'''
-        typeName = type(widget).__name__.split('.')[-1]
+        typeName = widget.metaObject().className()
         return getattr(widget, method[typeName])
 
     def _loadUi(self, uiFile):
