@@ -103,10 +103,6 @@ class Configure(QObject):
         filename = self.configname(object)
         with io.open(filename, 'w', encoding='utf8') as configfile:
             configfile.write(configuration)
-#            if platform.python_version().startswith('3.'):
-#                configfile.write(str(configuration))
-#            else:
-#                configfile.write(unicode(configuration))
 
     def restore(self, object):
         '''Restore object configuration from json file

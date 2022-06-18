@@ -51,3 +51,10 @@ ds345 = QDS345Widget(device=fake)
 ds345.show()
 sys.exit(app.exec_())
 ```
+
+## Acknowledgements
+
+Work on this project at New York University
+is supported by the National Science Foundation of the
+United States under award number DMR-2104837.
+
