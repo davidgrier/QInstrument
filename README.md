@@ -35,7 +35,7 @@ ds345.show()
 sys.exit(app.exec_())
 ```
 
-![DS345 Widget](/docs/QDS345Widget.png)
+![DS345 Widget](/docs/QDS345Widget.png | width=200)
 
 Sometimes a real instrument is not available. For those instances,
 `QInstrument` provides "fake" interfaces:
