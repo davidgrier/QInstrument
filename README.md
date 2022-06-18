@@ -24,7 +24,7 @@ is connected to the computer by a serial cable and pops up
 a widget to control that instrument's properties. If no instrument
 is found, the widget appears but has all of its controls disabled.
 
-'''
+```
 from PyQt5.QtWidgets import QApplication
 from QInstrument import QDS345Widget
 import sys
@@ -33,14 +33,14 @@ app = QApplication(sys.argv)
 ds345 = QDS345Widget()
 ds345.show()
 sys.exit(app.exec_())
-'''
+```
 
 ![DS345 Widget](/docs/QDS345Widget.png)
 
 Sometimes a real instrument is not available. For those instances,
 `QInstrument` provides "fake" interfaces:
 
-'''
+```
 from PyQt5.QtWidgets import QApplication
 from QInstrument import (QDS345Widget, QFakeDS345)
 import sys
@@ -50,4 +50,4 @@ fake = QFakeDS345()
 ds345 = QDS345Widget(device=fake)
 ds345.show()
 sys.exit(app.exec_())
-'''
+```
