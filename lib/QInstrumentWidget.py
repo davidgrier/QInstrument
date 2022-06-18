@@ -210,7 +210,7 @@ class QInstrumentWidget(QWidget):
         '''Identify properties and methods used to control device
 
         This method seeks out UI widgets that have the same
-        name as device properties. Properties of the type
+        name as device attributes. Attributes of the type
         pyqtProperty are stored in self._properties. Those
         of types.FunctionType are stored in self._methods.
         '''
