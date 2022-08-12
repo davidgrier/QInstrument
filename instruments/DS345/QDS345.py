@@ -1,6 +1,10 @@
 from PyQt5.QtCore import (pyqtProperty, pyqtSlot)
 from QInstrument.lib import QSerialInstrument
 import numpy as np
+import logging
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.WARNING)
 
 
 class QDS345(QSerialInstrument):
@@ -32,6 +36,9 @@ class QDS345(QSerialInstrument):
         ramp:       1 uHz,     100.0 kHz
         arbitrary:  2.329 mHz,  40.0 MHz sampling
         noise:     10 MHz white noise (fixed)
+    invert: bool
+        True: invert output.
+        False: normal output.
     mute: bool
         True: mute output.
         False: restore last amplitude setting.
@@ -146,10 +153,11 @@ class QDS345(QSerialInstrument):
 
     # Function output controls
     frequency = Property('FREQ')
+    invert = Property('INVT', bool)
     offset = Property('OFFS')
     phase = Property('PHSE')
-    waveform = Property('FUNC', int)
     sampling_frequency = Property('FSMP')
+    waveform = Property('FUNC', int)
     # Modulation controls
     modulation = Property('MENA', bool)
     modulation_rate = Property('RATE')
@@ -208,6 +216,8 @@ class QDS345(QSerialInstrument):
 
         Note: Effective if trigger_source=0 (single)
         '''
+        if self.trigger_source != 0:
+            logger.warn('Only effective if trigger_source is 0.')
         self.send('*TRG')
 
     def reset_sweep_markers(self):
@@ -216,6 +226,14 @@ class QDS345(QSerialInstrument):
     def set_sweep_span(self):
         self.send('SPMK')
 
+    def set_ttl(self):
+        '''Set output to TTL levels'''
+        self.send('ATTL')
+
+    def set_ecl(self):
+        '''Set output to ECL levels'''
+        self.send('AECL')
+
     def load_waveform(self, waveform):
         '''Load arbitrary waveform
 
@@ -223,12 +241,17 @@ class QDS345(QSerialInstrument):
         ---------
         waveform: numpy.array
         '''
-        signal = np.round(np.clip(waveform, -2047, 2047)).astype('>i2')
-        checksum = (np.sum(signal) & 0xFFFF).astype('>i2')
-        self.send(f'LDWF?0,{len(signal)}')
-        self.read_until()
-        self.send(signal.tobytes())
-        self.send(checksum.tobytes())
+        npts = len(waveform)
+        if npts > 16300:
+            logger.error('waveform can contain at most 16300 points')
+            return
+        if not self.expect(f'LDWF?0,{npts}', '1'):
+            logger.error(f'not able to load waveform of length {npts}.')
+            return
+        data = np.clip(np.round(waveform), -2047, 2047).astype('>i2')
+        checksum = (np.sum(data) & 0xFFFF).astype('>i2')
+        data = np.append(data, checksum)
+        self.send(data.tobytes())
 
     def amplitude_modulation(self, waveform):
         '''Load arbitrary amplitude modulation
@@ -236,6 +259,8 @@ class QDS345(QSerialInstrument):
         Range: -1 (full off) to +1 (full on)
         Maximum length: 10000 points
         '''
+        if len(waveform) > 10000:
+            logger.error('waveform can contain at most 10000 points')
         signal = np.round(32767.*waveform).astype('>i2')
         checksum = (np.sum(signal) & 0xFFFF).astype('>i2').tobytes()
         self.modulation = False
