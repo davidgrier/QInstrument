@@ -248,7 +248,7 @@ class QDS345(QSerialInstrument):
         if not self.expect(f'LDWF?0,{npts}', '1'):
             logger.error(f'not able to load waveform of length {npts}.')
             return
-        data = np.clip(np.round(waveform), -2047, 2047).astype('>i2')
+        data = np.clip(np.round(waveform), -2048, 2047).astype('>i2')
         checksum = (np.sum(data) & 0xFFFF).astype('>i2')
         data = np.append(data, checksum)
         self.send(data.tobytes())
