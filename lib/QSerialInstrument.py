@@ -1,4 +1,4 @@
-from PyQt5.QtCore import (pyqtSlot, pyqtSignal, QByteArray)
+from PyQt5.QtCore import (pyqtProperty, pyqtSlot, pyqtSignal, QByteArray)
 from PyQt5.QtSerialPort import (QSerialPort, QSerialPortInfo)
 from functools import wraps
 import logging
@@ -311,3 +311,20 @@ class QSerialInstrument(QSerialPort):
             False: instrument on the port failed to identify correctly
         '''
         return True
+
+    @pyqtProperty(list)
+    def properties(self):
+        p = vars(type(self)).items()
+        return [k for k, v in p if isinstance(v, pyqtProperty)]
+
+    @pyqtProperty(dict)
+    def settings(self):
+        return {key: getattr(self, key) for key in self.properties}
+
+    @settings.setter
+    def settings(self, settings):
+        for key, value in settings.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
+            else:
+                logger.warning(f'invalid property: {key}')
