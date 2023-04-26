@@ -144,7 +144,7 @@ class QSR830(QSerialInstrument):
     low_pass_slope = Property('OFSL')
     sensitivity = Property('SENS')
     synchronous_filter = Property('SYNC', bool)
-    time_contant = Property('OFLT')
+    time_constant = Property('OFLT')
 
     def __init__(self, portName=None, **kwargs):
         super().__init__(portName, **self.settings, **kwargs)
