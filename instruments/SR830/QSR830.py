@@ -151,7 +151,6 @@ class QSR830(QSerialInstrument):
 
     def identify(self):
         return 'SR830' in self.handshake('*IDN?')
-
     def report(self):
         response = self.handshake('SNAP?9,3,4')
         return list(map(float, response.split(',')))

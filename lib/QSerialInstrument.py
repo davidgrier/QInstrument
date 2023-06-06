@@ -69,7 +69,7 @@ class QSerialInstrument(QSerialPort):
                  **kwargs):
         super().__init__(**kwargs)
         self.eol = eol.encode()
-        self.timeout = timeout or 100.
+        self.timeout = timeout or 100
         self.readyRead.connect(self.receive)
         self.buffer = QByteArray()
         self.open(portName)
