@@ -3,6 +3,7 @@ from QInstrument.lib import QSerialInstrument
 import numpy as np
 import logging
 
+
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.WARNING)
 
@@ -135,12 +136,12 @@ class QDS345(QSerialInstrument):
     sampling_frequency: float
     '''
 
-    settings = dict(baudRate=QSerialInstrument.Baud9600,
-                    dataBits=QSerialInstrument.Data8,
-                    stopBits=QSerialInstrument.OneStop,
-                    parity=QSerialInstrument.NoParity,
-                    flowControl=QSerialInstrument.NoFlowControl,
-                    eol='\n')
+    portSettings = dict(baudRate=QSerialInstrument.Baud9600,
+                        dataBits=QSerialInstrument.Data8,
+                        stopBits=QSerialInstrument.TwoStop,
+                        parity=QSerialInstrument.NoParity,
+                        flowControl=QSerialInstrument.NoFlowControl,
+                        eol='\n')
 
     def Property(pstr, dtype=float):
         def getter(self):
@@ -149,6 +150,7 @@ class QDS345(QSerialInstrument):
         def setter(self, value):
             value = int(value) if (dtype == bool) else dtype(value)
             self.send(f'{pstr}{value}')
+
         return pyqtProperty(dtype, getter, setter)
 
     # Function output controls
@@ -175,7 +177,7 @@ class QDS345(QSerialInstrument):
     trigger_source = Property('TSRC', int)
 
     def __init__(self, portName=None, **kwargs):
-        super().__init__(portName, **self.settings, **kwargs)
+        super().__init__(portName, **self.portSettings, **kwargs)
         self._muted = False
 
     def identify(self):

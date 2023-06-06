@@ -125,6 +125,7 @@ class QSR830(QSerialInstrument):
             if dtype == bool:
                 value = int(value)
             self.send(f'{pstr}{value}')
+
         return pyqtProperty(dtype, getter, setter)
 
     # Reference and Phase
