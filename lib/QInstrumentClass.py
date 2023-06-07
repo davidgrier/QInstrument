@@ -2,7 +2,7 @@ from PyQt5.QtCore import (QObject, pyqtProperty)
 import types
 
 
-class QInstrument(QObject)
+class QInstrument(QObject):
 
     def __str__(self):
         name = self.__class__.__name__
@@ -26,7 +26,7 @@ class QInstrument(QObject)
         self._interface.close()
 
     def transmit(self, data):
-        self._interface.send(data)
+        self._interface.transmit(data)
 
     def receive(self, **kwargs):
         return self._interface.receive(**kwargs)

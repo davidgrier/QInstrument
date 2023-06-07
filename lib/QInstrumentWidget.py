@@ -6,6 +6,7 @@ import os
 import sys
 import logging
 
+
 logging.basicConfig()
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.WARNING)
@@ -214,7 +215,6 @@ class QInstrumentWidget(QWidget):
         pyqtProperty are stored in self._properties. Those
         of types.FunctionType are stored in self._methods.
         '''
-
         uiprops = vars(self.ui).keys()
         self._properties = []
         self._methods = []

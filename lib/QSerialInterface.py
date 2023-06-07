@@ -1,6 +1,5 @@
-from PyQt5.QtCore import (pyqtSlot, pyqtSignal, QByteArray)
+from PyQt5.QtCore import (pyqtProperty, pyqtSlot, pyqtSignal, QByteArray)
 from PyQt5.QtSerialPort import (QSerialPort, QSerialPortInfo)
-from functools import wraps
 import logging
 
 
@@ -53,26 +52,18 @@ class QSerialInterface(QSerialPort):
 
     dataReady = pyqtSignal(str)
 
-    def blocking(method):
-        '''Decorator for blocking communication methods'''
-        @wraps(method)
-        def wrapper(inst, *args, **kwargs):
-            inst.blockSignals(True)
-            result = method(inst, *args, **kwargs)
-            inst.blockSignals(False)
-            return result
-        return wrapper
-
     def __init__(self,
                  portName=None,
                  eol='',
                  timeout=None,
+                 blocking=True,
                  **kwargs):
         super().__init__(**kwargs)
         self.eol = eol if isinstance(eol, bytes) else eol.encode()
-        self.timeout = timeout or 100.
-        self.readyRead.connect(self.receive)
-        self.buffer = QByteArray()
+        self.timeout = timeout or 100
+        self.blocking = blocking
+        self._buffer = QByteArray()
+
         self.open(portName)
 
     def open(self, portName, **kwargs):
@@ -134,6 +125,18 @@ class QSerialInterface(QSerialPort):
             logger.error(f'Could not find {className}')
         return self
 
+    @pyqtProperty(bool)
+    def blocking(self):
+        return self._blocking
+
+    @blocking.setter
+    def blocking(self, blocking):
+        if blocking:
+            self.readyRead.connect(self._handleReadyRead)
+        else:
+            self.readyRead.disconnect(self._handleReadyRead)
+        self._blocking = blocking
+
     def transmit(self, data):
         '''Transmit data to the instrument
 
@@ -157,35 +160,22 @@ class QSerialInterface(QSerialPort):
         self.flush()
         logger.debug(f' sent: {data}')
 
-    def read_until(self, eol=None, raw=False):
-        '''Receive data from the instrument
-
-        Keywords
-        --------
-        eol: bytes [optional]
-            End-of-line character
-            Default: self.eol
-        raw: bool [optional]
-            True: Return raw data as bytes
-            False: Decode data into str [Default]
-
-        Returns
-        -------
-        response: str | bytes
-            Data received from the instrument.
-        '''
-        if not self.isOpen():
-            logger.warn('Cannot read data: Device is not open.')
-            return ''
+    def receive(self, eol=None, raw=False):
         eol = eol or self.eol
-        buffer = b''
-        while self.bytesAvailable() or self.waitForReadyRead(self.timeout):
-            char = bytes(self.read(1))
-            buffer += char
-            if char == eol:
+        while self.waitforReadyRead(self.timeout):
+            self._buffer.append(self.readAll())
+            if self._buffer.contains(eol):
                 break
-        logger.debug(f' received: {buffer}')
-        return buffer if raw else buffer.decode().strip()
+        pos = self._buffer.indexOf(self.eol) + 1
+        if pos == 0:
+            data = b''
+        elif pos < self._buffer.size():
+            data = bytes(self._buffer.left(pos))
+            self._buffer.remove(0, pos)
+        else:
+            data = bytes(self._buffer)
+            self._buffer.clear()
+        return data if raw else data.decode().strip()
 
     def readn(self, n=1):
         '''Receive n bytes of data from the instrument
@@ -211,63 +201,18 @@ class QSerialInterface(QSerialPort):
                 break
         return buffer
 
-    @blocking
-    def handshake(self, query, raw=False):
-        '''Send command to the instrument and receive its response
-
-        Arguments
-        ---------
-        query: str
-            String to be communicated to the instrument that
-            will elicit a response.
-
-        Keywords
-        --------
-        raw: bool
-            True: Return raw data as bytes
-            False: Decode data into str [Default]
-
-        Returns
-        -------
-        response: str | bytes
-            Response from instrument
-        '''
-        self.send(query)
-        return self.read_until(raw=raw)
-
-    def expect(self, query, response):
-        '''Send query and check for anticipated response
-
-        Arguments
-        ---------
-        query: str
-            Command to instrument that will elicit response.
-        response: str
-            Anticipated response
-
-        Returns
-        -------
-        expect: bool
-            True: expected response was received
-            False: expected response was not received
-        '''
-        return response in self.handshake(query)
-
     @pyqtSlot()
-    def receive(self):
+    def _handleReadyRead(self):
         '''Slot for nonblocking data communication'''
-        if not self.isOpen():
-            logger.warning('Cannot receive data: Device is not open.')
-            return
-        self.buffer.append(self.readAll())
-        if self.buffer.contains(self.eol):
-            len = self.buffer.indexOf(self.eol) + 1
-            if len < self.buffer.size():
-                data = bytes(self.buffer.left(len))
-                self.buffer.remove(0, len)
+        self._buffer.append(self.readAll())
+        if self._buffer.contains(self.eol):
+            pos = self._buffer.indexOf(self.eol) + 1
+            if pos < self._buffer.size():
+                data = bytes(self._buffer.left(pos))
+                self._buffer.remove(0, pos)
             else:
-                data = bytes(self.buffer)
-                self.buffer.clear()
+                data = bytes(self._buffer)
+                self._buffer.clear()
             logger.debug('emitting {}'.format(data.decode('utf-8')))
             self.dataReady.emit(data.decode('utf-8', 'backslashreplace'))
         else:
