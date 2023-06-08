@@ -2,7 +2,7 @@ from PyQt5.QtCore import (QObject, pyqtProperty)
 import types
 
 
-class QInstrument(QObject):
+class QInstrumentClass(QObject):
 
     def __str__(self):
         name = self.__class__.__name__

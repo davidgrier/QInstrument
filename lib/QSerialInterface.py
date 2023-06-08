@@ -4,7 +4,7 @@ import logging
 
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.ERROR)
+logger.setLevel(logging.WARNING)
 
 
 class QSerialInterface(QSerialPort):
@@ -63,8 +63,14 @@ class QSerialInterface(QSerialPort):
         self.timeout = timeout or 100
         self.blocking = blocking
         self._buffer = QByteArray()
-
         self.open(portName)
+
+    def identify(self, **kwargs):
+        '''Returns true if communication with instrument succeeds
+
+        This method should be overridden by subclasses.
+        '''
+        return True
 
     def open(self, portName, **kwargs):
         '''Open serial communications with instrument.
@@ -86,6 +92,8 @@ class QSerialInterface(QSerialPort):
             Open accepts keyword arguments for identify(),
             which must be defined by a subclassed instrument implementation.
         '''
+        if portName is None:
+            return False
         self.setPortName(portName)
         if super().open(QSerialPort.ReadWrite):
             self.clear()
@@ -132,9 +140,12 @@ class QSerialInterface(QSerialPort):
     @blocking.setter
     def blocking(self, blocking):
         if blocking:
-            self.readyRead.connect(self._handleReadyRead)
+            try:
+                self.readyRead.disconnect(self._handleReadyRead)
+            except TypeError:
+                pass
         else:
-            self.readyRead.disconnect(self._handleReadyRead)
+            self.readyRead.connect(self._handleReadyRead)
         self._blocking = blocking
 
     def transmit(self, data):
@@ -161,21 +172,30 @@ class QSerialInterface(QSerialPort):
         logger.debug(f' sent: {data}')
 
     def receive(self, eol=None, raw=False):
+        '''Read from serial interface until end of line
+
+        Keywords
+        --------
+        eol: bytes
+           end-of-line character
+        raw: bool
+           True: return line as bytes
+           False: decode response from instrument
+           Default: False
+
+        Returns
+        -------
+        line: str | bytes
+           characters received from serial interface
+        '''
         eol = eol or self.eol
-        while self.waitforReadyRead(self.timeout):
-            self._buffer.append(self.readAll())
-            if self._buffer.contains(eol):
+        buffer = b''
+        while self.bytesAvailable() or self.waitForReadyRead(self.timeout):
+            char = bytes(self.read(1))
+            if char == eol:
                 break
-        pos = self._buffer.indexOf(self.eol) + 1
-        if pos == 0:
-            data = b''
-        elif pos < self._buffer.size():
-            data = bytes(self._buffer.left(pos))
-            self._buffer.remove(0, pos)
-        else:
-            data = bytes(self._buffer)
-            self._buffer.clear()
-        return data if raw else data.decode().strip()
+            buffer += char
+        return buffer if raw else buffer.decode()
 
     def readn(self, n=1):
         '''Receive n bytes of data from the instrument

@@ -1,0 +1,584 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>SR844Widget</class>
+ <widget class="QWidget" name="SR844Widget">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>541</width>
+    <height>250</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>SR844Widget</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <property name="spacing">
+    <number>2</number>
+   </property>
+   <property name="leftMargin">
+    <number>2</number>
+   </property>
+   <property name="topMargin">
+    <number>1</number>
+   </property>
+   <property name="rightMargin">
+    <number>2</number>
+   </property>
+   <property name="bottomMargin">
+    <number>1</number>
+   </property>
+   <item>
+    <widget class="QGroupBox" name="inputBox">
+     <property name="title">
+      <string>SRS SR844 RF Lockin Amplifier</string>
+     </property>
+     <layout class="QGridLayout" name="gridLayout">
+      <item row="0" column="0">
+       <widget class="QLabel" name="wide_reserveLabel">
+        <property name="text">
+         <string>Wide Reserve</string>
+        </property>
+        <property name="buddy">
+         <cstring>wide_reserve</cstring>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QComboBox" name="wide_reserve">
+        <item>
+         <property name="text">
+          <string>High</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Normal</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Low Noise</string>
+         </property>
+        </item>
+       </widget>
+      </item>
+      <item row="0" column="2">
+       <widget class="QLabel" name="input_impedanceLabel">
+        <property name="text">
+         <string>Impedance</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="3">
+       <widget class="QComboBox" name="input_impedance">
+        <item>
+         <property name="text">
+          <string>50 Ω</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>1 MΩ</string>
+         </property>
+        </item>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QFrame" name="measurementFrame">
+     <property name="frameShape">
+      <enum>QFrame::StyledPanel</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Sunken</enum>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_2">
+      <property name="leftMargin">
+       <number>5</number>
+      </property>
+      <property name="topMargin">
+       <number>1</number>
+      </property>
+      <property name="rightMargin">
+       <number>5</number>
+      </property>
+      <property name="bottomMargin">
+       <number>1</number>
+      </property>
+      <property name="horizontalSpacing">
+       <number>5</number>
+      </property>
+      <property name="verticalSpacing">
+       <number>2</number>
+      </property>
+      <item row="0" column="1">
+       <widget class="QComboBox" name="sensitivity">
+        <item>
+         <property name="text">
+          <string>100 nVrms </string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>300 nVrms</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>     1 μVrms</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>     3 μVrms</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>  10 μVrms</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>  30 μVrms</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>100 μVrms</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>300 μVrms</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>    1 mVrms</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>    3 mVrms</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>  10 mVrms </string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>  30 mVrms</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>100 mVrms</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>300 mVrms</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>    ·1 Vrms</string>
+         </property>
+        </item>
+       </widget>
+      </item>
+      <item row="1" column="2">
+       <widget class="QLabel" name="low_pass_slopeLabel">
+        <property name="text">
+         <string>Low Pass Slope</string>
+        </property>
+        <property name="buddy">
+         <cstring>low_pass_slope</cstring>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="0">
+       <widget class="QLabel" name="sensitivityLabel">
+        <property name="text">
+         <string>Sensitivity</string>
+        </property>
+        <property name="buddy">
+         <cstring>sensitivity</cstring>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="2">
+       <widget class="QLabel" name="time_constantLabel">
+        <property name="text">
+         <string>Time Constant</string>
+        </property>
+        <property name="buddy">
+         <cstring>time_constant</cstring>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="close_reserveLabel">
+        <property name="text">
+         <string>Close Reserve</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QComboBox" name="close_reserve">
+        <item>
+         <property name="text">
+          <string>High</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Normal</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Low</string>
+         </property>
+        </item>
+       </widget>
+      </item>
+      <item row="0" column="3">
+       <widget class="QComboBox" name="time_constant">
+        <item>
+         <property name="text">
+          <string>100 μs</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>300 μs</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>  1 ms</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>  3 ms</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string> 10 ms</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string> 30 ms</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>100 ms</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>300 ms</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>  1 s</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>  3 s</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string> 10 s</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string> 30 s</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>100 s</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>300 s</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>  1 ks</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>  3 ks</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string> 10 ks</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>30 ks</string>
+         </property>
+        </item>
+       </widget>
+      </item>
+      <item row="1" column="3">
+       <widget class="QComboBox" name="low_pass_slope">
+        <item>
+         <property name="text">
+          <string>No Filter</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string> 6 dB/octave</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>12 dB/octave</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>18 dB/octave</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>24 dB/octave</string>
+         </property>
+        </item>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QFrame" name="referenceFrame">
+     <property name="frameShape">
+      <enum>QFrame::StyledPanel</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Sunken</enum>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_3">
+      <property name="leftMargin">
+       <number>5</number>
+      </property>
+      <property name="topMargin">
+       <number>1</number>
+      </property>
+      <property name="rightMargin">
+       <number>5</number>
+      </property>
+      <property name="bottomMargin">
+       <number>1</number>
+      </property>
+      <property name="horizontalSpacing">
+       <number>5</number>
+      </property>
+      <property name="verticalSpacing">
+       <number>2</number>
+      </property>
+      <item row="0" column="0">
+       <widget class="QCheckBox" name="internal_reference">
+        <property name="text">
+         <string>Internal Reference</string>
+        </property>
+        <property name="checkable">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QDoubleSpinBox" name="frequency">
+        <property name="suffix">
+         <string> Hz</string>
+        </property>
+        <property name="decimals">
+         <number>1</number>
+        </property>
+        <property name="minimum">
+         <double>25000.000000000000000</double>
+        </property>
+        <property name="maximum">
+         <double>200000000.000000000000000</double>
+        </property>
+        <property name="value">
+         <double>25000.000000000000000</double>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="frequencyLabel">
+        <property name="text">
+         <string>Frequency</string>
+        </property>
+        <property name="buddy">
+         <cstring>frequency</cstring>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="0">
+       <widget class="QLabel" name="phase_label">
+        <property name="text">
+         <string>Phase</string>
+        </property>
+        <property name="buddy">
+         <cstring>phase</cstring>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="1">
+       <widget class="QDoubleSpinBox" name="phase">
+        <property name="suffix">
+         <string>°</string>
+        </property>
+        <property name="minimum">
+         <double>-360.000000000000000</double>
+        </property>
+        <property name="maximum">
+         <double>360.000000000000000</double>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="2">
+       <widget class="QLabel" name="harmonicLabel">
+        <property name="text">
+         <string>Harmonic</string>
+        </property>
+        <property name="buddy">
+         <cstring>harmonic</cstring>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="3">
+       <widget class="QSpinBox" name="harmonic">
+        <property name="minimum">
+         <number>1</number>
+        </property>
+        <property name="maximum">
+         <number>20000</number>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="2">
+       <widget class="QLabel" name="reference_triggerLabel">
+        <property name="text">
+         <string>Impedance</string>
+        </property>
+        <property name="buddy">
+         <cstring>reference_impedance</cstring>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="3">
+       <widget class="QComboBox" name="reference_impedance">
+        <item>
+         <property name="text">
+          <string>50 Ω</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>10 kΩ</string>
+         </property>
+        </item>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>internal_reference</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>reference_impedance</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>72</x>
+     <y>171</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>273</x>
+     <y>172</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>internal_reference</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>reference_triggerLabel</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>72</x>
+     <y>171</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>378</x>
+     <y>171</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>internal_reference</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>frequency</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>72</x>
+     <y>171</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>69</x>
+     <y>197</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>internal_reference</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>frequencyLabel</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>72</x>
+     <y>171</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>167</x>
+     <y>197</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>

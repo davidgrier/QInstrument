@@ -1,20 +1,16 @@
-from QInstrument.lib.QInstrument import QInstrument
+from QInstrument.lib.QInstrumentMixin import QInstrumentMixin
 from QInstrument.lib.QSerialInterface import QSerialInterface
-import logging
 
 
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.ERROR)
-
-
-class QSerialInstrument(QInstrument):
+class QSerialInstrument(QInstrumentMixin, QSerialInterface):
     '''Base class for instruments connected to serial ports
 
     ........
 
     Inherits
     --------
-    QInstrument.lib.QInstrument
+    QInstrument.lib.QInstrumentMixin
+    QInstrument.lib.QSerialInterface
 
     Properties
     ----------
@@ -49,7 +45,24 @@ class QSerialInstrument(QInstrument):
     >>> instrument = QSerialInstrument().find()
 
     '''
+    pass
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.interface = QSerialInterface(**kwargs)
+
+def example(portname='/dev/ttyUSB0'):
+    from PyQt5.QtCore import QCoreApplication
+
+    app = QCoreApplication([])
+
+    comm = dict(baudRate=QSerialInstrument.Baud9600,
+                dataBits=QSerialInstrument.Data8,
+                stopBits=QSerialInstrument.OneStop,
+                parity=QSerialInstrument.NoParity,
+                flowControl=QSerialInstrument.NoFlowControl,
+                eol=b'\r')
+
+    a = QSerialInstrument(portname, **comm)
+    print(a.handshake('*IDN?'))
+
+
+if __name__ == '__main__':
+    example()
