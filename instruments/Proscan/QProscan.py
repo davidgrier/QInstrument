@@ -41,24 +41,25 @@ class QProscan(QSerialInstrument):
 
     '''
 
-    settings = dict(baudRate=QSerialInstrument.Baud9600,
-                    dataBits=QSerialInstrument.Data8,
-                    stopBits=QSerialInstrument.OneStop,
-                    parity=QSerialInstrument.NoParity,
-                    flowControl=QSerialInstrument.NoFlowControl,
-                    eol='\r')
+    comm = dict(baudRate=QSerialInstrument.Baud9600,
+                dataBits=QSerialInstrument.Data8,
+                stopBits=QSerialInstrument.OneStop,
+                parity=QSerialInstrument.NoParity,
+                flowControl=QSerialInstrument.NoFlowControl,
+                eol='\r')
 
     positionChanged = pyqtSignal(object)
 
     def Property(cmd, dtype=int, res='0'):
         def getter(self):
             logger.debug('Getting')
-            return self.get_value(cmd, dtype=dtype)
+            return self.get_value(cmd, dtype)
 
         def setter(self, value):
             value = dtype(value)
             logger.debug(f'Setting {value}')
             self.expect(f'{cmd},{value}', res)
+
         return pyqtProperty(dtype, getter, setter)
 
     speed = Property('SMS')
@@ -70,7 +71,7 @@ class QProscan(QSerialInstrument):
     zscurve = Property('SCZ')
 
     def __init__(self, portName=None, **kwargs):
-        super().__init__(portName, **self.settings, **kwargs)
+        super().__init__(portName, **self.comm, **kwargs)
         self._mirror = False
         self._flip = False
 

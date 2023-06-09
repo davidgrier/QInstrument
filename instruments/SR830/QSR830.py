@@ -119,16 +119,10 @@ class QSR830(QSerialInstrument):
 
     def Property(pstr, dtype=int):
         def getter(self):
-            response = self.handshake(f'{pstr}?')
-            try:
-                value = dtype(response)
-            except ValueError:
-                value = None
-            return value
+            return self.get_value(f'{pstr}?', dtype)
 
         def setter(self, value):
-            if dtype == bool:
-                value = int(value)
+            value = int(value) if (dtype == bool) else dtype(value)
             self.transmit(f'{pstr}{value}')
 
         return pyqtProperty(dtype, getter, setter)

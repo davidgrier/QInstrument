@@ -36,6 +36,29 @@ class QInstrumentMixin(object):
         self.transmit(data)
         return self.receive(**kwargs)
 
+    def get_value(self, query, dtype=float):
+        '''Return value from the instrument
+
+        Arguments
+        ---------
+        query: str
+            String to be transmitted to the instrument
+        dtype: type
+            Optional specification of the data type to be returned
+            Default: float
+
+        Returns
+        -------
+        value: dtype
+            Value returned by the instrument
+        '''
+        response = self.handshake(query)
+        try:
+            value = dtype(response)
+        except ValueError:
+            value = None
+        return value
+
     def expect(self, query, response, **kwargs):
         return response in self.handshake(query, **kwargs)
 

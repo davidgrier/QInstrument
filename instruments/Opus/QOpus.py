@@ -28,15 +28,15 @@ class QOpus(QSerialInstrument):
          Set Power [mW]
     '''
 
-    settings = dict(baudRate=QSerialInstrument.Baud19200,
-                    dataBits=QSerialInstrument.Data8,
-                    stopBits=QSerialInstrument.OneStop,
-                    parity=QSerialInstrument.NoParity,
-                    flowControl=QSerialInstrument.NoFlowControl,
-                    eol='\r')
+    comm = dict(baudRate=QSerialInstrument.Baud19200,
+                dataBits=QSerialInstrument.Data8,
+                stopBits=QSerialInstrument.OneStop,
+                parity=QSerialInstrument.NoParity,
+                flowControl=QSerialInstrument.NoFlowControl,
+                eol='\r')
 
     def __init__(self, portName=None, **kwargs):
-        super().__init__(portName, **self.settings, **kwargs)
+        super().__init__(portName, **self.comm, **kwargs)
 
     def identify(self):
         return 'MPC-D-1.0.07A' in self.handshake('VERSION?')
@@ -44,12 +44,13 @@ class QOpus(QSerialInstrument):
     def Property(cmd, dtype=int, res='0'):
         def getter(self):
             logger.debug('Getting')
-            return self.get_value(cmd, dtype=dtype)
+            return self.get_value(cmd, dtype)
 
         def setter(self, value):
             value = dtype(value)
             logger.debug(f'Setting {value}')
             self.expect(f'{cmd},{value}', res)
+
         return pyqtProperty(dtype, getter, setter)
 
     def keyswitch(self):

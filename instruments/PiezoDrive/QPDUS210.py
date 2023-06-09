@@ -3,23 +3,24 @@ from PyQt5.QtCore import pyqtProperty
 from struct import unpack
 import logging
 
+
 logging.basicConfig()
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.WARNING)
 
 
 class QPDUS210(QSerialInstrument):
-    settings = dict(baudRate=QSerialInstrument.Baud9600,
-                    dataBits=QSerialInstrument.Data8,
-                    stopBits=QSerialInstrument.OneStop,
-                    parity=QSerialInstrument.NoParity,
-                    flowControl=QSerialInstrument.NoFlowControl,
-                    timeout=1000.,
-                    eol='\r')
+    comm = dict(baudRate=QSerialInstrument.Baud9600,
+                dataBits=QSerialInstrument.Data8,
+                stopBits=QSerialInstrument.OneStop,
+                parity=QSerialInstrument.NoParity,
+                flowControl=QSerialInstrument.NoFlowControl,
+                timeout=1000.,
+                eol='\r')
 
     def Property(pstr, dtype=int):
         def getter(self):
-            return self.get_value(f'get{pstr}', dtype=dtype)
+            return self.get_value(f'get{pstr}', dtype)
 
         def setter(self, value):
             value = int(value) if (dtype == bool) else dtype(value)

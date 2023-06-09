@@ -136,16 +136,16 @@ class QDS345(QSerialInstrument):
     sampling_frequency: float
     '''
 
-    portSettings = dict(baudRate=QSerialInstrument.Baud9600,
-                        dataBits=QSerialInstrument.Data8,
-                        stopBits=QSerialInstrument.TwoStop,
-                        parity=QSerialInstrument.NoParity,
-                        flowControl=QSerialInstrument.NoFlowControl,
-                        eol='\n')
+    comm = dict(baudRate=QSerialInstrument.Baud9600,
+                dataBits=QSerialInstrument.Data8,
+                stopBits=QSerialInstrument.TwoStop,
+                parity=QSerialInstrument.NoParity,
+                flowControl=QSerialInstrument.NoFlowControl,
+                eol='\n')
 
     def Property(pstr, dtype=float):
         def getter(self):
-            return self.get_value(f'{pstr}?', dtype=dtype)
+            return self.get_value(f'{pstr}?', dtype)
 
         def setter(self, value):
             value = int(value) if (dtype == bool) else dtype(value)
@@ -177,7 +177,7 @@ class QDS345(QSerialInstrument):
     trigger_source = Property('TSRC', int)
 
     def __init__(self, portName=None, **kwargs):
-        super().__init__(portName, **self.portSettings, **kwargs)
+        super().__init__(portName, **self.comm, **kwargs)
         self._muted = False
 
     def identify(self):
