@@ -105,7 +105,7 @@ def example():
         print('position: ({:+.2f}, {:+.2f})'.format(*xy), end='\r')
 
     app = QApplication([])
-    joystick = QJoystick()
+    joystick = QJoystick(fullscale=2.)
     joystick.positionChanged.connect(report)
     joystick.show()
     app.exec()
