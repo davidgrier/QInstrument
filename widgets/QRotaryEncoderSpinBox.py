@@ -1,9 +1,9 @@
 from PyQt5 import uic
 from PyQt5.QtWidgets import QWidget
 from PyQt5.QtCore import pyqtSlot
-import os
 from matplotlib.colors import (to_rgb, to_hex)
 import numpy as np
+from pathlib import Path
 
 
 class QRotaryEncoderSpinBox(QWidget):
@@ -77,9 +77,7 @@ class QRotaryEncoderSpinBox(QWidget):
         self.setColors(colors or ('white', 'red'))
 
     def _loadUi(self):
-        uifile = os.path.splitext(__file__)[0] + '.ui'
-        dir = os.path.dirname(os.path.abspath(__file__))
-        uipath = os.path.join(dir, uifile)
+        uipath = Path(__file__).with_suffix('.ui')
         form, _ = uic.loadUiType(uipath)
         ui = form()
         ui.setupUi(self)
