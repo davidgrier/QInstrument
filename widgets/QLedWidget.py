@@ -147,12 +147,16 @@ class QLedWidget(QWidget):
         return QRectF(QPointF(x-dim, y-dim), QPointF(x+dim, y+dim))
 
 
-if __name__ == '__main__':
+def example():
     from PyQt5.QtWidgets import QApplication
 
-    app = QApplication(sys.argv)
-    widget = QLedWidget()
-    widget.color = widget.VIOLET
-    widget.blink = True
-    widget.show()
-    sys.exit(app.exec_())
+    app = QApplication([])
+    led = QLedWidget()
+    led.color = led.VIOLET
+    led.blink = True
+    led.show()
+    app.exec()
+
+
+if __name__ == '__main__':
+    example()
