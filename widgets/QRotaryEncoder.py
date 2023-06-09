@@ -66,11 +66,18 @@ class QRotaryEncoder(QDial):
         return self._steps
 
 
-if __name__ == '__main__':
+def example():
     from PyQt5.QtWidgets import QApplication
-    import sys
 
-    app = QApplication(sys.argv)
-    encoder = QRotaryEncoder()
+    def report(value):
+        print(f'value = {value:03d}', end='\r')
+
+    app = QApplication([])
+    encoder = QRotaryEncoder(steps=200)
+    encoder.valueChanged.connect(report)
     encoder.show()
-    sys.exit(app.exec_())
+    app.exec()
+
+
+if __name__ == '__main__':
+    example()
