@@ -1,5 +1,5 @@
 from PyQt5.QtCore import (pyqtProperty, pyqtSlot)
-from QInstrument.lib import QSerialInstrument
+from QInstrument.lib.QSerialInstrument import QSerialInstrument
 
 
 class QSR830(QSerialInstrument):
@@ -9,7 +9,7 @@ class QSR830(QSerialInstrument):
 
     Inherits
     --------
-    SerialInstrument
+    QInstrument.lib.QSerialInstrument
 
     Properties
     ==========
