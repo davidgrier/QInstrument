@@ -1,6 +1,6 @@
 from PyQt5 import uic
 from PyQt5.QtWidgets import QWidget
-from PyQt5.QtCore import (pyqtSlot, pyqtProperty)
+from PyQt5.QtCore import pyqtSlot
 import os
 from matplotlib.colors import (to_rgb, to_hex)
 import numpy as np
@@ -123,11 +123,10 @@ class QRotaryEncoderSpinBox(QWidget):
         self._setBackgroundColor(color)
 
 
-def main():
+def example():
     from PyQt5.QtWidgets import QApplication
-    import sys
 
-    app = QApplication(sys.argv)
+    app = QApplication([])
     widget = QRotaryEncoderSpinBox()
     widget.setRange(0., 5)
     widget.setSingleStep(0.01)
@@ -135,8 +134,8 @@ def main():
     widget.setSuffix(' W')
     widget.setColors(('white', '#68ff00'))
     widget.show()
-    sys.exit(app.exec_())
+    app.exec()
 
 
 if __name__ == '__main__':
-    main()
+    example()
