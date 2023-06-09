@@ -3,8 +3,7 @@ from PyQt5.QtCore import (QByteArray, QPointF, QRectF, QTimer,
                           pyqtProperty, pyqtSlot)
 from PyQt5.QtGui import QPainter
 from PyQt5.QtSvg import QSvgRenderer
-import os
-import sys
+from pathlib import Path
 
 
 class QLedWidget(QWidget):
@@ -59,6 +58,8 @@ class QLedWidget(QWidget):
                          ON:  ('#082686', '#0342eb')},
                 VIOLET: {OFF: ('#45098f', '#471b7d'),
                          ON:  ('#5a00cc', '#a65fff')}}
+
+    SVG_FILE = 'QLedWidget.svg'
 
     def __init__(self, *args,
                  color=None,
@@ -123,9 +124,7 @@ class QLedWidget(QWidget):
         self.state = self.ON if self.state is self.OFF else self.OFF
 
     def _get_template(self):
-        file = sys.modules[self.__module__].__file__
-        dir = os.path.dirname(os.path.abspath(file))
-        path = os.path.join(dir, 'QLedWidget.txt')
+        path = Path(__file__).parent / self.SVG_FILE
         with open(path, 'r') as f:
             template = f.read()
         return template
