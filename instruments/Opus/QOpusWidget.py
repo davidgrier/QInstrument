@@ -3,6 +3,7 @@ from QInstrument.instruments.Opus.QOpus import QOpus
 from PyQt5.QtCore import (pyqtSlot, QTimer)
 import logging
 
+
 logging.basicConfig()
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -40,9 +41,9 @@ class QOpusWidget(QInstrumentWidget):
 
     @pyqtSlot()
     def poll(self):
-        self.device.send('POWER?')
-        self.device.send('CURRENT?')
-        self.device.send('STATUS?')
+        self.device.transmit('POWER?')
+        self.device.transmit('CURRENT?')
+        self.device.transmit('STATUS?')
 
     @pyqtSlot(int)
     def updatePower(self, value):
@@ -80,7 +81,7 @@ class QOpusWidget(QInstrumentWidget):
         self.ui.PowerDial.setValue(int(value))
 
     def disable(self):
-        self.device.send('OFF')
+        self.device.transmit('OFF')
 
 
 def main():

@@ -124,7 +124,7 @@ class QSR830(QSerialInstrument):
         def setter(self, value):
             if dtype == bool:
                 value = int(value)
-            self.send(f'{pstr}{value}')
+            self.transmit(f'{pstr}{value}')
 
         return pyqtProperty(dtype, getter, setter)
 
@@ -159,24 +159,24 @@ class QSR830(QSerialInstrument):
 
     @pyqtSlot()
     def reset(self):
-        self.send('*RST')
+        self.transmit('*RST')
 
     @pyqtSlot()
     def auto_gain(self):
         '''Autorange gain'''
-        self.send('AGAN')
+        self.transmit('AGAN')
 
     @pyqtSlot()
     def auto_reserve(self):
         '''Autorange dynamic reserve'''
-        self.send('ARSV')
+        self.transmit('ARSV')
 
     @pyqtSlot()
     def auto_phase(self):
         '''Autorange phase'''
-        self.send('APHS')
+        self.transmit('APHS')
 
     @pyqtSlot()
     def auto_offset(self, channel):
         '''Autorange offset'''
-        self.send('AOFF{channel}')
+        self.transmit('AOFF{channel}')

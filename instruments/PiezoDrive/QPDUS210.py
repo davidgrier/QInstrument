@@ -23,7 +23,7 @@ class QPDUS210(QSerialInstrument):
 
         def setter(self, value):
             value = int(value) if (dtype == bool) else dtype(value)
-            self.send(f'set{pstr}{value}')
+            self.transmit(f'set{pstr}{value}')
 
         return pyqtProperty(dtype, getter, setter)
 
@@ -33,7 +33,7 @@ class QPDUS210(QSerialInstrument):
 
         def setter(self, value):
             value = int(value) if (dtype == bool) else dtype(value)
-            self.send(f'set{sstr}{value}')
+            self.transmit(f'set{sstr}{value}')
 
         return pyqtProperty(dtype, getter, setter)
 
@@ -47,7 +47,7 @@ class QPDUS210(QSerialInstrument):
                 cmd = 'ENABLE' if (pstr == 'ENABLE') else f'en{pstr}'
             else:
                 cmd = 'DISABLE' if (pstr == 'ENABLE') else f'dis{pstr}'
-            self.send(cmd)
+            self.transmit(cmd)
 
         return pyqtProperty(int, getter, setter)
 
@@ -92,7 +92,7 @@ class QPDUS210(QSerialInstrument):
         super().__init__(portName, **self.settings, **kwargs)
 
     def identify(self):
-        '''DISABLE returns FALSE to confirm the driver has been disabled, 
+        '''DISABLE returns FALSE to confirm the driver has been disabled,
         and also defaults the driver to its (safer) disabled state'''
         return 'FALSE' in self.handshake('DISABLE')
 
@@ -102,10 +102,10 @@ class QPDUS210(QSerialInstrument):
 
     @pyqtProperty(dict)
     def state(self):
-        '''Uses built-in feature to get all info from PDUS210 
+        '''Uses built-in feature to get all info from PDUS210
         in one serial command'''
         self.blockSignals(True)
-        self.send('getSTATE')
+        self.transmit('getSTATE')
         data = self.readn(80)
         self.blockSignals(False)
         keys = ['enabled', 'phaseTracking', 'currentTracking', 'powerTracking',

@@ -97,7 +97,7 @@ class QOpus(QSerialInstrument):
 
     @QSerialInstrument.blocking
     def _read_timers(self, query):
-        self.send(query)
+        self.transmit(query)
         response = []
         while True:
             this = self.read_until()

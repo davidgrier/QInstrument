@@ -208,7 +208,7 @@ class QProscan(QSerialInstrument):
     @resolution.setter
     def resolution(self, value):
         '''Get and set the resolution for the stage in micrometers'''
-        self.send(f'RES,s,{value}')
+        self.transmit(f'RES,s,{value}')
 
     def stepLeft(self):
         '''Step stage left'''
@@ -248,7 +248,7 @@ class QProscan(QSerialInstrument):
 
     @QSerialInstrument.blocking
     def _read_lines(self, query):
-        self.send(query)
+        self.transmit(query)
         response = []
         while True:
             this = self.read_until()

@@ -3,6 +3,7 @@ from QInstrument.instruments.Proscan.QProscan import QProscan
 from PyQt5.QtCore import (pyqtSlot, QTimer)
 import logging
 
+
 logging.basicConfig()
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -41,7 +42,7 @@ class QProscanWidget(QInstrumentWidget):
 
     @pyqtSlot()
     def poll(self):
-        self.device.send('P')
+        self.device.transmit('P')
 
     @pyqtSlot(str)
     def updatePosition(self, data):

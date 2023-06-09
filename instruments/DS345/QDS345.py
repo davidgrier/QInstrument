@@ -149,7 +149,7 @@ class QDS345(QSerialInstrument):
 
         def setter(self, value):
             value = int(value) if (dtype == bool) else dtype(value)
-            self.send(f'{pstr}{value}')
+            self.transmit(f'{pstr}{value}')
 
         return pyqtProperty(dtype, getter, setter)
 
@@ -186,7 +186,7 @@ class QDS345(QSerialInstrument):
     @pyqtSlot()
     def reset(self):
         '''Rest DS345 to default settings'''
-        self.send('*RST')
+        self.transmit('*RST')
 
     @pyqtProperty(float)
     def amplitude(self):
@@ -194,7 +194,7 @@ class QDS345(QSerialInstrument):
 
     @amplitude.setter
     def amplitude(self, value):
-        self.send(f'AMPL {value}VP')
+        self.transmit(f'AMPL {value}VP')
 
     @pyqtProperty(bool)
     def mute(self):
@@ -220,21 +220,21 @@ class QDS345(QSerialInstrument):
         '''
         if self.trigger_source != 0:
             logger.warn('Only effective if trigger_source is 0.')
-        self.send('*TRG')
+        self.transmit('*TRG')
 
     def reset_sweep_markers(self):
-        self.send('MKSP')
+        self.transmit('MKSP')
 
     def set_sweep_span(self):
-        self.send('SPMK')
+        self.transmit('SPMK')
 
     def set_ttl(self):
         '''Set output to TTL levels'''
-        self.send('ATTL')
+        self.transmit('ATTL')
 
     def set_ecl(self):
         '''Set output to ECL levels'''
-        self.send('AECL')
+        self.transmit('AECL')
 
     def load_waveform(self, waveform):
         '''Load arbitrary waveform
@@ -253,7 +253,7 @@ class QDS345(QSerialInstrument):
         data = np.clip(np.round(waveform), -2048, 2047).astype('>i2')
         checksum = (np.sum(data) & 0xFFFF).astype('>i2')
         data = np.append(data, checksum)
-        self.send(data.tobytes())
+        self.transmit(data.tobytes())
 
     def amplitude_modulation(self, waveform):
         '''Load arbitrary amplitude modulation
@@ -268,8 +268,8 @@ class QDS345(QSerialInstrument):
         self.modulation = False
         self.modulation_type = 2
         self.modulation_waveform = 5
-        self.send(f'AMOD?{len(signal)}')
+        self.transmit(f'AMOD?{len(signal)}')
         self.read_until()
-        self.send(signal.tobytes())
-        self.send(checksum)
+        self.transmit(signal.tobytes())
+        self.transmit(checksum)
         self.modulation = True
