@@ -1,13 +1,13 @@
 from PyQt5.QtWidgets import QWidget
-from PyQt5.QtGui import (QPainter, QPen, QBrush, QColor)
-from PyQt5.QtCore import (Qt, QPointF, QLineF, QRectF,
-                          pyqtSignal, pyqtProperty)
+from PyQt5.QtGui import (QPainter, QColor)
+from PyQt5.QtCore import (Qt, QPointF, QLineF, QRectF, pyqtSignal)
 import numpy as np
 import logging
 
+
 logging.basicConfig()
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.WARNING)
 
 
 class QJoystick(QWidget):
@@ -31,7 +31,7 @@ class QJoystick(QWidget):
         self.radius = min(self.size().width(), self.size().height()) / 2
         self.radius *= (1. - self.padding)
         self.limit = (1. - self.knobSize) * self.radius
-        
+
     def paintEvent(self, event):
         if self.isEnabled():
             pen, bg, knob = Qt.black, QColor('#F8EEFF'), Qt.gray
@@ -87,7 +87,7 @@ class QJoystick(QWidget):
         else:
             fx, fy = 0., 0.
         return np.array([fx, fy])
-    
+
     def emitSignal(self):
         values = self._fractions()
         if np.allclose(values, self._values, self.tolerance):
@@ -98,11 +98,18 @@ class QJoystick(QWidget):
         logger.debug('{:.2f} {:.2f}'.format(*values))
 
 
-if __name__ == '__main__':
+def example():
     from PyQt5.QtWidgets import QApplication
-    import sys
 
-    app = QApplication(sys.argv)
+    def report(xy):
+        print('position: ({:+.2f}, {:+.2f})'.format(*xy), end='\r')
+
+    app = QApplication([])
     joystick = QJoystick()
+    joystick.positionChanged.connect(report)
     joystick.show()
-    sys.exit(app.exec_())
+    app.exec()
+
+
+if __name__ == '__main__':
+    example()
