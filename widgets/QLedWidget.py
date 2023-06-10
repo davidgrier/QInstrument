@@ -20,7 +20,7 @@ class QLedWidget(QWidget):
 
     Colors
     ------
-    RED, AMBER, GREEN, BLUE, VIOLET
+    RED, AMBER, GREEN, BLUE, VIOLET, WHITE
 
     States
     ------
@@ -44,20 +44,23 @@ class QLedWidget(QWidget):
     GREEN = 3
     BLUE = 4
     VIOLET = 5
+    WHITE = 6
 
     OFF = 1
     ON = 2
 
-    hexcodes = {RED:    {OFF: ('#3f0000', '#a00000'),
-                         ON:  ('#af0000', '#ff0f0f')},
-                AMBER:  {OFF: ('#aa4400', '#ad892c'),
-                         ON:  ('#d45500', '#ffd42a')},
-                GREEN:  {OFF: ('#001c00', '#008200'),
-                         ON:  ('#009400', '#00d700')},
-                BLUE:   {OFF: ('#102151', '#0a163c'),
-                         ON:  ('#082686', '#0342eb')},
-                VIOLET: {OFF: ('#45098f', '#471b7d'),
-                         ON:  ('#5a00cc', '#a65fff')}}
+    hexcodes = {RED:    {OFF: ('3f0000', 'a00000'),
+                         ON:  ('af0000', 'ff0f0f')},
+                AMBER:  {OFF: ('aa4400', 'ad892c'),
+                         ON:  ('d45500', 'ffd42a')},
+                GREEN:  {OFF: ('001c00', '008200'),
+                         ON:  ('009400', '00d700')},
+                BLUE:   {OFF: ('102151', '0a163c'),
+                         ON:  ('082686', '0342eb')},
+                VIOLET: {OFF: ('45098f', '471b7d'),
+                         ON:  ('5a00cc', 'a65fff')},
+                WHITE:  {OFF: ('505055', 'a0a0aa'),
+                         ON:  ('d0d0dd', 'f0f0ff')}}
 
     SVG_FILE = 'QLedWidget.svg'
 
@@ -135,9 +138,9 @@ class QLedWidget(QWidget):
     def paintEvent(self, event):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing, True)
-        hexcodes = self.hexcodes[self.color][self.state]
-        _xml = self.template.format(*hexcodes).encode('utf-8')
-        self.renderer.load(QByteArray(_xml))
+        a, b = self.hexcodes[self.color][self.state]
+        svg = self.template.replace('af0000', a).replace('ff0f0f', b)
+        self.renderer.load(QByteArray(svg.encode()))
         self.renderer.render(painter, self._bounds())
 
     def _bounds(self):
@@ -151,7 +154,7 @@ def example():
 
     app = QApplication([])
     led = QLedWidget()
-    led.color = led.VIOLET
+    led.color = led.WHITE
     led.blink = True
     led.show()
     app.exec()
