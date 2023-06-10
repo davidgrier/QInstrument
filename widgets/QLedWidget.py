@@ -46,8 +46,8 @@ class QLedWidget(QWidget):
     VIOLET = 5
     WHITE = 6
 
-    OFF = 1
-    ON = 2
+    OFF = False
+    ON = True
 
     hexcodes = {RED:    {OFF: ('3f0000', 'a00000'),
                          ON:  ('af0000', 'ff0f0f')},
@@ -124,7 +124,8 @@ class QLedWidget(QWidget):
 
     @pyqtSlot()
     def flipState(self):
-        self.state = self.ON if self.state is self.OFF else self.OFF
+        self.state = not self.state
+#        self.state = self.ON if self.state is self.OFF else self.OFF
 
     def _get_template(self):
         path = Path(__file__).parent / self.SVG_FILE
