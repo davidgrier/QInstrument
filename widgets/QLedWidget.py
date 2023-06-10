@@ -41,9 +41,9 @@ class QLedWidget(QWidget):
     ------
     ON, OFF
 
-    color: Colors
+    color: QLedWidget.Color
         Color of the LED indicator
-    state: States
+    state: QLedWidget.State
         ON: LED is bright
         OFF: LED is dark
     blink: bool
