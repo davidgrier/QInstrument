@@ -3,7 +3,22 @@ from PyQt5.QtCore import (QByteArray, QPointF, QRectF, QTimer,
                           pyqtProperty, pyqtSlot)
 from PyQt5.QtGui import QPainter
 from PyQt5.QtSvg import QSvgRenderer
+from enum import Enum
 from pathlib import Path
+
+
+class Color(Enum):
+    RED = 1
+    AMBER = 2
+    GREEN = 3
+    BLUE = 4
+    VIOLET = 5
+    WHITE = 6
+
+
+class State(Enum):
+    OFF = 0
+    ON = 1
 
 
 class QLedWidget(QWidget):
@@ -39,15 +54,15 @@ class QLedWidget(QWidget):
         in milliseconds
     '''
 
-    RED = 1
-    AMBER = 2
-    GREEN = 3
-    BLUE = 4
-    VIOLET = 5
-    WHITE = 6
+    RED = Color.RED
+    AMBER = Color.AMBER
+    GREEN = Color.GREEN
+    BLUE = Color.BLUE
+    VIOLET = Color.VIOLET
+    WHITE = Color.WHITE
 
-    OFF = False
-    ON = True
+    OFF = State.OFF
+    ON = State.ON
 
     hexcodes = {RED:    {OFF: ('3f0000', 'a00000'),
                          ON:  ('af0000', 'ff0f0f')},
@@ -60,9 +75,8 @@ class QLedWidget(QWidget):
                 VIOLET: {OFF: ('45098f', '471b7d'),
                          ON:  ('5a00cc', 'a65fff')},
                 WHITE:  {OFF: ('505055', 'a0a0aa'),
-                         ON:  ('d0d0dd', 'f0f0ff')}}
-
-    SVG_FILE = 'QLedWidget.svg'
+                         ON:  ('d0d0dd', 'f0f0ff')}
+    }
 
     def __init__(self, *args,
                  color=None,
@@ -73,33 +87,26 @@ class QLedWidget(QWidget):
         super().__init__(*args, **kwargs)
         self.setMinimumSize(48, 48)
         self.sizePolicy().setWidthForHeight(True)
-        self.template = self._get_template()
         self.renderer = QSvgRenderer()
         self.timer = QTimer()
+        self.timer.timeout.connect(self.flipState)
+        self.template = self._load_template()
         self.color = color or self.RED
         self.state = state or self.ON
+        self._savedstate = self.state
         self.blink = blink or False
         self.interval = interval or 400
-        self._connectSignals()
 
-    @pyqtProperty(int)
-    def color(self):
-        return self._color
+    def __setattr__(self, name, value):
+        super().__setattr__(name, value)
+        if name in ['color', 'state']:
+            self.update()
 
-    @color.setter
-    def color(self, value):
-        self._color = value
-        self.update()
-
-    @pyqtProperty(int)
-    def state(self):
-        return self._state
-
-    @state.setter
-    def state(self, value):
-        self._state = value
-        self._setstate = value
-        self.update()
+    def _load_template(self):
+        svgfile = Path(__file__).parent / 'QLedWidget.svg'
+        with open(svgfile, 'r') as f:
+            template = f.read()
+        return template
 
     @pyqtProperty(bool)
     def blink(self):
@@ -109,32 +116,15 @@ class QLedWidget(QWidget):
     def blink(self, blink):
         self._blink = blink
         if blink:
+            self._savedstate = self.state
             self.timer.start(self.interval)
         else:
             self.timer.stop()
-            self.state = self._setstate
-
-    @pyqtProperty(int)
-    def interval(self):
-        return self._interval
-
-    @interval.setter
-    def interval(self, value):
-        self._interval = abs(value)
+            self.state = self._savedstate
 
     @pyqtSlot()
     def flipState(self):
-        self.state = not self.state
-#        self.state = self.ON if self.state is self.OFF else self.OFF
-
-    def _get_template(self):
-        path = Path(__file__).parent / self.SVG_FILE
-        with open(path, 'r') as f:
-            template = f.read()
-        return template
-
-    def _connectSignals(self):
-        self.timer.timeout.connect(self.flipState)
+        self.state = self.OFF if self.state == self.ON else self.ON
 
     def paintEvent(self, event):
         painter = QPainter(self)
@@ -155,9 +145,9 @@ def example():
 
     app = QApplication([])
     led = QLedWidget()
+    led.show()
     led.color = led.WHITE
     led.blink = True
-    led.show()
     app.exec()
 
 
