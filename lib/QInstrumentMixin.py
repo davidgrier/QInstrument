@@ -68,6 +68,7 @@ class QInstrumentMixin(object):
         kv = vars(type(self)).items()
         return [k for k, v in kv if isinstance(v, pyqtProperty)]
 
+    @pyqtProperty(list)
     def methods(self):
         '''List of instrument methods'''
         kv = vars(type(self)).items()
