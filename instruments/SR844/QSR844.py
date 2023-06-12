@@ -2,6 +2,30 @@ from PyQt5.QtCore import (pyqtProperty, pyqtSlot)
 from QInstrument.lib.QSerialInstrument import QSerialInstrument
 
 
+class Parameter(pyqtProperty):
+
+    def __init__(self, pstr, min=0, max=1, dtype=int, **kwargs):
+        super().__init__(dtype, self.getter, self.setter, **kwargs)
+        self.pstr = pstr
+        self.dtype = dtype
+        self.min = dtype(min)
+        self.max = dtype(max)
+
+    def getter(self, inst=None):
+        return self.get_value(f'{self.pstr}?', self.dtype)
+
+    def setter(self, inst=None, value=None):
+        if self.dtype == bool:
+            value = int(value)
+        elif value < self.min:
+            value = self.min
+        elif value > self.max:
+            value = self.max
+        else:
+            value = self.dtype(value)
+        self.transmit(f'{self.pstr}{value}')
+
+
 class QSR844(QSerialInstrument):
     '''SRS SR844 Lockin Amplifier
 
@@ -89,7 +113,7 @@ class QSR844(QSerialInstrument):
         Reset instrument to default settings
     '''
 
-    comm = dict(baudRate=QSerialInstrument.Baud9600,
+    comm = dict(baudRate=QSerialInstrument.Baud19200,
                 dataBits=QSerialInstrument.Data8,
                 stopBits=QSerialInstrument.OneStop,
                 parity=QSerialInstrument.NoParity,

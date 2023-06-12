@@ -2,8 +2,8 @@ from PyQt5 import uic
 from PyQt5.QtWidgets import (QWidget, QPushButton)
 from PyQt5.QtCore import (pyqtProperty, pyqtSlot, pyqtSignal)
 import types
-import os
 import sys
+from pathlib import Path
 import logging
 
 
@@ -200,9 +200,8 @@ class QInstrumentWidget(QWidget):
         return getattr(widget, method[typeName])
 
     def _loadUi(self, uiFile):
-        path = os.path.dirname(sys.modules[self.__module__].__file__)
-        filename = os.path.join(path, uiFile)
-        form, _ = uic.loadUiType(filename)
+        path = Path(sys.modules[self.__module__].__file__).parent
+        form, _ = uic.loadUiType(path / uiFile)
         ui = form()
         ui.setupUi(self)
         return ui
