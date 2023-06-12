@@ -1,6 +1,7 @@
 from PyQt5.QtCore import (pyqtProperty, pyqtSlot)
-from QInstrument.lib import QSerialInstrument
+from QInstrument.lib.QSerialInstrument import QSerialInstrument
 import logging
+
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -13,7 +14,7 @@ class QOpus(QSerialInstrument):
 
     Inherits
     --------
-    SerialInstrument
+    QInstrument.lib.QSerialInstrument
 
     Properties
     ----------
@@ -36,7 +37,8 @@ class QOpus(QSerialInstrument):
                 eol='\r')
 
     def __init__(self, portName=None, **kwargs):
-        super().__init__(portName, **self.comm, **kwargs)
+        args = self.comm | kwargs
+        super().__init__(portName, **args)
 
     def identify(self):
         return 'MPC-D-1.0.07A' in self.handshake('VERSION?')

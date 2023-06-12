@@ -71,7 +71,8 @@ class QProscan(QSerialInstrument):
     zscurve = Property('SCZ')
 
     def __init__(self, portName=None, **kwargs):
-        super().__init__(portName, **self.comm, **kwargs)
+        args = self.comm | kwargs
+        super().__init__(portName, **args)
         self._mirror = False
         self._flip = False
 
