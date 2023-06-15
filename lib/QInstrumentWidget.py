@@ -1,8 +1,12 @@
 from PyQt5 import uic
 from PyQt5.QtWidgets import (QWidget, QPushButton)
 from PyQt5.QtCore import (pyqtProperty, pyqtSlot, pyqtSignal)
+<<<<<<< HEAD
 import os
+=======
+>>>>>>> 7099515ee20160b2381e79813c6498aed24eb555
 import sys
+from pathlib import Path
 import logging
 
 
@@ -199,9 +203,8 @@ class QInstrumentWidget(QWidget):
         return getattr(widget, method[typeName])
 
     def _loadUi(self, uiFile):
-        path = os.path.dirname(sys.modules[self.__module__].__file__)
-        filename = os.path.join(path, uiFile)
-        form, _ = uic.loadUiType(filename)
+        path = Path(sys.modules[self.__module__].__file__).parent
+        form, _ = uic.loadUiType(path / uiFile)
         ui = form()
         ui.setupUi(self)
         return ui
@@ -210,6 +213,7 @@ class QInstrumentWidget(QWidget):
         '''Identify properties and methods used to control device
 
         This method seeks out UI widgets that have the same
+<<<<<<< HEAD
         name as device properties and methods.
         '''
         uikeys = set(vars(self.ui).keys())
@@ -232,6 +236,15 @@ class QInstrumentWidget(QWidget):
                 logger.debug(f'registering method: {k}')
                 self._methods.append(k)
         """
+=======
+        name as device attributes.
+        '''
+        uproperties = set(vars(self.ui).keys())
+        dproperties = set(self.device.properties)
+        dmethods = set(self.device.methods)
+        self._properties = list(uproperties & dproperties)
+        self._methods = list(uproperties & dmethods)
+>>>>>>> 7099515ee20160b2381e79813c6498aed24eb555
 
     def _syncProperties(self):
         '''Set UI widgets to device values'''

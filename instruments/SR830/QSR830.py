@@ -147,7 +147,8 @@ class QSR830(QSerialInstrument):
     time_constant = Property('OFLT')
 
     def __init__(self, portName=None, **kwargs):
-        super().__init__(portName, **self.comm, **kwargs)
+        args = self.comm | kwargs
+        super().__init__(portName, **args)
 
     def identify(self):
         return 'SR830' in self.handshake('*IDN?')

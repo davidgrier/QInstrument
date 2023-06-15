@@ -90,7 +90,8 @@ class QPDUS210(QSerialInstrument):
     temperature = Measured('TEMP', dtype=float)  # Celsius
 
     def __init__(self, portName=None, **kwargs):
-        super().__init__(portName, **self.settings, **kwargs)
+        args = self.comm | kwargs
+        super().__init__(portName, **args)
 
     def identify(self):
         '''DISABLE returns FALSE to confirm the driver has been disabled,
