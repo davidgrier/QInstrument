@@ -1,7 +1,6 @@
 from PyQt5 import uic
 from PyQt5.QtWidgets import (QWidget, QPushButton)
 from PyQt5.QtCore import (pyqtProperty, pyqtSlot, pyqtSignal)
-import types
 import os
 import sys
 import logging
@@ -211,10 +210,14 @@ class QInstrumentWidget(QWidget):
         '''Identify properties and methods used to control device
 
         This method seeks out UI widgets that have the same
-        name as device attributes. Attributes of the type
-        pyqtProperty are stored in self._properties. Those
-        of types.FunctionType are stored in self._methods.
+        name as device properties and methods.
         '''
+        uikeys = set(vars(self.ui).keys())
+        dproperties = set(self.device.properties)
+        dmethods = set(self.device.methods)
+        self._properties = list(uikeys & dproperties)
+        self._methods = list(uikeys & dmethods)
+        """
         uiprops = vars(self.ui).keys()
         self._properties = []
         self._methods = []
@@ -228,6 +231,7 @@ class QInstrumentWidget(QWidget):
             elif isinstance(v, types.FunctionType):
                 logger.debug(f'registering method: {k}')
                 self._methods.append(k)
+        """
 
     def _syncProperties(self):
         '''Set UI widgets to device values'''
