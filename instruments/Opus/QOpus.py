@@ -117,7 +117,7 @@ def example():
 
     app = QCoreApplication([])
     laser = QOpus().find()
-    print(laser.power)
+    print(laser.power())
 
 
 if __name__ == '__main__':
