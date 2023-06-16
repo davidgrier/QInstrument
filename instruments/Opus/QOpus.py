@@ -110,3 +110,15 @@ class QOpus(QSerialInstrument):
             else:
                 break
         return response
+
+
+def example():
+    from PyQt5.QtCore import QCoreApplication
+
+    app = QCoreApplication([])
+    laser = QOpus().find()
+    print(laser.power)
+
+
+if __name__ == '__main__':
+    example()
