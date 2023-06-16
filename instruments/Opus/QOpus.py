@@ -37,7 +37,7 @@ class QOpus(QSerialInstrument):
                 eol='\r')
 
     def __init__(self, portName=None, **kwargs):
-        args = {**self.com, **kwargs}
+        args = {**self.comm, **kwargs}
         super().__init__(portName, **args)
 
     def identify(self):
