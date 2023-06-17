@@ -129,6 +129,10 @@
    </slots>
   </customwidget>
  </customwidgets>
+ <tabstops>
+  <tabstop>encoder</tabstop>
+  <tabstop>value</tabstop>
+ </tabstops>
  <resources/>
  <connections>
   <connection>

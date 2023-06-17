@@ -90,6 +90,7 @@ class QRotaryEncoderSpinBox(QWidget):
         self.ui.value.installEventFilter(self.filter)
         self._inheritMethods()
         self.setColors(colors or ('white', 'red'))
+        self.ui.encoder.setFocus()
 
     def _loadUi(self):
         uipath = Path(__file__).with_suffix('.ui')
