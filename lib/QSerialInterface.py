@@ -1,4 +1,5 @@
-from PyQt5.QtCore import (pyqtProperty, pyqtSlot, pyqtSignal, QByteArray)
+from PyQt5.QtCore import (pyqtProperty, pyqtSlot, pyqtSignal,
+                          QTimer, QByteArray)
 from PyQt5.QtSerialPort import (QSerialPort, QSerialPortInfo)
 import logging
 
@@ -220,6 +221,22 @@ class QSerialInterface(QSerialPort):
             if len(buffer) >= n:
                 break
         return buffer
+
+    def sendbreak(self, duration=250):
+        '''Send break to the instrument
+
+        Keywords
+        --------
+        duration: int
+            Number of milliseconds to maintain break state.
+            Valid range: [1, 500]
+            Default: 250
+        '''
+        if not self.isOpen():
+            logger.warn('Cannot send break unless port is open')
+            return
+        self.setBreakEnabled(True)
+        QTimer.singleShot(duration, lambda: self.setBreakEnabled(False))
 
     @pyqtSlot()
     def _handleReadyRead(self):
