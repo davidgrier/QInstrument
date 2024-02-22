@@ -7,16 +7,24 @@ class QTDS1000(QSerialInstrument):
                 dataBits=QSerialInstrument.Data8,
                 stopBits=QSerialInstrument.OneStop,
                 parity=QSerialInstrument.NoParity,
-                flowControl=QSerialInstrument.HardwareControl,
-                eol='\n')
+                flowControl=QSerialInstrument.NoFlowControl,
+                eol=b'\r')
 
-    def __init__(self, portName=None, **kwargs):
+    def __init__(self, portname=None, **kwargs):
         args = self.comm | kwargs
-        super().__init__(portName, **args)
+        super().__init__(portname, **args)
 
     def identify(self):
-        return 'TEK' in self.handshake('*IDN?')
+        return 'TEKTRONIX' in self.handshake('*IDN?')
 
-    def clear(self):
-        self.sendbreak()
-        return 'DCL' in self.receive()
+
+def example():
+    from PyQt5.QtCore import QCoreApplication
+
+    app = QCoreApplication([])
+    scope = QTDS1000().find()
+    print(scope.handshake('*IDN?'))
+
+
+if __name__ == '__main__':
+    example()
