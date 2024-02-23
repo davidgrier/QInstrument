@@ -21,9 +21,13 @@ class QTDS1000(QSerialInstrument):
 def example():
     from PyQt5.QtCore import QCoreApplication
 
-    app = QCoreApplication([])
+    QCoreApplication([])
     scope = QTDS1000().find()
     print(scope.handshake('*IDN?'))
+
+    print(scope.handshake('SELECT:CH1 ON'))
+    # scope.transmit('ACQUIRE:MODE SAMPLE')
+    # scope.transmit('ACQUIRE:STOPAFTER SEQUENCE')
 
 
 if __name__ == '__main__':
