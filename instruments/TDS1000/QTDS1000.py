@@ -1,4 +1,6 @@
 from QInstrument.lib.QSerialInstrument import QSerialInstrument
+import numpy as np
+from struct import unpack
 
 
 class QTDS1000(QSerialInstrument):
@@ -10,46 +12,43 @@ class QTDS1000(QSerialInstrument):
                 flowControl=QSerialInstrument.HardwareControl,
                 eol=b'\n')
 
-    def __init__(self, portname=None, **kwargs):
+    def __init__(self, portname=None, timeout=500, **kwargs):
         args = self.comm | kwargs
         super().__init__(portname, **args)
 
     def identify(self):
         return 'TEKTRONIX' in self.handshake('*IDN?')
 
+    def data(self, channel='CH1'):
+        self.transmit(f'DATA:SOURCE {channel}')
+        self.transmit('DATA:WIDTH 1')
+        self.transmit('DATA:ENC RPB')
+        adc0 = self.get_value('WFMPRE:YOFF?')
+        dx = self.get_value('WFMPRE:XINCR?')
+        x0 = self.get_value('HOR:POS?')
+        scale = self.get_value('WFMPRE:YMULT?')
+        y0 = self.get_value('WFMPRE:YZERO?')
+        self.transmit('CURVE?')
+        data = self.receive(raw=True)
+        headerlen = 2 + int(data[1])
+        adc = data[headerlen:-1]
+        npts = len(adc)
+        range = dx*npts/2.
+        x = np.arange(-range, range, dx) + x0
+        adc = np.array(unpack(f'{npts}B', adc))
+        y = scale*(adc - adc0) + y0
+        return x, y
+
 
 def example():
     from PyQt5.QtCore import QCoreApplication
-    from struct import unpack
-    import numpy as np
     import matplotlib.pyplot as plt
 
     app = QCoreApplication([])
-    scope = QTDS1000(timeout=500).find()
-    print(scope.portName())
-    print(scope.handshake('*IDN?'))
+    scope = QTDS1000().find()
+    x, y = scope.data('CH1')
 
-    scope.transmit('DATA:SOURCE CH1')
-    print(scope.handshake('DATA:SOURCE?'))
-    scope.transmit('DATA:WIDTH 1')
-    scope.transmit('DATA:ENC RPB')
-    print(scope.handshake('CH1:COUPLING?'))
-    ymult = scope.get_value('WFMPRE:YMULT?')
-    yzero = scope.get_value('WFMPRE:YZERO?')
-    yoff = scope.get_value('WFMPRE:YOFF?')
-    xincr = scope.get_value('WFMPRE:XINCR?')
-    xdelay = scope.get_value('HOR:POS?')
-    scope.transmit('CURVE?')
-    data = scope.receive(raw=True)
-
-    headerlen = 2 + int(data[1])
-    adc = data[headerlen:-1]
-    adc = np.array(unpack(f'{len(adc)}B', adc))
-    signal = (adc - yoff) * ymult + yzero
-    time = np.arange(0, (xincr * len(signal)), xincr)
-    time -= xincr * len(signal) / 2 - xdelay
-
-    plt.plot(time, signal)
+    plt.plot(x, y)
     plt.show()
 
 
