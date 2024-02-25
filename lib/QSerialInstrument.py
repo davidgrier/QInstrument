@@ -14,7 +14,7 @@ class QSerialInstrument(QInstrumentMixin, QSerialInterface):
 
     Properties
     ----------
-    eol: str
+    eol: bytes
         End-of-line string (character) used to terminate
         strings that are transmitted to the instrument.
         Default: ''
@@ -48,7 +48,7 @@ class QSerialInstrument(QInstrumentMixin, QSerialInterface):
     pass
 
 
-def example(portname='/dev/ttyUSB0'):
+def example(portname: str = '/dev/ttyUSB0') -> None:
     from PyQt5.QtCore import QCoreApplication
 
     app = QCoreApplication([])

@@ -15,7 +15,7 @@ class QInstrumentMixin(object):
         s = s.replace('$', ')')
         return s
 
-    def handshake(self, data, **kwargs):
+    def handshake(self, data: str, **kwargs) -> str:
         '''Transmit data to the instrument and receive its response
 
         Arguments
@@ -30,13 +30,13 @@ class QInstrumentMixin(object):
 
         Returns
         -------
-        response:
+        response: str
             Response from instrument
         '''
         self.transmit(data)
         return self.receive(**kwargs)
 
-    def get_value(self, query, dtype=float):
+    def get_value(self, query: str, dtype=float):
         '''Return value from the instrument
 
         Arguments
@@ -59,7 +59,22 @@ class QInstrumentMixin(object):
             value = None
         return value
 
-    def expect(self, query, response, **kwargs):
+    def expect(self, query: str, response: str, **kwargs) -> bool:
+        '''Check for expected response to a query
+
+        Arguments
+        ---------
+        query: str
+            String to be transmitted to the instrument
+        response: str
+            Expected response
+
+        Returns
+        -------
+        success: bool
+            True if expect response is found in the string
+            returned by the instrument in response to the query
+        '''
         return response in self.handshake(query, **kwargs)
 
     @pyqtProperty(list)
