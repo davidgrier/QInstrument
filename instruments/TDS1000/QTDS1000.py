@@ -14,7 +14,7 @@ class QTDS1000(QSerialInstrument):
 
     def __init__(self, portname=None, timeout=500, **kwargs):
         args = self.comm | kwargs
-        super().__init__(portname, **args)
+        super().__init__(portname, timeout=timeout, **args)
 
     def identify(self):
         return 'TEKTRONIX' in self.handshake('*IDN?')
@@ -46,10 +46,13 @@ def example():
 
     app = QCoreApplication([])
     scope = QTDS1000().find()
-    x, y = scope.data('CH1')
-
-    plt.plot(x, y)
+    t, s = scope.data('CH1')
+    plt.plot(t, s)
+    plt.xlabel('time [s]')
+    plt.ylabel('signal [V]')
     plt.show()
+    data = np.vstack([t, s])
+    np.savetxt('tds1000.csv', data, delimiter=',')
 
 
 if __name__ == '__main__':
