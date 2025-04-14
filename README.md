@@ -56,5 +56,6 @@ sys.exit(app.exec_())
 
 Work on this project at New York University
 is supported by the National Science Foundation of the
-United States under award number DMR-2104837.
+United States under award number DMR-2104837 and by an
+award from the TAC Program at New York University.
 
