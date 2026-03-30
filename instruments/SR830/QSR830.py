@@ -179,4 +179,4 @@ class QSR830(QSerialInstrument):
     @pyqtSlot()
     def auto_offset(self, channel):
         '''Autorange offset'''
-        self.transmit('AOFF{channel}')
+        self.transmit(f'AOFF{channel}')

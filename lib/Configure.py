@@ -1,18 +1,20 @@
-from PyQt5.QtCore import QObject
-from PyQt5.QtWidgets import QMessageBox
+try:
+    from PyQt6 import (QtCore, QtWidgets)
+except ImportError:
+    from PyQt5 import (QtCore, QtWidgets)
 import json
 import os
 import io
 from datetime import datetime
-
 import logging
+
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.WARNING)
 
 
-class Configure(QObject):
+class Configure(QtCore.QObject):
     '''Save and restore configuration of objects
 
     The configuration object also includes utility functions for
@@ -33,9 +35,9 @@ class Configure(QObject):
     '''
 
     def __init__(self, *args,
-                 datadir=None,
-                 configdir=None,
-                 **kwargs):
+                 datadir: str = None,
+                 configdir: str = None,
+                 **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.datadir = os.path.expanduser(datadir or '~/data/')
         self.configdir = os.path.expanduser(configdir or '~/.QInstrument/')
@@ -67,7 +69,7 @@ class Configure(QObject):
         name += self.timestamp() + suffix
         return os.path.join(self.datadir, name)
 
-    def configname(self, object):
+    def configname(self, object) -> str:
         '''Returns name of configuration file based on class of objects
 
         Parameters
@@ -84,7 +86,7 @@ class Configure(QObject):
         classname = object.__class__.__name__
         return os.path.join(self.configdir, classname + '.json')
 
-    def save(self, object):
+    def save(self, object) -> None:
         '''Save configuration of object as json file
 
         Parameters
@@ -104,7 +106,7 @@ class Configure(QObject):
         with io.open(filename, 'w', encoding='utf8') as configfile:
             configfile.write(configuration)
 
-    def restore(self, object):
+    def restore(self, object) -> None:
         '''Restore object configuration from json file
 
         Parameters
@@ -123,14 +125,13 @@ class Configure(QObject):
                    '\n\tUsing default configuration.')
             logger.warning(msg)
 
-    def query_save(self, object):
-        query = 'Save current configuration?'
-        reply = QMessageBox.question(self.parent,
-                                     'Confirmation',
-                                     query,
-                                     QMessageBox.Yes,
-                                     QMessageBox.No)
-        if reply == QMessageBox.Yes:
+    def query_save(self, object) -> None:
+        mbox = QtWidgets.QMessageBox
+        msg = mbox(self.parent)
+        msg.setWindowTitle('Confirmation')
+        msg.setText('Save current configuration?')
+        msg.setStandardButtons(mbox.StandardButton.Yes |
+                               mbox.StandardButton.No)
+        response = msg.exec()
+        if response = mbox.StandardButton.Yes:
             self.save(object)
-        else:
-            pass

@@ -7,10 +7,6 @@ class QSerialInstrument(QInstrumentMixin, QSerialInterface):
 
     ........
 
-    Inherits
-    --------
-    QInstrument.lib.QInstrumentMixin
-    QInstrument.lib.QSerialInterface
 
     Properties
     ----------
@@ -45,24 +41,28 @@ class QSerialInstrument(QInstrumentMixin, QSerialInterface):
     >>> instrument = QSerialInstrument().find()
 
     '''
-    pass
 
+    @classmethod
+    def example(cls, portname: str = '/dev/ttyUSB0') -> None:
+        from pyqtgraph.Qt import QtCore
 
-def example(portname: str = '/dev/ttyUSB0') -> None:
-    from PyQt5.QtCore import QCoreApplication
+        for k in cls.__dict__.keys():
+            if 'Baud' in k:
+                print(dir(k))
+        '''
+        app = QtCore.QCoreApplication([])
 
-    app = QCoreApplication([])
+        comm = dict(baudRate=cls.BaudRate.Baud9600,
+                    dataBits=cls.DataBits.Data8,
+                    stopBits=cls.StopBits.OneStop,
+                    parity=cls.Parity.NoParity,
+                    flowControl=cls.FlowControl.NoFlowControl,
+                    eol=b'\r')
 
-    comm = dict(baudRate=QSerialInstrument.Baud9600,
-                dataBits=QSerialInstrument.Data8,
-                stopBits=QSerialInstrument.OneStop,
-                parity=QSerialInstrument.NoParity,
-                flowControl=QSerialInstrument.NoFlowControl,
-                eol=b'\r')
-
-    a = QSerialInstrument(portname, **comm)
-    print(a.handshake('*IDN?'))
+        a = cls(portname, **comm)
+        print(a._handshake('*IDN?'))
+        '''
 
 
 if __name__ == '__main__':
-    example()
+    QSerialInstrument.example()
