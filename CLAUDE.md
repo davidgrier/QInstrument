@@ -4,12 +4,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-QInstrument is a PyQt5/PyQt6-compatible framework for controlling scientific instruments over serial ports. It provides a property registration system, automatic UI binding, and JSON-based configuration persistence.
+QInstrument is a framework for controlling scientific instruments over serial ports. It provides a property registration system, automatic UI binding, and JSON-based configuration persistence. It targets any installed Qt binding (PyQt5, PyQt6, PySide2, PySide6) via `pyqtgraph.Qt`.
+
+Active development happens on the `devel` branch. The `lib/` foundations are being revised before instrument classes are migrated.
 
 ## Development Commands
 
-Install dependencies:
+The virtual environment lives in `.qi/` (not `venv/`):
 ```bash
+source .qi/bin/activate
 pip install -r requirements.txt
 ```
 
@@ -18,7 +21,7 @@ Run a specific instrument widget interactively:
 python -c "from PyQt5.QtWidgets import QApplication; import sys; from instruments.DS345 import QDS345Widget; app = QApplication(sys.argv); w = QDS345Widget(); w.show(); sys.exit(app.exec_())"
 ```
 
-There is no test suite, build step, or linter configuration.
+Tests cover `QSerialInterface` only; run with `pytest tests/`. No build step or linter configuration.
 
 ## Architecture
 
@@ -39,7 +42,7 @@ QWidget
 
 ### Key Abstractions
 
-**`lib/QInstrumentMixin.py`** — Base for all instruments. Properties are explicitly registered via `registerProperty(name, getter, setter, ptype, **meta)`. Provides `get(key)`/`set(key, value)` Qt slots, `settings` dict, and `propertyValue` signal. Uses `QMutex` for thread safety.
+**`lib/QInstrumentMixin.py`** — Base for all instruments. Properties are explicitly registered via `registerProperty(name, getter, setter, ptype, **meta)`. Provides `get(key)`/`set(key, value)` Qt slots, `settings` dict, and `propertyValue(str, object)` signal (emitted by both `get` and `set`). Uses `QMutex` to protect the property registry; the lock is released before calling any getter/setter/method so that callables may safely re-enter the API without deadlocking.
 
 **`lib/QSerialInterface.py`** — Wraps `QSerialPort`. Key methods: `find(**kwargs)` (auto-detect device by scanning ports), `transmit(data)`, `receive(eol, raw)`. Supports blocking and non-blocking I/O via `blocking` property.
 
@@ -56,18 +59,24 @@ QWidget
 Each instrument lives in `instruments/<Name>/` and follows this pattern:
 
 1. **`QName.py`** — Inherits `QSerialInstrument`. In `__init__`, set serial params (`baudrate`, `eol`, etc.) and call `registerProperty(...)` for each controllable parameter. Implement `identify()` to verify the connected device.
-2. **`QFakeName.py`** — Inherits `QFakeInstrument`. Mirrors the same properties using the `Property` metaclass pattern for UI testing without hardware.
+2. **`QFakeName.py`** — Inherits `QFakeInstrument`. Mirrors the same properties for UI testing without hardware.
 3. **`QNameWidget.py`** — Inherits `QInstrumentWidget`. Points to a `.ui` file; widget names must match registered property names for auto-binding to work.
 4. **`__init__.py`** — Exports the main classes.
 
-### PyQt5 / PyQt6 Compatibility
+### Qt Imports
 
-The codebase targets PyQt5 but is being migrated toward PyQt6 compatibility. `Configure.py` and other files use a try/except import pattern:
+**Always import Qt via `pyqtgraph.Qt`**, not directly from PyQt5/PyQt6:
 ```python
-try:
-    from PyQt5 import ...
-except ImportError:
-    from PyQt6 import ...
+from pyqtgraph.Qt import QtCore, QtWidgets, QtSerialPort
 ```
+`pyqtgraph.Qt` automatically resolves to whichever Qt binding (PyQt5, PyQt6, PySide2, PySide6) is installed. Do **not** use the try/except PyQt5/PyQt6 import pattern — it is less general and being phased out.
 
-Follow this pattern in all new or modified files.
+### Property System
+
+Instrument properties are registered via `registerProperty()` at `__init__` time, not declared as `pyqtProperty` class attributes. The `registerProperty()` approach is preferred because some instruments expose properties that are only discoverable at runtime.
+
+Existing instruments in `instruments/` predate this convention and still use `pyqtProperty`. Do not add new `pyqtProperty` usage; they will be migrated to `registerProperty()` once the `lib/` foundations are stable.
+
+### Transport Layer Contract
+
+`QInstrumentMixin` provides `handshake(cmd)`, `getValue(cmd, dtype)`, and `expect(cmd, response)` as transport-agnostic helpers. They delegate to `transmit()` and `receive()`, which must be supplied by the transport layer (e.g. `QSerialInterface`). These helpers belong in `QInstrumentMixin`, not in the transport layer, because they are needed by every instrument regardless of communication medium (serial, GPIB, etc.).
