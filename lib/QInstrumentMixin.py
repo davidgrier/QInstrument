@@ -9,6 +9,25 @@ _AUTO = object()  # sentinel: auto-generate getter/setter from _name convention
 
 
 class QInstrumentMixin(QtCore.QObject):
+    '''Mixin defining the computer-instrument interface.
+
+    Provides a transport-agnostic property and method registration
+    system for controlling scientific instruments.  Concrete
+    instrument classes combine this mixin with a transport layer
+    (e.g. ``QSerialInterface``) that supplies ``transmit()`` and
+    ``receive()`` methods.
+
+    Properties are registered with :meth:`registerProperty` and
+    accessed by name via :meth:`get` and :meth:`set`.  Methods are
+    registered with :meth:`registerMethod` and invoked by name via
+    :meth:`execute`.  Both slots are thread-safe.
+
+    Signals
+    -------
+    propertyValue(str, object)
+        Emitted by :meth:`get` and :meth:`set` with the property name
+        and its current value.
+    '''
 
     PropertyValue = bool | int | float | str
     Settings = dict[str, PropertyValue]
@@ -27,44 +46,44 @@ class QInstrumentMixin(QtCore.QObject):
         args = f',\n{tab}'.join(f'{k}={v}' for k, v in self.settings.items())
         return f'{name}({args})'
 
-    def _handshake(self, data: str, **kwargs) -> str:
-        '''Transmit data to the instrument and receive its response
+    def handshake(self, data: str, **kwargs) -> str:
+        '''Transmit a command and return the instrument's response.
 
-        Arguments
-        ---------
-        data: str
-            String to be transmitted to the instrument
-            to elicit a response
+        Delegates to ``transmit()`` and ``receive()``, which must be
+        provided by the transport layer mixed in with this class.
 
-        Keywords
-        --------
-        Keywords are passed through to receive()
+        Parameters
+        ----------
+        data : str
+            Command string to send to the instrument.
+        **kwargs :
+            Passed through to ``receive()``.
 
         Returns
         -------
-        response: str
-            Response from instrument
+        str
+            Response string from the instrument.
         '''
         self.transmit(data)
         return self.receive(**kwargs)
 
-    def _getValue(self, query: str, dtype=float):
-        '''Return value from the instrument
+    def getValue(self, query: str, dtype=float):
+        '''Query the instrument and return a typed value.
 
-        Arguments
-        ---------
-        query: str
-            String to be transmitted to the instrument
-        dtype: type
-            Optional specification of the data type to be returned
-            Default: float
+        Parameters
+        ----------
+        query : str
+            Command string that elicits a single-value response.
+        dtype : callable, optional
+            Converts the response string to the desired type.
+            Default: ``float``.
 
         Returns
         -------
-        value: dtype
-            Value returned by the instrument
+        dtype or None
+            Converted value, or ``None`` if conversion fails.
         '''
-        response = self._handshake(query)
+        response = self.handshake(query)
         try:
             value = dtype(response)
         except ValueError:
@@ -72,22 +91,23 @@ class QInstrumentMixin(QtCore.QObject):
         return value
 
     def expect(self, query: str, response: str, **kwargs) -> bool:
-        '''Check for expected response to a query
+        '''Return True if the instrument's response contains the expected string.
 
-        Arguments
-        ---------
-        query: str
-            String to be transmitted to the instrument
-        response: str
-            Expected response
+        Parameters
+        ----------
+        query : str
+            Command string to send to the instrument.
+        response : str
+            Substring expected in the instrument's reply.
+        **kwargs :
+            Passed through to ``receive()``.
 
         Returns
         -------
-        success: bool
-            True if expect response is found in the string
-            returned by the instrument in response to the query
+        bool
+            ``True`` if *response* appears in the instrument's reply.
         '''
-        return response in self._handshake(query, **kwargs)
+        return response in self.handshake(query, **kwargs)
 
     def registerProperty(self,
                          name: str,
@@ -105,21 +125,22 @@ class QInstrumentMixin(QtCore.QObject):
         Parameters
         ----------
         name : str
-            Property name used with :meth:`get`, :meth:`set`, and
-            attribute access.
+            Property name used with :meth:`get` and :meth:`set`.
         getter : callable, optional
             Zero-argument callable returning the current value.
-            Defaults to ``lambda: getattr(self, f'_{name}')``.
+            Default: ``lambda: getattr(self, f'_{name}')``.
         setter : callable or None, optional
-            Single-argument callable applying a new value.  ``None``
-            marks the property read-only.  Defaults to
-            ``lambda v: setattr(self, f'_{name}', ptype(v))``.
-        ptype : type
+            Single-argument callable that applies a new value.
+            ``None`` marks the property read-only.
+            Default: ``lambda v: setattr(self, f'_{name}', ptype(v))``.
+        ptype : type, optional
             Python type of the property value (``int``, ``float``,
-            ``bool``, ``str``).  Drives the default setter coercion and
-            is stored for use by UI generators such as ``QCameraTree``.
+            ``bool``, or ``str``).  Used for default setter coercion
+            and stored as metadata for UI generators.
+            Default: ``float``.
         **meta :
-            Additional metadata (e.g. ``minimum``, ``maximum``, ``step``).
+            Arbitrary metadata stored alongside the property
+            (e.g. ``minimum``, ``maximum``, ``step``).
         '''
         if getter is _AUTO:
             def _getter(): return getattr(self, f'_{name}')
@@ -132,12 +153,18 @@ class QInstrumentMixin(QtCore.QObject):
 
     @property
     def properties(self) -> list[str]:
-        '''List of instrument properties'''
+        '''Names of all registered instrument properties.'''
         return list(self._properties.keys())
 
     @property
     def settings(self) -> Settings:
-        '''Dictionary of instrument settings'''
+        '''Current values of all registered properties as a dict.
+
+        Getting this property calls every registered getter, which may
+        issue instrument queries.  Setting it calls each registered
+        setter for keys present in the supplied dict, skipping unknown
+        keys and read-only properties.
+        '''
         with QtCore.QMutexLocker(self.mutex):
             props = list(self._properties.items())
         return {name: info['getter']() for name, info in props}
@@ -156,10 +183,17 @@ class QInstrumentMixin(QtCore.QObject):
     def set(self, key: str, value: PropertyValue) -> None:
         '''Set a registered property to the given value.
 
+        Thread-safe Qt slot.  The registry lock is released before
+        calling the setter, so the setter may safely call other
+        instrument methods without deadlocking.  Emits
+        :attr:`propertyValue` with the new value on success.  Logs a
+        warning if the property is read-only and an error if the key
+        is not registered.
+
         Parameters
         ----------
         key : str
-            Property name.
+            Registered property name.
         value : PropertyValue
             New value to assign.
         '''
@@ -168,47 +202,54 @@ class QInstrumentMixin(QtCore.QObject):
                 logger.error(f'Unknown property: {key}')
                 return
             setter = self._properties[key]['setter']
-            if setter is None:
-                logger.warning(f'Property {key!r} is read-only')
-            else:
-                logger.debug(f'Setting {key}: {value}')
-                setter(value)
+        if setter is None:
+            logger.warning(f'Property {key!r} is read-only')
+            return
+        logger.debug(f'Setting {key}: {value}')
+        setter(value)
+        self.propertyValue.emit(key, value)
 
     @QtCore.pyqtSlot(str)
     def get(self, key: str) -> PropertyValue | None:
         '''Return the current value of a registered property.
 
-        Emits :attr:`propertyValue` with the name and value.
+        Thread-safe Qt slot.  The registry lock is released before
+        calling the getter, so the getter may safely call other
+        instrument methods without deadlocking.  Emits
+        :attr:`propertyValue` with the name and value.  Logs an error
+        and returns ``None`` if the key is not registered.
 
         Parameters
         ----------
         key : str
-            Property name.
+            Registered property name.
 
         Returns
         -------
         PropertyValue or None
-            Current value, or ``None`` if the property is unknown.
+            Current value, or ``None`` if *key* is unknown.
         '''
         with QtCore.QMutexLocker(self.mutex):
-            if key in self._properties:
-                value = self._properties[key]['getter']()
-            else:
+            if key not in self._properties:
                 logger.error(f'Unknown property: {key}')
                 return None
+            getter = self._properties[key]['getter']
+        value = getter()
         self.propertyValue.emit(key, value)
         return value
 
     def busy(self) -> bool:
-        '''Returns True if the instrument is busy.
+        '''Return True if the instrument is busy.
 
-        Subclasses should override this if the instrument has a
-        queryable busy/ready state.
+        Returns ``False`` by default.  Subclasses should override this
+        if the instrument exposes a queryable busy/ready state.
         '''
         return False
 
     def registerMethod(self, name: str, method: Callable) -> None:
-        '''Register a named callable method.
+        '''Register a named zero-argument callable.
+
+        Registered methods can be invoked by name via :meth:`execute`.
 
         Parameters
         ----------
@@ -221,20 +262,24 @@ class QInstrumentMixin(QtCore.QObject):
 
     @property
     def methods(self) -> list[str]:
-        '''List of registered instrument methods'''
+        '''Names of all registered instrument methods.'''
         return list(self._methods.keys())
 
     @QtCore.pyqtSlot(str)
     def execute(self, key: str) -> None:
         '''Call a registered method by name.
 
+        Thread-safe Qt slot.  Logs an error if the key is not
+        registered.
+
         Parameters
         ----------
         key : str
-            Method name.
+            Registered method name.
         '''
         with QtCore.QMutexLocker(self.mutex):
-            if key in self._methods:
-                self._methods[key]()
-            else:
+            if key not in self._methods:
                 logger.error(f'Unknown method: {key}')
+                return
+            method = self._methods[key]
+        method()
