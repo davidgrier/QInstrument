@@ -1,6 +1,9 @@
+import logging
 from pyqtgraph.Qt import QtCore
-import types
 from typing import Callable
+
+
+logger = logging.getLogger(__name__)
 
 _AUTO = object()  # sentinel: auto-generate getter/setter from _name convention
 
@@ -10,7 +13,9 @@ class QInstrumentMixin(QtCore.QObject):
     PropertyValue = bool | int | float | str
     Settings = dict[str, PropertyValue]
 
-    def __int__(self, **kwargs) -> None:
+    propertyValue = QtCore.pyqtSignal(str, object)
+
+    def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
         self.mutex = QtCore.QMutex()
         self._properties = {}
@@ -18,14 +23,9 @@ class QInstrumentMixin(QtCore.QObject):
 
     def __repr__(self) -> str:
         name = self.__class__.__name__
-        s = f'{name}'
-        tab = (len(s) + 1) * ' '
-        for k, v in self.settings.items():
-            s += f'^{k}={v}$'
-        s = s.replace('$^', ',\n'+tab)
-        s = s.replace('^', '(')
-        s = s.replace('$', ')')
-        return s
+        tab = ' ' * (len(name) + 1)
+        args = f',\n{tab}'.join(f'{k}={v}' for k, v in self.settings.items())
+        return f'{name}({args})'
 
     def _handshake(self, data: str, **kwargs) -> str:
         '''Transmit data to the instrument and receive its response
@@ -64,7 +64,7 @@ class QInstrumentMixin(QtCore.QObject):
         value: dtype
             Value returned by the instrument
         '''
-        response = self.handshake(query)
+        response = self._handshake(query)
         try:
             value = dtype(response)
         except ValueError:
@@ -87,7 +87,7 @@ class QInstrumentMixin(QtCore.QObject):
             True if expect response is found in the string
             returned by the instrument in response to the query
         '''
-        return response in self.handshake(query, **kwargs)
+        return response in self._handshake(query, **kwargs)
 
     def registerProperty(self,
                          name: str,
@@ -122,9 +122,11 @@ class QInstrumentMixin(QtCore.QObject):
             Additional metadata (e.g. ``minimum``, ``maximum``, ``step``).
         '''
         if getter is _AUTO:
-            def getter(): return getattr(self, f'_{name}')
+            def _getter(): return getattr(self, f'_{name}')
+            getter = _getter
         if setter is _AUTO:
-            def setter(v): return setattr(self, f'_{name}', ptype(v))
+            def _setter(v): return setattr(self, f'_{name}', ptype(v))
+            setter = _setter
         self._properties[name] = dict(
             getter=getter, setter=setter, ptype=ptype, **meta)
 
@@ -136,16 +138,19 @@ class QInstrumentMixin(QtCore.QObject):
     @property
     def settings(self) -> Settings:
         '''Dictionary of instrument settings'''
-        return {p: self._properties[p]['getter']()
-                for p in self.properties}
+        with QtCore.QMutexLocker(self.mutex):
+            props = list(self._properties.items())
+        return {name: info['getter']() for name, info in props}
 
     @settings.setter
     def settings(self, settings: Settings) -> None:
-        for key, value in settings.items():
-            if key in self._properties:
-                setter = self._properties[key]['setter']
-                if setter is not None:
-                    setter(value)
+        with QtCore.QMutexLocker(self.mutex):
+            calls = [(self._properties[k]['setter'], v)
+                     for k, v in settings.items()
+                     if k in self._properties]
+        for setter, value in calls:
+            if setter is not None:
+                setter(value)
 
     @QtCore.pyqtSlot(str, object)
     def set(self, key: str, value: PropertyValue) -> None:
@@ -194,6 +199,14 @@ class QInstrumentMixin(QtCore.QObject):
         self.propertyValue.emit(key, value)
         return value
 
+    def busy(self) -> bool:
+        '''Returns True if the instrument is busy.
+
+        Subclasses should override this if the instrument has a
+        queryable busy/ready state.
+        '''
+        return False
+
     def registerMethod(self, name: str, method: Callable) -> None:
         '''Register a named callable method.
 
@@ -208,9 +221,8 @@ class QInstrumentMixin(QtCore.QObject):
 
     @property
     def methods(self) -> list[str]:
-        '''List of instrument methods'''
-        kv = vars(type(self)).items()
-        return [k for k, v in kv if isinstance(v, types.FunctionType)]
+        '''List of registered instrument methods'''
+        return list(self._methods.keys())
 
     @QtCore.pyqtSlot(str)
     def execute(self, key: str) -> None:
