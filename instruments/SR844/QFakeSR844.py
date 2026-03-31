@@ -1,26 +1,39 @@
-from QInstrument.lib.QFakeInstrument import (QFakeInstrument, Property)
 import numpy as np
+from QInstrument.lib.QFakeInstrument import QFakeInstrument
 
 
 class QFakeSR844(QFakeInstrument):
 
-    amplitude = Property(0.)
-    frequency = Property(0.)
-    harmonic = Property(1)
-    internal_reference = Property(False)
-    phase = Property(0.)
-    reference_trigger = Property(0)
-    dc_coupling = Property(True)
-    input_configuration = Property(0)
-    line_filter = Property(0)
-    dynamic_reserve = Property(0)
-    low_pass_slope = Property(0)
-    sensitivity = Property(0)
-    synchronous_filter = Property(False)
-    time_constant = Property(0)
-
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, *kwargs)
+        super().__init__(*args, **kwargs)
+        self._amplitude = 0.
+        self._frequency = 0.
+        self._harmonic = 1
+        self._internal_reference = False
+        self._phase = 0.
+        self._reference_trigger = 0
+        self._dc_coupling = True
+        self._input_configuration = 0
+        self._line_filter = 0
+        self._dynamic_reserve = 0
+        self._low_pass_slope = 0
+        self._sensitivity = 0
+        self._synchronous_filter = False
+        self._time_constant = 0
+        self.registerProperty('amplitude')
+        self.registerProperty('frequency')
+        self.registerProperty('harmonic', ptype=int)
+        self.registerProperty('internal_reference', ptype=bool)
+        self.registerProperty('phase')
+        self.registerProperty('reference_trigger', ptype=int)
+        self.registerProperty('dc_coupling', ptype=bool)
+        self.registerProperty('input_configuration', ptype=int)
+        self.registerProperty('line_filter', ptype=int)
+        self.registerProperty('dynamic_reserve', ptype=int)
+        self.registerProperty('low_pass_slope', ptype=int)
+        self.registerProperty('sensitivity', ptype=int)
+        self.registerProperty('synchronous_filter', ptype=bool)
+        self.registerProperty('time_constant', ptype=int)
         self.identification = 'Fake SR844 RF Lockin Amplifier'
 
     def report(self):

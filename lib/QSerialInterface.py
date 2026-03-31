@@ -1,14 +1,13 @@
 import logging
-import importlib
 
-from pyqtgraph.Qt import QtCore, QT_LIB
-QtSP = importlib.import_module(f'{QT_LIB}.QtSerialPort')
+from qtpy import QtCore
+from qtpy.QtSerialPort import QSerialPort, QSerialPortInfo
 
 
 logger = logging.getLogger(__name__)
 
 
-class QSerialInterface(QtSP.QSerialPort):
+class QSerialInterface(QSerialPort):
     '''Base class for instruments connected to serial ports.
 
     Wraps ``QSerialPort`` to provide instrument-oriented communication:
@@ -65,7 +64,7 @@ class QSerialInterface(QtSP.QSerialPort):
     dataReady = QtCore.pyqtSignal(str)
 
     def __init__(self,
-                 portName: str | None = None,
+                 portName: str = '',
                  eol: bytes | str = '',
                  timeout: int | None = None,
                  blocking: bool = True,
@@ -90,7 +89,7 @@ class QSerialInterface(QtSP.QSerialPort):
         '''
         return True
 
-    def open(self, portName: str | None, **kwargs) -> bool:
+    def open(self, portName: str, **kwargs) -> bool:
         '''Open serial communication with the instrument.
 
         Opens the specified port in read/write mode and calls
@@ -99,7 +98,7 @@ class QSerialInterface(QtSP.QSerialPort):
 
         Parameters
         ----------
-        portName : str | None
+        portName : str
             Name of the serial port device file, without the
             system-dependent path prefix.
             Examples: ``'ttyUSB0'``, ``'COM1'``.
@@ -112,15 +111,14 @@ class QSerialInterface(QtSP.QSerialPort):
             ``True`` if the port was opened and the device identified
             successfully.
         '''
-        if portName is None:
+        if len(portName) == 0:
             return False
         self.setPortName(portName)
-        if super().open(QtSP.QSerialPort.OpenModeFlag.ReadWrite):
+        if super().open(QSerialPort.OpenModeFlag.ReadWrite):
             self.clear()
             if not self.identify(**kwargs):
-                className = self.__class__.__name__
-                msg = f'Device on {portName} is not {className}'
-                logger.warning(msg)
+                logger.warning(f'Device on {portName} '
+                               f'is not {self.__class__.__name__}')
                 self.close()
         else:
             logger.warning(f'Could not open {portName}')
@@ -144,7 +142,7 @@ class QSerialInterface(QtSP.QSerialPort):
             The instance itself, whether or not a device was found.
             Call :meth:`isOpen` to check the result.
         '''
-        for port in QtSP.QSerialPortInfo.availablePorts():
+        for port in QSerialPortInfo.availablePorts():
             portName = port.portName()
             logger.debug(f'Trying to open {portName}')
             if self.open(portName, **kwargs):

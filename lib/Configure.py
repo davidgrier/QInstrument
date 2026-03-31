@@ -1,17 +1,11 @@
-try:
-    from PyQt6 import (QtCore, QtWidgets)
-except ImportError:
-    from PyQt5 import (QtCore, QtWidgets)
+from qtpy import QtCore, QtWidgets
+from pathlib import Path
 import json
-import os
-import io
 from datetime import datetime
 import logging
 
 
-logging.basicConfig()
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.WARNING)
 
 
 class Configure(QtCore.QObject):
@@ -34,59 +28,58 @@ class Configure(QtCore.QObject):
         Read configuration and set properties of object.
     '''
 
-    def __init__(self, *args,
-                 datadir: str = None,
-                 configdir: str = None,
-                 **kwargs) -> None:
-        super().__init__(*args, **kwargs)
-        self.datadir = os.path.expanduser(datadir or '~/data/')
-        self.configdir = os.path.expanduser(configdir or '~/.QInstrument/')
-        if not os.path.exists(self.datadir):
+    def __init__(self,
+                 datadir: str | None = None,
+                 configdir: str | None = None) -> None:
+        super().__init__()
+        self.datadir = Path(datadir or '~/data/').expanduser()
+        self.configdir = Path(configdir or '~/.QInstrument/').expanduser()
+        if not self.datadir.exists():
             logger.info(f'Creating data directory: {self.datadir}')
-            os.makedirs(self.datadir)
-        if not os.path.exists(self.configdir):
+            self.datadir.mkdir(parents=True)
+        if not self.configdir.exists():
             logger.info(
                 f'Creating configuration directory: {self.configdir}')
-            os.makedirs(self.configdir)
+            self.configdir.mkdir(parents=True)
 
-    def timestamp(self):
+    def timestamp(self) -> str:
         '''Returns string representing the current date and time'''
         return datetime.now().strftime('_%Y%b%d_%H%M%S')
 
-    def filename(self, prefix=None, suffix=None):
+    def filename(self,
+                 prefix: str = 'QInstrument',
+                 suffix: str = '') -> str:
         '''Returns a file name, including timestamp
 
         Arguments
         ---------
-        prefix : str, optional
+        prefix : str
             String prefix for the filename.
             Default: QInstrument
-        suffix : str, optional
+        suffix : str
             String suffix to append to filename.
-            Default: None
+            Default: ''
         '''
-        name = prefix or 'QInstrument'
-        name += self.timestamp() + suffix
-        return os.path.join(self.datadir, name)
+        name = prefix + self.timestamp() + suffix
+        return str(self.datadir / name)
 
-    def configname(self, object) -> str:
+    def configname(self, obj: object) -> str:
         '''Returns name of configuration file based on class of objects
 
         Parameters
         ----------
-        object : object
+        obj : object
             Configuration file is named based on class name of objects
 
         Returns
         -------
         configname : str
             File name for configuration file
-
         '''
-        classname = object.__class__.__name__
-        return os.path.join(self.configdir, classname + '.json')
+        classname = obj.__class__.__name__
+        return str(self.configdir / (classname + '.json'))
 
-    def save(self, object) -> None:
+    def save(self, obj: object) -> None:
         '''Save configuration of object as json file
 
         Parameters
@@ -95,18 +88,16 @@ class Configure(QtCore.QObject):
             Object must have settings property, which provides
             a dictionary of parameters to be saved.
         '''
-        settings = object.settings
+        settings = obj.settings
         if len(settings) == 0:
             return
-        configuration = json.dumps(settings,
-                                   indent=2,
-                                   separators=(',', ': '),
-                                   ensure_ascii=False)
-        filename = self.configname(object)
-        with io.open(filename, 'w', encoding='utf8') as configfile:
-            configfile.write(configuration)
+        filename = self.configname(obj)
+        with open(filename, 'w', encoding='utf-8') as configfile:
+            json.dump(settings, configfile,
+                      indent=2, separators=(',', ': '),
+                      ensure_ascii=False)
 
-    def restore(self, object) -> None:
+    def restore(self, obj: object) -> None:
         '''Restore object configuration from json file
 
         Parameters
@@ -116,16 +107,16 @@ class Configure(QtCore.QObject):
             based on the object class name
         '''
         try:
-            filename = self.configname(object)
+            filename = self.configname(obj)
             logger.info(f'Configuring {filename}')
-            configuration = json.load(io.open(filename))
-            object.settings = configuration
-        except IOError as ex:
-            msg = (f'Could not read {filename}: {ex}'
-                   '\n\tUsing default configuration.')
-            logger.warning(msg)
+            with open(filename, 'r', encoding='utf-8') as configfile:
+                obj.settings = json.load(configfile)
+        except Exception as ex:
+            logger.warning(
+                f'Could not read {filename}: {ex}'
+                '\n\tUsing default configuration.')
 
-    def query_save(self, object) -> None:
+    def query_save(self, obj: object) -> None:
         mbox = QtWidgets.QMessageBox
         msg = mbox(self.parent)
         msg.setWindowTitle('Confirmation')
@@ -134,4 +125,4 @@ class Configure(QtCore.QObject):
                                mbox.StandardButton.No)
         response = msg.exec()
         if response = mbox.StandardButton.Yes:
-            self.save(object)
+            self.save(obj)

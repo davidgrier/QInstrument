@@ -1,5 +1,5 @@
 import logging
-from pyqtgraph.Qt import QtCore
+from qtpy import QtCore
 from typing import Callable
 
 
@@ -8,12 +8,12 @@ logger = logging.getLogger(__name__)
 _AUTO = object()  # sentinel: auto-generate getter/setter from _name convention
 
 
-class QInstrumentMixin(QtCore.QObject):
-    '''Mixin defining the computer-instrument interface.
+class QAbstractInstrument(QtCore.QObject):
+    '''Abstract base class defining the computer-instrument interface.
 
     Provides a transport-agnostic property and method registration
     system for controlling scientific instruments.  Concrete
-    instrument classes combine this mixin with a transport layer
+    instrument classes combine this base with a transport layer
     (e.g. ``QSerialInterface``) that supplies ``transmit()`` and
     ``receive()`` methods.
 
@@ -91,7 +91,8 @@ class QInstrumentMixin(QtCore.QObject):
         return value
 
     def expect(self, query: str, response: str, **kwargs) -> bool:
-        '''Return True if the instrument's response contains the expected string.
+        '''Return True if the instrument's response
+        contains the expected string.
 
         Parameters
         ----------

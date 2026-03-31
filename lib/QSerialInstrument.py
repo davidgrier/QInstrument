@@ -1,8 +1,8 @@
-from QInstrument.lib.QInstrumentMixin import QInstrumentMixin
+from QInstrument.lib.QAbstractInstrument import QAbstractInstrument
 from QInstrument.lib.QSerialInterface import QSerialInterface
 
 
-class QSerialInstrument(QInstrumentMixin, QSerialInterface):
+class QSerialInstrument(QAbstractInstrument, QSerialInterface):
     '''Base class for instruments connected to serial ports
 
     ........
@@ -44,7 +44,7 @@ class QSerialInstrument(QInstrumentMixin, QSerialInterface):
 
     @classmethod
     def example(cls, portname: str = '/dev/ttyUSB0') -> None:
-        from pyqtgraph.Qt import QtCore
+        from qtpy import QtCore
 
         for k in cls.__dict__.keys():
             if 'Baud' in k:

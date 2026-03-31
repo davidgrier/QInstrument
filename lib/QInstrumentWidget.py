@@ -1,6 +1,4 @@
-from PyQt5 import uic
-from PyQt5.QtWidgets import (QWidget, QPushButton)
-from PyQt5.QtCore import (pyqtProperty, pyqtSlot, pyqtSignal)
+from qtpy import uic, QtWidgets, QtCore
 import sys
 from pathlib import Path
 import logging
@@ -11,8 +9,8 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.WARNING)
 
 
-class QInstrumentWidget(QWidget):
-    '''Glue class to attach a PyQt5 GUI to a device interface
+class QInstrumentWidget(QtWidgets.QWidget):
+    '''Glue class to attach a PyQt GUI to a device interface
 
     A widget in the UI is linked to a pyqtProperty in the
     device interface if the widget and the property have
@@ -28,10 +26,6 @@ class QInstrumentWidget(QWidget):
     for the hardware implementation.
 
     ...
-
-    Inherits
-    --------
-    PyQt5.QtWidgets.QWidget
 
     Properties
     ----------
@@ -90,14 +84,14 @@ class QInstrumentWidget(QWidget):
                'QRadioButton':   'toggled',
                'QSpinBox':       'valueChanged'}
 
-    propertyChanged = pyqtSignal(str, object)
+    propertyChanged = QtCore.pyqtSignal(str, object)
 
     def __init__(self, *args, uiFile=None, device=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.ui = self._loadUi(uiFile)
         self.device = device
 
-    @pyqtProperty(object)
+    @QtCore.pyqtProperty(object)
     def device(self):
         return self._device
 
@@ -113,7 +107,7 @@ class QInstrumentWidget(QWidget):
         else:
             self.setEnabled(False)
 
-    @pyqtProperty(list)
+    @QtCore.pyqtProperty(list)
     def properties(self):
         '''List of device properties that are controlled by the ui
 
@@ -122,7 +116,7 @@ class QInstrumentWidget(QWidget):
         '''
         return self._properties
 
-    @pyqtProperty(list)
+    @QtCore.pyqtProperty(list)
     def methods(self):
         '''List of device methods that are called by the ui
 
@@ -131,7 +125,7 @@ class QInstrumentWidget(QWidget):
         '''
         return self._methods
 
-    @pyqtProperty(dict)
+    @QtCore.pyqtProperty(dict)
     def settings(self):
         '''Dictionary of properties and their current values.
 
@@ -233,10 +227,10 @@ class QInstrumentWidget(QWidget):
             if isinstance(widget, QPushButton):
                 widget.clicked.connect(getattr(self.device, method))
 
-    @pyqtSlot(bool)
-    @pyqtSlot(int)
-    @pyqtSlot(float)
-    @pyqtSlot(str)
+    @QtCore.pyqtSlot(bool)
+    @QtCore.pyqtSlot(int)
+    @QtCore.pyqtSlot(float)
+    @QtCore.pyqtSlot(str)
     def _setDeviceProperty(self, value):
         name = self.sender().objectName()
         if hasattr(self.device, name):

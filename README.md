@@ -1,5 +1,5 @@
 # QInstrument
-PyQt5-compatible framework for controlling scientific instruments
+PyQt-compatible framework for controlling scientific instruments
 
 ## Instruments
 
@@ -18,21 +18,22 @@ PyQt5-compatible framework for controlling scientific instruments
 
 ## Interface
 All instrument interfaces are intended to be invoked within
-PyQt5 applications with the event loop running.
+PyQt applications. To simplify invocation across platforms
+and implementations of PyQt, `QInstrument` leverages the unifying
+framework provided by `pyqtgraph`.
 The following script finds a DS345 function generator that
 is connected to the computer by a serial cable and pops up
 a widget to control that instrument's properties. If no instrument
 is found, the widget appears but has all of its controls disabled.
 
 ```
-from PyQt5.QtWidgets import QApplication
+import pyqtgraph as pg
 from QInstrument import QDS345Widget
-import sys
 
-app = QApplication(sys.argv)
+pg.mkQApp()
 ds345 = QDS345Widget()
 ds345.show()
-sys.exit(app.exec_())
+pg.exec()
 ```
 
 <img src="/docs/QDS345Widget.png" width="50%" alt="DS345 Widget">
@@ -41,20 +42,18 @@ Sometimes a real instrument is not available. For those instances,
 `QInstrument` provides "fake" interfaces:
 
 ```
-from PyQt5.QtWidgets import QApplication
+import pyqtgraph as pg
 from QInstrument import (QDS345Widget, QFakeDS345)
-import sys
 
-app = QApplication(sys.argv)
+pg.mkQApp()
 fake = QFakeDS345()
 ds345 = QDS345Widget(device=fake)
 ds345.show()
-sys.exit(app.exec_())
+pg.exec()
 ```
 
 ## Acknowledgements
 
 Work on this project at New York University
 is supported by the National Science Foundation of the
-United States under award number DMR-2104837.
-
+United States under award number DMR-2438983.
