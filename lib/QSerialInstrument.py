@@ -15,6 +15,9 @@ class QSerialInstrument(QAbstractInstrument, QSerialInterface):
     QAbstractInstrument, QSerialInterface
     '''
 
+    def __init__(self, portName: str | None = None, **kwargs) -> None:
+        super().__init__(portName=portName or '', **kwargs)
+
     @classmethod
     def example(cls, portname: str | None = None) -> None:
         '''Connect to an instrument and print its current settings.

@@ -68,8 +68,23 @@ class QSerialInterface(QSerialPort):
                  eol: bytes | str = '',
                  timeout: int | None = None,
                  blocking: bool = True,
+                 baudRate=None,
+                 dataBits=None,
+                 stopBits=None,
+                 parity=None,
+                 flowControl=None,
                  **kwargs) -> None:
         super().__init__(**kwargs)
+        if baudRate is not None:
+            self.setBaudRate(baudRate)
+        if dataBits is not None:
+            self.setDataBits(dataBits)
+        if stopBits is not None:
+            self.setStopBits(stopBits)
+        if parity is not None:
+            self.setParity(parity)
+        if flowControl is not None:
+            self.setFlowControl(flowControl)
         self.eol = eol if isinstance(eol, bytes) else eol.encode()
         self.timeout = timeout or 100
         self.blocking = blocking
