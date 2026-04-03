@@ -32,7 +32,7 @@ class QAbstractInstrument(QtCore.QObject):
     PropertyValue = bool | int | float | str
     Settings = dict[str, PropertyValue]
 
-    propertyValue = QtCore.pyqtSignal(str, object)
+    propertyValue = QtCore.Signal(str, object)
 
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
@@ -180,7 +180,7 @@ class QAbstractInstrument(QtCore.QObject):
             if setter is not None:
                 setter(value)
 
-    @QtCore.pyqtSlot(str, object)
+    @QtCore.Slot(str, object)
     def set(self, key: str, value: PropertyValue) -> None:
         '''Set a registered property to the given value.
 
@@ -210,7 +210,7 @@ class QAbstractInstrument(QtCore.QObject):
         setter(value)
         self.propertyValue.emit(key, value)
 
-    @QtCore.pyqtSlot(str)
+    @QtCore.Slot(str)
     def get(self, key: str) -> PropertyValue | None:
         '''Return the current value of a registered property.
 
@@ -266,7 +266,7 @@ class QAbstractInstrument(QtCore.QObject):
         '''Names of all registered instrument methods.'''
         return list(self._methods.keys())
 
-    @QtCore.pyqtSlot(str)
+    @QtCore.Slot(str)
     def execute(self, key: str) -> None:
         '''Call a registered method by name.
 

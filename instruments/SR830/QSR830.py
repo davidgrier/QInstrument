@@ -110,11 +110,11 @@ class QSR830(QSerialInstrument):
         Reset instrument to default settings
     '''
 
-    comm = dict(baudRate=QSerialInstrument.Baud9600,
-                dataBits=QSerialInstrument.Data8,
-                stopBits=QSerialInstrument.OneStop,
-                parity=QSerialInstrument.NoParity,
-                flowControl=QSerialInstrument.NoFlowControl,
+    comm = dict(baudRate=QSerialInstrument.BaudRate.Baud9600,
+                dataBits=QSerialInstrument.DataBits.Data8,
+                stopBits=QSerialInstrument.StopBits.OneStop,
+                parity=QSerialInstrument.Parity.NoParity,
+                flowControl=QSerialInstrument.FlowControl.NoFlowControl,
                 eol='\n')
 
     def Property(pstr, dtype=int):

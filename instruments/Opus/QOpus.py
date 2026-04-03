@@ -29,11 +29,11 @@ class QOpus(QSerialInstrument):
          Set Power [mW]
     '''
 
-    comm = dict(baudRate=QSerialInstrument.Baud19200,
-                dataBits=QSerialInstrument.Data8,
-                stopBits=QSerialInstrument.OneStop,
-                parity=QSerialInstrument.NoParity,
-                flowControl=QSerialInstrument.NoFlowControl,
+    comm = dict(baudRate=QSerialInstrument.BaudRate.Baud19200,
+                dataBits=QSerialInstrument.DataBits.Data8,
+                stopBits=QSerialInstrument.StopBits.OneStop,
+                parity=QSerialInstrument.Parity.NoParity,
+                flowControl=QSerialInstrument.FlowControl.NoFlowControl,
                 eol='\r')
 
     def __init__(self, portName=None, **kwargs):

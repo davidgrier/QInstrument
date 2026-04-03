@@ -1,276 +1,272 @@
-from PyQt5.QtCore import (pyqtProperty, pyqtSlot)
-from QInstrument.lib import QSerialInstrument
-import numpy as np
 import logging
+import numpy as np
+from numpy.typing import ArrayLike
+from QInstrument.lib.QSerialInstrument import QSerialInstrument
 
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.WARNING)
 
 
 class QDS345(QSerialInstrument):
     '''SRS DS345 Function Generator
 
-    .....
-
-    Inherits
-    --------
-    SerialInstrument
-
     Properties
     ==========
-    Setting properties on an instantiated object
-    changes corresponding settings on the connected
-    instrument.
 
     Function Output
     ---------------
-    amplitude: float
-        Peak-to-peak amplitude of output signal [V]
-        Range: 0. <= amplitude <= 5V, amplitude + offset <= 5V
-    frequency: float
-        Frequency of output signal [Hz]
-        Range:
-        sine:       1 uHz,      30.2 MHz
-        square:     1 uHz,      30.2 MHz
-        triangle:   1 uHz,     100.0 kHz
-        ramp:       1 uHz,     100.0 kHz
-        arbitrary:  2.329 mHz,  40.0 MHz sampling
-        noise:     10 MHz white noise (fixed)
+    amplitude: float [V]
+        Peak-to-peak output amplitude.
+        Range: 0 <= amplitude <= 5, amplitude + |offset| <= 5
+    frequency: float [Hz]
+        Output frequency.
+        Range by waveform:
+            sine, square:   1 uHz – 30.2 MHz
+            triangle, ramp: 1 uHz – 100 kHz
+            arbitrary:      2.329 mHz – 40 MHz (sampling rate)
+            noise:          10 MHz (fixed)
     invert: bool
-        True: invert output.
-        False: normal output.
+        True: invert output polarity.
     mute: bool
-        True: mute output.
-        False: restore last amplitude setting.
-    offset: float
-        DC output offset voltage [V]
-        Range: 0 V <= offset <= 5V, amplitude + offset <= 5V
-    phase: float
-        Relative phase of output waveform [degrees]
-        Range: 0.001 degrees <= phase <= 7199.999 degrees
-        Note: Setting phase produces an error if
-        waveform is set to noise (4) or arbitrary (5)
-        or if a frequency sweep or frequency modulation
-        is enabled.
+        True: silence output (saves and restores amplitude).
+    offset: float [V]
+        DC offset voltage.
+        Range: -5 <= offset <= 5, amplitude + |offset| <= 5
+    phase: float [degrees]
+        Output waveform phase.
+        Range: 0.001 – 7199.999
+        Note: raises an instrument error if waveform is noise (4)
+        or arbitrary (5), or if a sweep or FM is active.
     waveform: int
         Output waveform.
-        0: sine
-        1: square
-        2: triangle
-        3: ramp
-        4: noise
-        5: arbitrary waveform
+        0: sine, 1: square, 2: triangle, 3: ramp, 4: noise, 5: arbitrary
 
     Output Modulation
     -----------------
     modulation: bool
-        True: enable output modulation
-        False: unmodulated output
+        True: enable output modulation.
     modulation_type: int
-        0: linear sweep
-        1: logarithmic sweep
-        2: internal amplitude modulation
-        3: frequency modulation
-        4: phase modulation
-        5: burst mode
+        0: linear sweep, 1: log sweep, 2: AM, 3: FM, 4: PM, 5: burst
     modulation_waveform: int
-        Waveform used to modulate output:
-        0: single sweep
-        1: ramp
-        2: triangle
-        3: sine
-        4: square
-        5: arbitrary waveform
-        6: none: used for burst mode modulation
-        Note: arbitrary (5) may only be set for
-        amplitude modulation (AM), frequency modulation (FM)
-        or phase modulation (PM). The waveform must be
-        loaded before setting modulation_waveform=5 and
-        modulation=True or else an error will be produced.
-    modulation_rate: float
-        Modulation rate [Hz]
-        Range: 0.001 Hz <= modulation_rate <= 10 kHz
-        Value is rounded to 2 significant digits.
+        Modulating waveform.
+        0: single, 1: ramp, 2: triangle, 3: sine, 4: square,
+        5: arbitrary, 6: none (burst mode)
+        Note: arbitrary (5) is valid for AM, FM, and PM only, and the
+        waveform must be loaded before enabling modulation.
+    modulation_rate: float [Hz]
+        Modulation rate.
+        Range: 0.001 – 10000
     burst_count: int
-        Range: 1 <= burst_count <= 30000, subject to the
-        constraint that the burst time cannot exceed 500s.
-    am_depth: int
-        Depth of AM modulation [percent]
-        Range: 0 <= am_depth <= 100
-        Note: negative values enable double-sideband-suppressed
-        carrier modulation (DSBSC).
-    fm_span: float
-        Span of frequency modulation [Hz]
-    pm_span: float
-        Span of phase modulation_waveform [degrees]
-        Range: 0 <= pm_span <= 7199.999 degrees
-        Note: the phase shift ranges from -pm_span/2 to +pm_span/2
-    sweep_center_frequency: float
-        Sweep center frequency [Hz]
-        Range: 0 <= sweep_center_frequency <= waveform limit
-    sweep_span: float
-        Sweep span [Hz]
-        Range: abs(sweep_span) <= 2*sweep_center_frequency
-        Note: negative values correspond to downward sweep.
-    sweep_start_frequency: float
-        Starting frequency for frequency sweep [Hz]
-        Range: 0 <= sweep_start_frequency <= waveform maximum
-    sweep_stop_frequency: float
-        Ending frequency for frequency sweep [Hz]
-        Range: 0 <= sweep_stop_frequency <= waveform maximum
-    trigger_rate: float
-        Rate for internally triggered bursts or sweeps [Hz]
-        Range: 0.001 Hz <= trigger_rate <= 10 kHz
-        Rounded to two significant digits.
+        Number of cycles per burst.
+        Range: 1 – 30000 (burst time must not exceed 500 s)
+    am_depth: int [%]
+        AM modulation depth.
+        Range: 0 – 100. Negative values enable double-sideband
+        suppressed-carrier (DSBSC) modulation.
+    fm_span: float [Hz]
+        Peak frequency deviation for FM.
+        Range: 0 – 2 * frequency
+    pm_span: float [degrees]
+        Peak phase deviation for PM.
+        Range: 0 – 7199.999
+    sweep_center_frequency: float [Hz]
+        Center frequency for frequency sweep.
+        Range: 0 – waveform maximum
+    sweep_span: float [Hz]
+        Span for frequency sweep. Negative values sweep downward.
+        Range: |sweep_span| <= 2 * sweep_center_frequency
+    sweep_start_frequency: float [Hz]
+        Start frequency for sweep.
+        Range: 0 – waveform maximum
+    sweep_stop_frequency: float [Hz]
+        Stop frequency for sweep.
+        Range: 0 – waveform maximum
+    trigger_rate: float [Hz]
+        Internal trigger rate for bursts and sweeps.
+        Range: 0.001 – 10000 (rounded to 2 significant digits)
     trigger_source: int
-        Trigger source for bursts and sweeps
-        0: single trigger: see trigger()
-        1: internal rate
-        2: external, positive slope
-        3: external, negative slope
-        4: line trigger
+        Trigger source for bursts and sweeps.
+        0: single (see trigger()), 1: internal rate,
+        2: external positive slope, 3: external negative slope,
+        4: line
 
     Arbitrary Waveform
     ------------------
-    sampling_frequency: float
+    sampling_frequency: float [Hz]
+        Sampling rate for arbitrary waveform playback.
+        Range: 1 mHz – 40 MHz
     '''
 
-    comm = dict(baudRate=QSerialInstrument.Baud9600,
-                dataBits=QSerialInstrument.Data8,
-                stopBits=QSerialInstrument.TwoStop,
-                parity=QSerialInstrument.NoParity,
-                flowControl=QSerialInstrument.NoFlowControl,
+    comm = dict(baudRate=QSerialInstrument.BaudRate.Baud9600,
+                dataBits=QSerialInstrument.DataBits.Data8,
+                stopBits=QSerialInstrument.StopBits.TwoStop,
+                parity=QSerialInstrument.Parity.NoParity,
+                flowControl=QSerialInstrument.FlowControl.NoFlowControl,
                 eol='\n')
 
-    def Property(pstr, dtype=float):
-        def getter(self):
-            return self.get_value(f'{pstr}?', dtype)
-
-        def setter(self, value):
-            value = int(value) if (dtype == bool) else dtype(value)
-            self.transmit(f'{pstr}{value}')
-
-        return pyqtProperty(dtype, getter, setter)
-
-    # Function output controls
-    frequency = Property('FREQ')
-    invert = Property('INVT', bool)
-    offset = Property('OFFS')
-    phase = Property('PHSE')
-    sampling_frequency = Property('FSMP')
-    waveform = Property('FUNC', int)
-    # Modulation controls
-    modulation = Property('MENA', bool)
-    modulation_rate = Property('RATE')
-    modulation_type = Property('MTYP', int)
-    modulation_waveform = Property('MDWF', int)
-    burst_count = Property('BCNT', int)
-    am_depth = Property('DPTH', int)
-    fm_span = Property('FDEV')
-    pm_span = Property('PDEV')
-    sweep_span = Property('SPAN')
-    sweep_center_frequency = Property('SPCF')
-    sweep_start_frequency = Property('STFR')
-    sweep_stop_frequency = Property('SPFR')
-    trigger_rate = Property('TRAT')
-    trigger_source = Property('TSRC', int)
-
-    def __init__(self, portName=None, **kwargs):
+    def __init__(self, portName: str | None = None, **kwargs) -> None:
         args = self.comm | kwargs
         super().__init__(portName, **args)
-        self._muted = False
+        self._muted: bool = False
+        self._saved_amplitude: float
+        register = self.registerProperty
+        register('amplitude',
+                 getter=lambda: float(self.handshake('AMPL?')[:-4]),
+                 setter=lambda v: self.transmit(f'AMPL {float(v)}VP'))
+        register('mute', ptype=bool,
+                 getter=lambda: self._muted,
+                 setter=self._setMute)
+        self._register('frequency',              'FREQ')
+        self._register('offset',                 'OFFS')
+        self._register('phase',                  'PHSE')
+        self._register('sampling_frequency',     'FSMP')
+        self._register('waveform',               'FUNC', int)
+        self._register('invert',                 'INVT', bool)
+        self._register('modulation',             'MENA', bool)
+        self._register('modulation_type',        'MTYP', int)
+        self._register('modulation_waveform',    'MDWF', int)
+        self._register('modulation_rate',        'RATE')
+        self._register('burst_count',            'BCNT', int)
+        self._register('am_depth',               'DPTH', int)
+        self._register('fm_span',                'FDEV')
+        self._register('pm_span',                'PDEV')
+        self._register('sweep_span',             'SPAN')
+        self._register('sweep_center_frequency', 'SPCF')
+        self._register('sweep_start_frequency',  'STFR')
+        self._register('sweep_stop_frequency',   'SPFR')
+        self._register('trigger_rate',           'TRAT')
+        self._register('trigger_source',         'TSRC', int)
+        self.registerMethod('reset', self.reset)
+        self.registerMethod('trigger', self.trigger)
 
-    def identify(self):
+    def _register(self, name: str, cmd: str, dtype: type = float) -> None:
+        '''Register a standard instrument property.
+
+        Builds getter and setter from the DS345 command convention:
+        query is ``cmd + '?'``, set is ``cmd + value``. Bool properties
+        are transmitted as integers (0/1) per the instrument protocol.
+
+        Parameters
+        ----------
+        name : str
+            Property name passed to ``registerProperty``.
+        cmd : str
+            DS345 command mnemonic (e.g. ``'FREQ'``).
+        dtype : type, optional
+            Value type: ``float`` (default), ``int``, or ``bool``.
+        '''
+        if dtype is bool:
+            def getter(): return bool(self.getValue(f'{cmd}?', int))
+            def setter(v): return self.transmit(f'{cmd}{int(bool(v))}')
+        else:
+            def getter(): return self.getValue(f'{cmd}?', dtype)
+            def setter(v): return self.transmit(f'{cmd}{dtype(v)}')
+        self.registerProperty(name, getter=getter, setter=setter, ptype=dtype)
+
+    def identify(self) -> bool:
+        '''Return True if the connected device identifies as a DS345.
+
+        Queries the instrument identification string (``*IDN?``) and
+        checks for the ``'DS345'`` model token in the response.
+        '''
         return 'DS345' in self.handshake('*IDN?')
 
-    @pyqtSlot()
-    def reset(self):
-        '''Rest DS345 to default settings'''
+    def reset(self) -> None:
+        '''Reset the DS345 to its factory default settings.'''
         self.transmit('*RST')
 
-    @pyqtProperty(float)
-    def amplitude(self):
-        return float(self.handshake('AMPL?')[:-4])
+    def trigger(self) -> None:
+        '''Issue a single trigger for a burst or sweep.
 
-    @amplitude.setter
-    def amplitude(self, value):
-        self.transmit(f'AMPL {value}VP')
+        Only effective when ``trigger_source`` is 0 (single trigger
+        mode). Logs a warning otherwise.
+        '''
+        if self.getValue('TSRC?', int) != 0:
+            logger.warning(
+                'trigger() is only effective when trigger_source is 0.')
+        self.transmit('*TRG')
 
-    @pyqtProperty(bool)
-    def mute(self):
-        return self._muted
+    def _setMute(self, value: bool) -> None:
+        '''Setter for the ``mute`` property.
 
-    @mute.setter
-    def mute(self, value):
+        On mute: reads and saves the current amplitude, then sets it
+        to zero. On unmute: restores the saved amplitude. Idempotent —
+        repeated calls with the same value are no-ops.
+        '''
+        value = bool(value)
         if value == self._muted:
             return
         if value:
-            self._saved_amplitude = self.amplitude
-            self.amplitude = 0.
+            amplitude = self.get('amplitude')
+            assert amplitude is not None
+            self._saved_amplitude = float(amplitude)
+            self.transmit('AMPL 0.0VP')
             self._muted = True
         else:
             self._muted = False
-            self.amplitude = self._saved_amplitude
+            self.transmit(f'AMPL {self._saved_amplitude}VP')
 
-    @pyqtSlot()
-    def trigger(self):
-        '''Trigger sweep or burst
-
-        Note: Effective if trigger_source=0 (single)
-        '''
-        if self.trigger_source != 0:
-            logger.warn('Only effective if trigger_source is 0.')
-        self.transmit('*TRG')
-
-    def reset_sweep_markers(self):
+    def set_span_from_markers(self) -> None:
+        '''Set the sweep span from the current marker positions (MKSP).'''
         self.transmit('MKSP')
 
-    def set_sweep_span(self):
+    def set_markers_from_span(self) -> None:
+        '''Set the marker positions from the current sweep span (SPMK).'''
         self.transmit('SPMK')
 
-    def set_ttl(self):
-        '''Set output to TTL levels'''
+    def set_ttl(self) -> None:
+        '''Set output amplitude and offset to TTL levels.'''
         self.transmit('ATTL')
 
-    def set_ecl(self):
-        '''Set output to ECL levels'''
+    def set_ecl(self) -> None:
+        '''Set output amplitude and offset to ECL levels.'''
         self.transmit('AECL')
 
-    def load_waveform(self, waveform):
-        '''Load arbitrary waveform
+    def load_waveform(self, waveform: ArrayLike) -> None:
+        '''Load an arbitrary waveform into the DS345.
 
-        Arguments
-        ---------
-        waveform: numpy.array
+        Parameters
+        ----------
+        waveform : ArrayLike
+            Up to 16300 samples. Values are clipped and rounded to
+            the range [-2048, 2047] before transmission.
         '''
-        npts = len(waveform)
+        data = np.asarray(waveform)
+        npts = len(data)
         if npts > 16300:
             logger.error('waveform can contain at most 16300 points')
             return
         if not self.expect(f'LDWF?0,{npts}', '1'):
-            logger.error(f'not able to load waveform of length {npts}.')
+            logger.error(f'Not able to load waveform of length {npts}.')
             return
-        data = np.clip(np.round(waveform), -2048, 2047).astype('>i2')
+        data = np.clip(np.round(data), -2048, 2047).astype('>i2')
         checksum = (np.sum(data) & 0xFFFF).astype('>i2')
         data = np.append(data, checksum)
         self.transmit(data.tobytes())
 
-    def amplitude_modulation(self, waveform):
-        '''Load arbitrary amplitude modulation
+    def amplitude_modulation(self, waveform: ArrayLike) -> None:
+        '''Load an arbitrary amplitude modulation waveform.
 
-        Range: -1 (full off) to +1 (full on)
-        Maximum length: 10000 points
+        Configures the instrument for arbitrary AM and uploads the
+        waveform. Modulation is enabled on completion.
+
+        Parameters
+        ----------
+        waveform : ArrayLike
+            Up to 10000 samples normalised to [-1, 1], where -1 is
+            full off and +1 is full on.
         '''
-        if len(waveform) > 10000:
+        data = np.asarray(waveform)
+        if len(data) > 10000:
             logger.error('waveform can contain at most 10000 points')
-        signal = np.round(32767.*waveform).astype('>i2')
+            return
+        signal = np.round(32767. * data).astype('>i2')
         checksum = (np.sum(signal) & 0xFFFF).astype('>i2').tobytes()
-        self.modulation = False
-        self.modulation_type = 2
-        self.modulation_waveform = 5
+        self.transmit('MENA0')
+        self.transmit('MTYP2')
+        self.transmit('MDWF5')
         self.transmit(f'AMOD?{len(signal)}')
-        self.read_until()
+        self.receive()
         self.transmit(signal.tobytes())
         self.transmit(checksum)
-        self.modulation = True
+        self.transmit('MENA1')

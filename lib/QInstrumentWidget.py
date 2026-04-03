@@ -84,14 +84,14 @@ class QInstrumentWidget(QtWidgets.QWidget):
                'QRadioButton':   'toggled',
                'QSpinBox':       'valueChanged'}
 
-    propertyChanged = QtCore.pyqtSignal(str, object)
+    propertyChanged = QtCore.Signal(str, object)
 
     def __init__(self, *args, uiFile=None, device=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.ui = self._loadUi(uiFile)
         self.device = device
 
-    @QtCore.pyqtProperty(object)
+    @QtCore.Property(object)
     def device(self):
         return self._device
 
@@ -107,7 +107,7 @@ class QInstrumentWidget(QtWidgets.QWidget):
         else:
             self.setEnabled(False)
 
-    @QtCore.pyqtProperty(list)
+    @QtCore.Property(list)
     def properties(self):
         '''List of device properties that are controlled by the ui
 
@@ -116,7 +116,7 @@ class QInstrumentWidget(QtWidgets.QWidget):
         '''
         return self._properties
 
-    @QtCore.pyqtProperty(list)
+    @QtCore.Property(list)
     def methods(self):
         '''List of device methods that are called by the ui
 
@@ -125,7 +125,7 @@ class QInstrumentWidget(QtWidgets.QWidget):
         '''
         return self._methods
 
-    @QtCore.pyqtProperty(dict)
+    @QtCore.Property(dict)
     def settings(self):
         '''Dictionary of properties and their current values.
 
@@ -173,19 +173,21 @@ class QInstrumentWidget(QtWidgets.QWidget):
             Value of property
             Default: update widget value with device value
         '''
-        if hasattr(self.ui, key):
-            widget = getattr(self.ui, key)
-            setter = self._wmethod(widget, self.wsetter)
-            if value is None:
-                value = getattr(self.device, key, None)
-                self.blockSignals(True)
-            try:
-                setter(value)
-            except Exception as ex:
-                logger.error(f'Could not set {key} to {value}: {ex}')
-            self.blockSignals(False)
-        else:
+        if not hasattr(self.ui, key):
             logger.error(f'Unknown property {key}')
+            return
+        widget = getattr(self.ui, key)
+        setter = self._wmethod(widget, self.wsetter)
+        syncing = value is None
+        if syncing:
+            value = self.device.get(key)
+            widget.blockSignals(True)
+        try:
+            setter(value)
+        except Exception as ex:
+            logger.error(f'Could not set {key} to {value}: {ex}')
+        if syncing:
+            widget.blockSignals(False)
 
     def _wmethod(self, widget, method):
         '''Return method used by widget'''
@@ -224,18 +226,18 @@ class QInstrumentWidget(QtWidgets.QWidget):
                 signal.connect(self._setDeviceProperty)
         for method in self.methods:
             widget = getattr(self.ui, method)
-            if isinstance(widget, QPushButton):
-                widget.clicked.connect(getattr(self.device, method))
+            if isinstance(widget, QtWidgets.QPushButton):
+                widget.clicked.connect(lambda m=method: self.device.execute(m))
 
-    @QtCore.pyqtSlot(bool)
-    @QtCore.pyqtSlot(int)
-    @QtCore.pyqtSlot(float)
-    @QtCore.pyqtSlot(str)
+    @QtCore.Slot(bool)
+    @QtCore.Slot(int)
+    @QtCore.Slot(float)
+    @QtCore.Slot(str)
     def _setDeviceProperty(self, value):
         name = self.sender().objectName()
-        if hasattr(self.device, name):
+        if name in self.device.properties:
             logger.debug(f'Setting device: {name}: {value}')
-            setattr(self.device, name, value)
+            self.device.set(name, value)
             self.waitForDevice()
             self.propertyChanged.emit(name, value)
 

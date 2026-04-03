@@ -41,11 +41,11 @@ class QProscan(QSerialInstrument):
 
     '''
 
-    comm = dict(baudRate=QSerialInstrument.Baud9600,
-                dataBits=QSerialInstrument.Data8,
-                stopBits=QSerialInstrument.OneStop,
-                parity=QSerialInstrument.NoParity,
-                flowControl=QSerialInstrument.NoFlowControl,
+    comm = dict(baudRate=QSerialInstrument.BaudRate.Baud9600,
+                dataBits=QSerialInstrument.DataBits.Data8,
+                stopBits=QSerialInstrument.StopBits.OneStop,
+                parity=QSerialInstrument.Parity.NoParity,
+                flowControl=QSerialInstrument.FlowControl.NoFlowControl,
                 eol='\r')
 
     positionChanged = pyqtSignal(object)

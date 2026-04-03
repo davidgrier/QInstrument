@@ -5,10 +5,10 @@ from struct import unpack
 
 class QTDS1000(QSerialInstrument):
 
-    comm = dict(baudRate=QSerialInstrument.Baud9600,
-                dataBits=QSerialInstrument.Data8,
-                stopBits=QSerialInstrument.OneStop,
-                parity=QSerialInstrument.NoParity,
+    comm = dict(baudRate=QSerialInstrument.BaudRate.Baud9600,
+                dataBits=QSerialInstrument.DataBits.Data8,
+                stopBits=QSerialInstrument.StopBits.OneStop,
+                parity=QSerialInstrument.Parity.NoParity,
                 flowControl=QSerialInstrument.HardwareControl,
                 eol=b'\n')
 

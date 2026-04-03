@@ -1,4 +1,4 @@
-from QInstrument.lib import QInstrumentWidget
+from QInstrument.lib.QInstrumentWidget import QInstrumentWidget
 from QInstrument.instruments.DS345.QDS345 import QDS345
 
 
@@ -16,13 +16,9 @@ class QDS345Widget(QInstrumentWidget):
 
 def main():
     import sys
-    from PyQt5.QtWidgets import QApplication
+    from qtpy.QtWidgets import QApplication
 
     app = QApplication(sys.argv)
     widget = QDS345Widget()
     widget.show()
-    sys.exit(app.exec_())
-
-
-if __name__ == '__main__':
-    main()
+    sys.exit(app.exec())

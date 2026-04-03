@@ -61,7 +61,7 @@ class QSerialInterface(QSerialPort):
     >>> instrument = instrument.find()
     '''
 
-    dataReady = QtCore.pyqtSignal(str)
+    dataReady = QtCore.Signal(str)
 
     def __init__(self,
                  portName: str = '',
@@ -274,7 +274,7 @@ class QSerialInterface(QSerialPort):
         self.setBreakEnabled(True)
         QtCore.QTimer.singleShot(duration, lambda: self.setBreakEnabled(False))
 
-    @QtCore.pyqtSlot()
+    @QtCore.Slot()
     def _handleReadyRead(self) -> None:
         '''Slot for non-blocking data reception.
 
