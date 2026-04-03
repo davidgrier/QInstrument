@@ -3,65 +3,46 @@ from QInstrument.lib.QSerialInterface import QSerialInterface
 
 
 class QSerialInstrument(QAbstractInstrument, QSerialInterface):
-    '''Base class for instruments connected to serial ports
+    '''Base class for instruments connected to serial ports.
 
-    ........
+    Combines :class:`QAbstractInstrument` (property registration, thread-safe
+    access) with :class:`QSerialInterface` (serial I/O, port auto-detection).
+    Concrete instrument classes inherit from this and call
+    ``registerProperty()`` in ``__init__`` for each controllable parameter.
 
-
-    Properties
-    ----------
-    eol: bytes
-        End-of-line string (character) used to terminate
-        strings that are transmitted to the instrument.
-        Default: ''
-    timeout: float
-        Time to wait for characters from device [ms]
-        Default: 100.
-
-    Methods
-    -------
-    find(): QSerialInstrument
-        Poll serial ports to find the device.
-
-    Signals
-    -------
-    dataReady(str):
-        Emitted when asynchronous reading encounters
-        the eol character and transmits the received data
-        up to and including the eol character.
-
-    Slots
-    -----
-    set_value(value):
-        Intended as a slot for instrument widgets that
-        subclass QSerialInstrument.
-
-    Example
-    -------
-    >>> instrument = QSerialInstrument().find()
-
+    See Also
+    --------
+    QAbstractInstrument, QSerialInterface
     '''
 
     @classmethod
-    def example(cls, portname: str = '/dev/ttyUSB0') -> None:
-        from qtpy import QtCore
+    def example(cls, portname: str | None = None) -> None:
+        '''Connect to an instrument and print its current settings.
 
-        for k in cls.__dict__.keys():
-            if 'Baud' in k:
-                print(dir(k))
+        Creates a ``QCoreApplication``, opens the instrument on *portname*
+        (or auto-detects it with :meth:`find` when *portname* is ``None``),
+        then prints the instrument repr showing all registered property values.
+
+        Intended to be run from ``__main__`` in each instrument module:
+
+        .. code-block:: python
+
+            if __name__ == '__main__':
+                QMyInstrument.example()
+
+        Parameters
+        ----------
+        portname : str | None, optional
+            Serial port to open (e.g. ``'/dev/ttyUSB0'``).
+            If ``None``, all available ports are scanned via :meth:`find`.
         '''
-        app = QtCore.QCoreApplication([])
-
-        comm = dict(baudRate=cls.BaudRate.Baud9600,
-                    dataBits=cls.DataBits.Data8,
-                    stopBits=cls.StopBits.OneStop,
-                    parity=cls.Parity.NoParity,
-                    flowControl=cls.FlowControl.NoFlowControl,
-                    eol=b'\r')
-
-        a = cls(portname, **comm)
-        print(a._handshake('*IDN?'))
-        '''
+        from qtpy.QtCore import QCoreApplication
+        app = QCoreApplication.instance() or QCoreApplication([])
+        if portname is None:
+            instrument = cls().find()
+        else:
+            instrument = cls(portname)
+        print(instrument)
 
 
 if __name__ == '__main__':

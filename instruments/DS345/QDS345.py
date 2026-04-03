@@ -270,3 +270,7 @@ class QDS345(QSerialInstrument):
         self.transmit(signal.tobytes())
         self.transmit(checksum)
         self.transmit('MENA1')
+
+
+if __name__ == '__main__':
+    QDS345.example()
