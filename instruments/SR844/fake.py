@@ -1,45 +1,33 @@
 import numpy as np
 from QInstrument.lib.QFakeInstrument import QFakeInstrument
+from QInstrument.instruments.SR844.instrument import QSR844
 
 
-class QFakeSR844(QFakeInstrument):
+class QFakeSR844(QFakeInstrument, QSR844):
+    '''Fake SR844 for UI development without hardware.
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._amplitude = 0.
-        self._frequency = 0.
-        self._harmonic = 1
-        self._internal_reference = False
-        self._phase = 0.
-        self._reference_trigger = 0
-        self._dc_coupling = True
-        self._input_configuration = 0
-        self._line_filter = 0
-        self._dynamic_reserve = 0
-        self._low_pass_slope = 0
-        self._sensitivity = 0
-        self._synchronous_filter = False
-        self._time_constant = 0
-        self.registerProperty('amplitude')
-        self.registerProperty('frequency')
-        self.registerProperty('harmonic', ptype=int)
-        self.registerProperty('internal_reference', ptype=bool)
-        self.registerProperty('phase')
-        self.registerProperty('reference_trigger', ptype=int)
-        self.registerProperty('dc_coupling', ptype=bool)
-        self.registerProperty('input_configuration', ptype=int)
-        self.registerProperty('line_filter', ptype=int)
-        self.registerProperty('dynamic_reserve', ptype=int)
-        self.registerProperty('low_pass_slope', ptype=int)
-        self.registerProperty('sensitivity', ptype=int)
-        self.registerProperty('synchronous_filter', ptype=bool)
-        self.registerProperty('time_constant', ptype=int)
-        self.identification = 'Fake SR844 RF Lockin Amplifier'
+    All standard read/write properties are backed by an in-memory store
+    via the MRO auto-mock pattern.  The read-only output channels
+    (x, y, r, theta, reference_frequency, if_frequency) are re-registered
+    here to return ``0`` or ``0.0`` from the store rather than attempting
+    wire communication.
+    '''
 
-    def report(self):
-        '''Return [frequency, amplitude, phase]'''
+    def _registerProperties(self) -> None:
+        QSR844._registerProperties(self)
+        for name in ('x', 'y', 'r', 'theta'):
+            self.registerProperty(name, setter=None, ptype=float,
+                                  getter=lambda n=name: self._store.get(n, 0.))
+        for name in ('reference_frequency', 'if_frequency'):
+            self.registerProperty(name, setter=None, ptype=int,
+                                  getter=lambda n=name: self._store.get(n, 0))
+        self.identification = 'Fake SR844 RF Lock-in Amplifier'
+
+    def report(self) -> list[float]:
+        '''Return simulated [frequency, R, theta].'''
         data = np.random.rand(3)
         data[2] *= 360.
         return data.tolist()
+
 
 __all__ = ['QFakeSR844']

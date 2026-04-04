@@ -3,7 +3,7 @@ from QInstrument.instruments.SR844.instrument import QSR844
 
 
 class QSR844Widget(QInstrumentWidget):
-    '''Stanford Research Systems SR844 RF Lockin Amplifier
+    '''Stanford Research Systems SR844 RF Lock-in Amplifier
     '''
 
     UIFILE = 'SR844Widget.ui'
