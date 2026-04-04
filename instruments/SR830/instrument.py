@@ -20,10 +20,10 @@ class QSR830(QSerialInstrument):
     frequency : float [Hz]
         Reference frequency for the internal oscillator.
         Rounded to 5 significant digits or 0.0001 Hz, whichever is greater.
-        Range: 0.001 <= frequency, frequency * harmonic <= 102000
+        Range: 0.001 Hz <= frequency, frequency * harmonic <= 102 kHz
     harmonic : int
         Detection harmonic.
-        Range: 1 <= harmonic < 20000, frequency * harmonic <= 102000
+        Range: 1 <= harmonic < 20000, frequency * harmonic <= 102 kHz
     internal_reference : bool
         True: use internal reference source.
         False: use external reference source.
@@ -56,6 +56,7 @@ class QSR830(QSerialInstrument):
     low_pass_slope : int
         0: 6 dB/octave, 1: 12 dB/octave, 2: 18 dB/octave, 3: 24 dB/octave
     sensitivity : int
+        Voltage input sensitivities (V/V mode):
         0:   2 nV/fA    10:   5 μV/pA    20:  10 mV/nA
         1:   5 nV/fA    11:  10 μV/pA    21:  20 mV/nA
         2:  10 nV/fA    12:  20 μV/pA    22:  50 mV/nA
@@ -82,6 +83,17 @@ class QSR830(QSerialInstrument):
         7:  30 ms    17:   3 ks
         8: 100 ms    18:  10 ks
         9: 300 ms    19:  30 ks
+
+    Output (read-only)
+    ------------------
+    x : float [V]
+        In-phase (X) component of the lock-in signal.
+    y : float [V]
+        Quadrature (Y) component of the lock-in signal.
+    r : float [V]
+        Magnitude R of the lock-in signal.
+    theta : float [degrees]
+        Phase angle theta of the lock-in signal.
     '''
 
     comm = dict(baudRate=QSerialInstrument.BaudRate.Baud9600,
@@ -110,16 +122,21 @@ class QSR830(QSerialInstrument):
         self._register('phase',              'PHAS', float)
         self._register('reference_trigger',  'RSLP', int)
         # Input and Filter
-        self._register('dc_coupling',          'ICPL', bool)
-        self._register('input_configuration',  'ISRC', int)
-        self._register('line_filter',          'ILIN', int)
-        self._register('shield_grounding',     'IGND', bool)
+        self._register('dc_coupling',         'ICPL', bool)
+        self._register('input_configuration', 'ISRC', int)
+        self._register('line_filter',         'ILIN', int)
+        self._register('shield_grounding',    'IGND', bool)
         # Gain and Time Constant
         self._register('dynamic_reserve',    'RMOD', int)
         self._register('low_pass_slope',     'OFSL', int)
         self._register('sensitivity',        'SENS', int)
         self._register('synchronous_filter', 'SYNC', bool)
         self._register('time_constant',      'OFLT', int)
+        # Output channels (read-only)
+        self.registerProperty('x',     getter=lambda: self.getValue('OUTP?1', float), setter=None, ptype=float)
+        self.registerProperty('y',     getter=lambda: self.getValue('OUTP?2', float), setter=None, ptype=float)
+        self.registerProperty('r',     getter=lambda: self.getValue('OUTP?3', float), setter=None, ptype=float)
+        self.registerProperty('theta', getter=lambda: self.getValue('OUTP?4', float), setter=None, ptype=float)
 
     def _registerMethods(self) -> None:
         '''Register all instrument methods via ``registerMethod()``.
@@ -127,10 +144,13 @@ class QSR830(QSerialInstrument):
         Called once from ``__init__``. Subclasses that add methods should
         call ``super()._registerMethods()`` first.
         '''
-        self.registerMethod('reset',        self.reset)
-        self.registerMethod('auto_gain',    self.auto_gain)
-        self.registerMethod('auto_reserve', self.auto_reserve)
-        self.registerMethod('auto_phase',   self.auto_phase)
+        self.registerMethod('reset',          self.reset)
+        self.registerMethod('auto_gain',      self.auto_gain)
+        self.registerMethod('auto_reserve',   self.auto_reserve)
+        self.registerMethod('auto_phase',     self.auto_phase)
+        self.registerMethod('auto_offset_x',  self.auto_offset_x)
+        self.registerMethod('auto_offset_y',  self.auto_offset_y)
+        self.registerMethod('auto_offset_r',  self.auto_offset_r)
 
     def _register(self, name: str, cmd: str, dtype: type = float) -> None:
         '''Register a standard instrument property.
@@ -165,10 +185,10 @@ class QSR830(QSerialInstrument):
         return 'SR830' in self.handshake('*IDN?')
 
     def report(self) -> list[float]:
-        '''Return the current frequency, magnitude, and phase.
+        '''Return the current frequency, magnitude, and phase simultaneously.
 
-        Queries the instrument using the SNAP command for simultaneous
-        capture of frequency (9), R (3), and theta (4).
+        Uses the SNAP command for simultaneous capture, avoiding the
+        timing errors that would result from three sequential queries.
 
         Returns
         -------
@@ -194,14 +214,32 @@ class QSR830(QSerialInstrument):
         '''Automatically adjust the reference phase.'''
         self.transmit('APHS')
 
+    def auto_offset_x(self) -> None:
+        '''Automatically offset the X output channel to zero.'''
+        self.auto_offset(1)
+
+    def auto_offset_y(self) -> None:
+        '''Automatically offset the Y output channel to zero.'''
+        self.auto_offset(2)
+
+    def auto_offset_r(self) -> None:
+        '''Automatically offset the R output channel to zero.'''
+        self.auto_offset(3)
+
     def auto_offset(self, channel: int) -> None:
         '''Automatically offset the specified output channel to zero.
+
+        Prefer the dedicated methods :meth:`auto_offset_x`,
+        :meth:`auto_offset_y`, and :meth:`auto_offset_r` for widget binding.
 
         Parameters
         ----------
         channel : int
             1: X, 2: Y, 3: R
         '''
+        if channel not in (1, 2, 3):
+            logger.warning(f'auto_offset: channel must be 1, 2, or 3 (got {channel})')
+            return
         self.transmit(f'AOFF{channel}')
 
 
