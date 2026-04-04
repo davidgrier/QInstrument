@@ -1,10 +1,7 @@
-from PyQt5.QtWidgets import QWidget
-from PyQt5.QtCore import (QByteArray, QPointF, QRectF, QTimer,
-                          pyqtProperty, pyqtSlot)
-from PyQt5.QtGui import QPainter
-from PyQt5.QtSvg import QSvgRenderer
+import sys
 from enum import Enum
 from pathlib import Path
+from qtpy import QtCore, QtWidgets, QtGui, QtSvg
 
 
 class Color(Enum):
@@ -21,48 +18,35 @@ class State(Enum):
     ON = 1
 
 
-class QLedWidget(QWidget):
-    '''LED indicator
+class QLedWidget(QtWidgets.QWidget):
+    '''SVG-based LED indicator widget.
 
-    ...
-
-    Inherits
-    --------
-    PyQt5.QtWidgets.QWidget
+    Renders a colored LED that can be on, off, or blinking.
 
     Properties
     ==========
-
-    Colors
-    ------
-    RED, AMBER, GREEN, BLUE, VIOLET, WHITE
-
-    States
-    ------
-    ON, OFF
-
-    color: QLedWidget.Color
-        Color of the LED indicator
-    state: QLedWidget.State
-        ON: LED is bright
-        OFF: LED is dark
-    blink: bool
-        True: LED alternates between ON and OFF
-        False: LED returns to its initial state
-    interval: int
-        Duration of each state during blinking
-        in milliseconds
+    blink : bool
+        True: LED alternates between ON and OFF states at
+        :attr:`interval` ms per state.
+        False: LED returns to its saved state and stops blinking.
+    color : QLedWidget.Color
+        LED color.  One of ``RED``, ``AMBER``, ``GREEN``, ``BLUE``,
+        ``VIOLET``, ``WHITE``.
+    interval : int [ms]
+        Duration of each ON/OFF phase during blinking. Default: 400.
+    state : QLedWidget.State
+        ``ON``: LED is bright. ``OFF``: LED is dark.
     '''
 
-    RED = Color.RED
-    AMBER = Color.AMBER
-    GREEN = Color.GREEN
-    BLUE = Color.BLUE
+    RED    = Color.RED
+    AMBER  = Color.AMBER
+    GREEN  = Color.GREEN
+    BLUE   = Color.BLUE
     VIOLET = Color.VIOLET
-    WHITE = Color.WHITE
+    WHITE  = Color.WHITE
 
     OFF = State.OFF
-    ON = State.ON
+    ON  = State.ON
 
     hexcodes = {RED:    {OFF: ('3f0000', 'a00000'),
                          ON:  ('af0000', 'ff0f0f')},
@@ -75,20 +59,19 @@ class QLedWidget(QWidget):
                 VIOLET: {OFF: ('45098f', '471b7d'),
                          ON:  ('5a00cc', 'a65fff')},
                 WHITE:  {OFF: ('505055', 'a0a0aa'),
-                         ON:  ('d0d0dd', 'f0f0ff')}
-    }
+                         ON:  ('d0d0dd', 'f0f0ff')}}
 
     def __init__(self, *args,
-                 color=None,
-                 state=None,
-                 blink=None,
-                 interval=None,
-                 **kwargs):
+                 color: Color | None = None,
+                 state: State | None = None,
+                 blink: bool | None = None,
+                 interval: int | None = None,
+                 **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.setMinimumSize(48, 48)
         self.sizePolicy().setWidthForHeight(True)
-        self.renderer = QSvgRenderer()
-        self.timer = QTimer()
+        self.renderer = QtSvg.QSvgRenderer()
+        self.timer = QtCore.QTimer()
         self.timer.timeout.connect(self.flipState)
         self.template = self._load_template()
         self.color = color or self.RED
@@ -97,23 +80,23 @@ class QLedWidget(QWidget):
         self.blink = blink or False
         self.interval = interval or 400
 
-    def __setattr__(self, name, value):
+    def __setattr__(self, name: str, value: object) -> None:
         super().__setattr__(name, value)
-        if name in ['color', 'state']:
+        if name in ('color', 'state'):
             self.update()
 
-    def _load_template(self):
+    def _load_template(self) -> str:
+        '''Read and return the SVG template as a string.'''
         svgfile = Path(__file__).parent / 'QLedWidget.svg'
         with open(svgfile, 'r') as f:
-            template = f.read()
-        return template
+            return f.read()
 
-    @pyqtProperty(bool)
-    def blink(self):
+    @property
+    def blink(self) -> bool:
         return self._blink
 
     @blink.setter
-    def blink(self, blink):
+    def blink(self, blink: bool) -> None:
         self._blink = blink
         if blink:
             self._savedstate = self.state
@@ -122,33 +105,35 @@ class QLedWidget(QWidget):
             self.timer.stop()
             self.state = self._savedstate
 
-    @pyqtSlot()
-    def flipState(self):
+    @QtCore.Slot()
+    def flipState(self) -> None:
+        '''Toggle the LED between ON and OFF states.'''
         self.state = self.OFF if self.state == self.ON else self.ON
 
-    def paintEvent(self, event):
-        painter = QPainter(self)
-        painter.setRenderHint(QPainter.Antialiasing, True)
+    def paintEvent(self, event: QtGui.QPaintEvent) -> None:
+        painter = QtGui.QPainter(self)
+        painter.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing, True)
         a, b = self.hexcodes[self.color][self.state]
         svg = self.template.replace('af0000', a).replace('ff0f0f', b)
-        self.renderer.load(QByteArray(svg.encode()))
+        self.renderer.load(QtCore.QByteArray(svg.encode()))
         self.renderer.render(painter, self._bounds())
 
-    def _bounds(self):
-        x, y = self.size().width()/2., self.size().height()/2.
+    def _bounds(self) -> QtCore.QRectF:
+        x, y = self.size().width() / 2., self.size().height() / 2.
         dim = min(x, y)
-        return QRectF(QPointF(x-dim, y-dim), QPointF(x+dim, y+dim))
+        return QtCore.QRectF(QtCore.QPointF(x - dim, y - dim),
+                             QtCore.QPointF(x + dim, y + dim))
 
 
-def example():
-    from PyQt5.QtWidgets import QApplication
+def example() -> None:
+    from qtpy.QtWidgets import QApplication
 
-    app = QApplication([])
+    app = QApplication.instance() or QApplication(sys.argv)
     led = QLedWidget()
     led.show()
-    led.color = led.WHITE
+    led.color = QLedWidget.WHITE
     led.blink = True
-    app.exec()
+    sys.exit(app.exec())
 
 
 __all__ = ['QLedWidget']
