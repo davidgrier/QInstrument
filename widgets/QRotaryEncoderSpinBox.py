@@ -1,121 +1,87 @@
-from PyQt5 import uic
-from PyQt5.QtWidgets import QWidget
-from PyQt5.QtCore import (QObject, QEvent, pyqtSlot)
-from PyQt5.Qt import Qt
-from matplotlib.colors import (to_rgb, to_hex)
-import numpy as np
+import sys
 from pathlib import Path
+from qtpy import uic, QtCore
+from qtpy.QtWidgets import QWidget
+from matplotlib.colors import to_rgb, to_hex
+import numpy as np
 
 
-class SuppressArrowKeys(QObject):
+class _SuppressArrowKeys(QtCore.QObject):
+    '''Event filter that blocks Up and Down arrow key presses.
 
-    def __init__(self, parent):
-        super().__init__(parent)
+    Installed on the spinbox to prevent arrow keys from changing its
+    value while the rotary encoder has focus.
+    '''
 
-    def eventFilter(self, object, event):
-        if event.type() == QEvent.KeyPress:
-            if event.key() in [Qt.Key_Up, Qt.Key_Down]:
+    def eventFilter(self,
+                    obj: QtCore.QObject,
+                    event: QtCore.QEvent) -> bool:
+        if event.type() == QtCore.QEvent.Type.KeyPress:
+            if event.key() in (QtCore.Qt.Key.Key_Up,
+                               QtCore.Qt.Key.Key_Down):
                 return True
         return False
 
 
 class QRotaryEncoderSpinBox(QWidget):
-    '''QDoubleSpinBox controlled by a rotary encoder widget
+    '''QDoubleSpinBox controlled by a rotary encoder dial.
 
-    ...
-
-    Inherits
-    --------
-    PyQt5.QtWidgets.QWidget
+    Combines a :class:`QRotaryEncoder` dial and a ``QDoubleSpinBox``
+    into a single widget.  Turning the dial steps the spinbox value up
+    or down.  The spinbox background color interpolates between two
+    colors as the value moves from minimum to maximum.
 
     Properties
-    ----------
-    colors: tuple or list [optional]
-        The SpinBox background color advances from
-        color[0] to color[1] as the value() increases
-        from minimum() to maximum()
+    ==========
+    colors : tuple[str, str]
+        Background color interpolates from ``colors[0]`` at minimum to
+        ``colors[1]`` at maximum.  Accepts any color string recognized
+        by ``matplotlib.colors`` (e.g. ``'white'``, ``'#68ff00'``).
+        Default: ``('white', 'red')``.
 
-    QRotaryEncoderSpinBox inherits properties from QDoubleSpinBox:
+    The following ``QDoubleSpinBox`` properties are delegated directly:
 
-    decimals
-    maximum
-    minimum
-    range
-    prefix
-    suffix
-    singleStep
-    stepType
-    value
-
-    These properties are accessed through inherited methods:
-
-    Methods
-    -------
-    decimals(): int
-    setDecimals(number: int)
-
-    maximum(): float
-    setMaximum(value: float)
-
-    minimum(): float
-    setMinimum(value: float)
-
-    setRange(minimum: float, maximum: float)
-
-    prefix(): str
-    setPrefix(value: str)
-
-    suffix(): str
-    setSuffix(value: str)
-
-    singleStep(): float
-    setSingleStep(value: float)
-
-    stepType(): enum
-    setStepType(value: enum)
-
-    value(): float
-    setValue(value: float)
-
-    Signals
-    -------
-    valueChanged(float)
-
+    ``decimals``, ``maximum``, ``minimum``, ``prefix``, ``singleStep``,
+    ``stepType``, ``suffix``, ``value``, ``valueChanged``.
     '''
 
-    def __init__(self, *args, colors=None, **kwargs):
+    def __init__(self, *args, colors: tuple[str, str] | None = None,
+                 **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self.ui = self._loadUi()
-        self.filter = SuppressArrowKeys(self)
-        self.ui.value.installEventFilter(self.filter)
+        uic.loadUi(Path(__file__).with_suffix('.ui'), self)
+        self._spinbox = self.value  # save before _inheritMethods overwrites
+        self._filter = _SuppressArrowKeys(self)
+        self._spinbox.installEventFilter(self._filter)
         self._inheritMethods()
         self.setColors(colors or ('white', 'red'))
-        self.ui.encoder.setFocus()
+        self.encoder.setFocus()
 
-    def _loadUi(self):
-        uipath = Path(__file__).with_suffix('.ui')
-        form, _ = uic.loadUiType(uipath)
-        ui = form()
-        ui.setupUi(self)
-        return ui
+    def _inheritMethods(self) -> None:
+        '''Delegate QDoubleSpinBox methods to the embedded spinbox widget.'''
+        for method in ('decimals', 'setDecimals',
+                       'maximum', 'setMaximum',
+                       'minimum', 'setMinimum',
+                       'setRange',
+                       'prefix', 'setPrefix',
+                       'suffix', 'setSuffix',
+                       'singleStep', 'setSingleStep',
+                       'stepType', 'setStepType',
+                       'value', 'setValue', 'valueChanged'):
+            setattr(self, method, getattr(self._spinbox, method))
 
-    def _inheritMethods(self):
-        methods = ['decimals', 'setDecimals',
-                   'maximum', 'setMaximum',
-                   'minimum', 'setMinimum',
-                   'setRange',
-                   'prefix', 'setPrefix',
-                   'suffix', 'setSuffix',
-                   'singleStep', 'setSingleStep',
-                   'stepType', 'setStepType',
-                   'value', 'setValue', 'valueChanged']
-        for method in methods:
-            setattr(self, method, getattr(self.ui.value, method))
-
-    def colors(self):
+    def colors(self) -> tuple[str, str]:
+        '''Return the current color pair.'''
         return self._colors
 
-    def setColors(self, colors):
+    def setColors(self, colors: tuple[str, str] | None) -> None:
+        '''Set the spinbox background color gradient.
+
+        Parameters
+        ----------
+        colors : tuple[str, str] or None
+            ``(low_color, high_color)`` pair, or ``None`` to disable
+            color interpolation and disconnect the color-update slot.
+        '''
         self._colors = colors
         if colors is None:
             self.valueChanged.disconnect(self._setColor)
@@ -124,28 +90,36 @@ class QRotaryEncoderSpinBox(QWidget):
             self._c2 = np.array(to_rgb(colors[1]))
             self.valueChanged.connect(self._setColor)
 
-    @pyqtSlot(float)
-    def _setColor(self, value):
-        f = (value - self.minimum())/(self.maximum() - self.minimum())
-        color = to_hex((1-f)*self._c1 + f*self._c2)
+    @QtCore.Slot(float)
+    def _setColor(self, value: float) -> None:
+        '''Update the spinbox background color for the current value.
+
+        Parameters
+        ----------
+        value : float
+            Current spinbox value, used to interpolate between the two
+            endpoint colors.
+        '''
+        f = (value - self.minimum()) / (self.maximum() - self.minimum())
+        color = to_hex((1 - f) * self._c1 + f * self._c2)
         style = (f'QDoubleSpinBox {{'
                  f' background-color: {color};'
                  f' selection-background-color: {color}; }}')
-        self.ui.value.setStyleSheet(style)
+        self._spinbox.setStyleSheet(style)
 
 
-def example():
-    from PyQt5.QtWidgets import QApplication
+def example() -> None:
+    from qtpy.QtWidgets import QApplication
 
-    app = QApplication([])
+    app = QApplication.instance() or QApplication(sys.argv)
     widget = QRotaryEncoderSpinBox()
-    widget.setRange(0., 5)
+    widget.setRange(0., 5.)
     widget.setSingleStep(0.01)
-    widget.setValue(0)
+    widget.setValue(0.)
     widget.setSuffix(' W')
     widget.setColors(('white', '#68ff00'))
     widget.show()
-    app.exec()
+    sys.exit(app.exec())
 
 
 __all__ = ['QRotaryEncoderSpinBox']
