@@ -105,6 +105,12 @@ class QIPGLaser(QSerialInstrument):
         ----------
         cmd : str
             IPG command mnemonic (e.g. ``'STA'``, ``'ABN'``).
+
+        Returns
+        -------
+        str
+            Value token from the echoed response, or the full response
+            if the echo is absent.
         '''
         response = self.handshake(cmd)
         if cmd not in response:

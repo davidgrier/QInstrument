@@ -14,7 +14,7 @@ class QIPGLaserWidget(QInstrumentWidget):
     UIFILE = 'IPGLaserWidget.ui'
     poll_interval = 500  # ms
 
-    def __init__(self, *args, device=None, **kwargs):
+    def __init__(self, *args, device=None, **kwargs) -> None:
         device = device or QIPGLaser().find()
         super().__init__(*args, device=device, **kwargs)
         self._timer = QtCore.QTimer(self)
@@ -24,7 +24,7 @@ class QIPGLaserWidget(QInstrumentWidget):
             self._timer.start()
 
     @QtCore.Slot()
-    def _poll(self):
+    def _poll(self) -> None:
         for prop in ('keyswitch', 'power', 'fault', 'aiming', 'emission'):
             self.set(prop)
 
