@@ -87,16 +87,16 @@ class QSR844(QSerialInstrument):
     sensitivity: int
         0: 100 nVrms / -127 dBm   8:   1 mVrms / -47 dBm
         1: 300 nVrms / -117 dBm   9:   3 mVrms / -37 dBm
-        2:   1 uVrms / -107 dBm  10:  10 mVrms / -27 dBm
-        3:   3 uVrms /  -97 dBm  11:  30 mVrms / -17 dBm
-        4:  10 uVrms /  -87 dBm  12: 100 mVrms /  -7 dBm
-        5:  30 uVrms /  -77 dBm  13: 300 mVrms /  +3 dBm
-        6: 100 uVrms /  -67 dBm  14:   1  Vrms / +13 dBm
-        7: 300 uVrms /  -57 dBm
+        2:   1 μVrms / -107 dBm  10:  10 mVrms / -27 dBm
+        3:   3 μVrms /  -97 dBm  11:  30 mVrms / -17 dBm
+        4:  10 μVrms /  -87 dBm  12: 100 mVrms /  -7 dBm
+        5:  30 μVrms /  -77 dBm  13: 300 mVrms /  +3 dBm
+        6: 100 μVrms /  -67 dBm  14:   1  Vrms / +13 dBm
+        7: 300 μVrms /  -57 dBm
     time_constant: int
         Input filter time constant
-        0: 100 us     9:   3 s
-        1: 300 us    10:  10 s
+        0: 100 μs     9:   3 s
+        1: 300 μs    10:  10 s
         2:   1 ms    11:  30 s
         3:   3 ms    12: 100 s
         4:  10 ms    13: 300 s

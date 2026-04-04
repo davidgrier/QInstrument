@@ -22,8 +22,8 @@ class QDS345(QSerialInstrument):
         Output frequency.
         Range by waveform:
 
-        - sine, square: 1 uHz – 30.2 MHz
-        - triangle, ramp: 1 uHz – 100 kHz
+        - sine, square: 1 μHz – 30.2 MHz
+        - triangle, ramp: 1 μHz – 100 kHz
         - arbitrary: 2.329 mHz – 40 MHz (sampling rate)
         - noise: 10 MHz (fixed)
     invert: bool

@@ -56,26 +56,26 @@ class QSR830(QSerialInstrument):
     low_pass_slope : int
         0: 6 dB/octave, 1: 12 dB/octave, 2: 18 dB/octave, 3: 24 dB/octave
     sensitivity : int
-        0:   2 nV/fA    10:   5 uV/pA    20:  10 mV/nA
-        1:   5 nV/fA    11:  10 uV/pA    21:  20 mV/nA
-        2:  10 nV/fA    12:  20 uV/pA    22:  50 mV/nA
-        3:  20 nV/fA    13:  50 uV/pA    23: 100 mV/nA
-        4:  50 nV/fA    14: 100 uV/pA    24: 200 mV/nA
-        5: 100 nV/fA    15: 200 uV/pA    25: 500 mV/nA
-        6: 200 nV/fA    16: 500 uV/pA    26:   1  V/uA
+        0:   2 nV/fA    10:   5 μV/pA    20:  10 mV/nA
+        1:   5 nV/fA    11:  10 μV/pA    21:  20 mV/nA
+        2:  10 nV/fA    12:  20 μV/pA    22:  50 mV/nA
+        3:  20 nV/fA    13:  50 μV/pA    23: 100 mV/nA
+        4:  50 nV/fA    14: 100 μV/pA    24: 200 mV/nA
+        5: 100 nV/fA    15: 200 μV/pA    25: 500 mV/nA
+        6: 200 nV/fA    16: 500 μV/pA    26:   1  V/μA
         7: 500 nV/fA    17:   1 mV/nA
-        8:   1 uV/pA    18:   2 mV/nA
-        9:   2 uV/pA    19:   5 mV/nA
+        8:   1 μV/pA    18:   2 mV/nA
+        9:   2 μV/pA    19:   5 mV/nA
     synchronous_filter : bool
         True: synchronous filtering below 200 Hz
         (only engaged when harmonic * frequency < 200 Hz).
         False: no synchronous filter.
     time_constant : int
         Input filter time constant.
-        0:  20 us    10:   1 s
-        1:  30 us    11:   3 s
-        2: 100 us    12:  10 s
-        3: 300 us    13:  30 s
+        0:  20 μs    10:   1 s
+        1:  30 μs    11:   3 s
+        2: 100 μs    12:  10 s
+        3: 300 μs    13:  30 s
         4:   1 ms    14: 100 s
         5:   3 ms    15: 300 s
         6:  10 ms    16:   1 ks
