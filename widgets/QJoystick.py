@@ -12,18 +12,23 @@ logger = logging.getLogger(__name__)
 class QJoystick(QtWidgets.QWidget):
     '''Mouse-controlled joystick widget.
 
-    Renders a circular pad with a draggable knob. Emits
-    :attr:`positionChanged` with a two-element NumPy array
-    ``[x, y]`` scaled by :attr:`fullscale` whenever the knob
-    moves beyond the dead-band tolerance.
+    Renders a circular pad with a draggable knob. Press and drag the
+    knob to set a position; release to return it to center.
+
+    Signals
+    -------
+    positionChanged(numpy.ndarray)
+        Emitted when the knob moves beyond the dead-band. Carries a
+        two-element array ``[x, y]`` scaled by :attr:`fullscale`.
+        ``x`` is positive to the right; ``y`` is positive upward.
 
     Properties
     ==========
     fullscale : float
         Maximum output magnitude along each axis. Default: 1.0.
     tolerance : float
-        Fractional dead-band; changes smaller than this fraction of
-        fullscale are suppressed. Default: 0.05.
+        Fractional dead-band; position changes smaller than this
+        fraction of the full pad radius are suppressed. Default: 0.05.
     '''
 
     positionChanged = QtCore.Signal(object)
@@ -42,6 +47,7 @@ class QJoystick(QtWidgets.QWidget):
         self.active = False
 
     def resizeEvent(self, event: QtGui.QResizeEvent) -> None:
+        '''Recompute the pad radius and knob travel limit on resize.'''
         self.radius = min(self.size().width(), self.size().height()) / 2
         self.radius *= (1. - self.padding)
         self.limit = (1. - self.knobSize) * self.radius
@@ -64,40 +70,71 @@ class QJoystick(QtWidgets.QWidget):
         painter.drawEllipse(self._knobRect())
 
     def _limitRect(self) -> QtCore.QRectF:
+        '''Return the bounding rectangle of the outer pad circle.'''
         rect = np.array([-1, -1, 2, 2]) * self.radius
         return QtCore.QRectF(*rect).translated(self._center())
 
     def _knobRect(self) -> QtCore.QRectF:
+        '''Return the bounding rectangle of the knob circle.
+
+        When inactive the knob is drawn at the center; when active it
+        follows :attr:`position`.
+        '''
         size = self.radius * self.knobSize
         rect = np.array([-1, -1, 2, 2]) * size
         pos = self.position if self.active else self._center()
         return QtCore.QRectF(*rect).translated(pos)
 
     def _center(self) -> QtCore.QPointF:
+        '''Return the widget center point.'''
         return QtCore.QPointF(self.width() / 2, self.height() / 2)
 
     def _limited(self, point: QtCore.QPointF) -> QtCore.QPointF:
+        '''Clamp ``point`` to within the knob travel radius.
+
+        Parameters
+        ----------
+        point : QtCore.QPointF
+            Unclamped cursor position in widget coordinates.
+
+        Returns
+        -------
+        QtCore.QPointF
+            Nearest point on or inside the travel circle.
+        '''
         limit_line = QtCore.QLineF(self._center(), point)
         if limit_line.length() > self.limit:
             limit_line.setLength(self.limit)
         return limit_line.p2()
 
     def mousePressEvent(self, event: QtGui.QMouseEvent) -> None:
+        '''Activate dragging when the press lands inside the knob.'''
         self.active = self._knobRect().contains(event.pos())
         super().mousePressEvent(event)
 
     def mouseReleaseEvent(self, event: QtGui.QMouseEvent) -> None:
+        '''Deactivate dragging and return the knob to center.'''
         self.active = False
         self.position = QtCore.QPointF(0, 0)
         self.update()
         self._emitSignal()
 
     def mouseMoveEvent(self, event: QtGui.QMouseEvent) -> None:
+        '''Update knob position while dragging.'''
         self.position = self._limited(event.pos())
         self.update()
         self._emitSignal()
 
     def _fractions(self) -> np.ndarray:
+        '''Return the current knob displacement as fractions of the travel radius.
+
+        Returns
+        -------
+        numpy.ndarray
+            Two-element array ``[fx, fy]`` in the range ``[-1, 1]``.
+            ``fy`` is negated so that upward motion gives a positive value.
+            Returns ``[0., 0.]`` when inactive.
+        '''
         if self.active:
             displacement = QtCore.QLineF(self._center(), self.position)
             fx = min(displacement.dx() / self.limit, 1.)
@@ -107,6 +144,11 @@ class QJoystick(QtWidgets.QWidget):
         return np.array([fx, fy])
 
     def _emitSignal(self) -> None:
+        '''Emit :attr:`positionChanged` if the position changed beyond tolerance.
+
+        Suppresses emission when the change from the last emitted value
+        is within :attr:`tolerance` on both axes.
+        '''
         values = self._fractions()
         if np.allclose(values, self._values, self.tolerance):
             return
