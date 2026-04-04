@@ -25,8 +25,13 @@ class QIPGLaserWidget(QInstrumentWidget):
 
     @QtCore.Slot()
     def _poll(self) -> None:
-        for prop in ('keyswitch', 'power', 'fault', 'aiming', 'emission'):
-            self.set(prop)
+        for prop, value in self.device.status().items():
+            widget = self.__dict__.get(prop)
+            if widget is not None:
+                setter = self._wmethod(widget, self.wsetter)
+                widget.blockSignals(True)
+                setter(value)
+                widget.blockSignals(False)
 
 
 if __name__ == '__main__':

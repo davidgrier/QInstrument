@@ -167,6 +167,50 @@ class QIPGLaser(QSerialInstrument):
         '''
         self._command('EMON' if bool(state) else 'EMOFF')
 
+    def status(self) -> dict[str, bool | float]:
+        '''Return a snapshot of all status properties.
+
+        Reads the status word (``STA``) and output power (``ROP``) once
+        each, avoiding the redundant ``STA`` queries that result from
+        reading flag-derived properties individually.  Intended for use
+        by the widget poll loop.
+
+        Returns
+        -------
+        dict[str, bool | float]
+            Mapping of property name to current value for ``keyswitch``,
+            ``aiming``, ``emission``, ``fault``, and ``power``.
+        '''
+        flags = self._flags()
+        return {
+            'keyswitch': bool(flags & self.flag['KEY']),
+            'aiming':    bool(flags & self.flag['AIM']),
+            'emission':  bool(flags & self.flag['EMX']),
+            'fault':     bool(flags & self.flag['ERR']),
+            'power':     self._getPower(),
+        }
+
+    def fault_detail(self) -> list[str]:
+        '''Return a list of active fault condition names.
+
+        Returns an empty list when no faults are active.
+
+        Returns
+        -------
+        list[str]
+            Human-readable names of active fault conditions.  Possible
+            values: ``'over-temperature'``, ``'excessive backreflection'``,
+            ``'power supply off'``, ``'unexpected emission'``.
+        '''
+        flags = self._flags()
+        conditions = [
+            ('TMP', 'over-temperature'),
+            ('BKR', 'excessive backreflection'),
+            ('PWR', 'power supply off'),
+            ('UNX', 'unexpected emission'),
+        ]
+        return [label for key, label in conditions if flags & self.flag[key]]
+
     def version(self) -> str:
         '''Return the firmware version string.'''
         return self._command('RFV')
