@@ -19,13 +19,15 @@ class QJoystick(QtWidgets.QWidget):
     -------
     positionChanged(numpy.ndarray)
         Emitted when the knob moves beyond the dead-band. Carries a
-        two-element array ``[x, y]`` scaled by :attr:`fullscale`.
+        two-element array ``[x, y]`` mapped linearly from the knob
+        fraction ``[-1, 1]`` to ``[minimum, maximum]``.
         ``x`` is positive to the right; ``y`` is positive upward.
 
     Properties
     ==========
     fullscale : float
-        Maximum output magnitude along each axis. Default: 1.0.
+        Symmetric output limit: equivalent to ``setRange(-v, v)``.
+        Default: 1.0.
     tolerance : float
         Fractional dead-band; position changes smaller than this
         fraction of the full pad radius are suppressed. Default: 0.05.
@@ -40,11 +42,45 @@ class QJoystick(QtWidgets.QWidget):
         self.sizePolicy().setHeightForWidth(True)
         self.padding = 0.1
         self.knobSize = 0.3
-        self.fullscale = fullscale or 1.
+        self.setRange(-(fullscale or 1.), fullscale or 1.)
         self.tolerance = 0.05
         self.position = QtCore.QPointF(0, 0)
         self._values = np.zeros(2)
         self.active = False
+
+    def setRange(self, minimum: float, maximum: float) -> None:
+        '''Set the output range for both axes.
+
+        The knob fraction ``[-1, 1]`` maps linearly to
+        ``[minimum, maximum]``, so the center position emits
+        ``(minimum + maximum) / 2``.
+
+        Parameters
+        ----------
+        minimum : float
+            Output value at full negative deflection.
+        maximum : float
+            Output value at full positive deflection.
+        '''
+        self._minimum = minimum
+        self._maximum = maximum
+
+    def minimum(self) -> float:
+        '''Return the output value at full negative deflection.'''
+        return self._minimum
+
+    def maximum(self) -> float:
+        '''Return the output value at full positive deflection.'''
+        return self._maximum
+
+    @property
+    def fullscale(self) -> float:
+        '''Symmetric output limit; equivalent to ``setRange(-v, v)``.'''
+        return self._maximum
+
+    @fullscale.setter
+    def fullscale(self, value: float) -> None:
+        self.setRange(-value, value)
 
     def resizeEvent(self, event: QtGui.QResizeEvent) -> None:
         '''Recompute the pad radius and knob travel limit on resize.'''
@@ -153,7 +189,8 @@ class QJoystick(QtWidgets.QWidget):
         if np.allclose(values, self._values, self.tolerance):
             return
         self._values = values
-        values = values * self.fullscale
+        lo, hi = self._minimum, self._maximum
+        values = lo + (values + 1.) / 2. * (hi - lo)
         self.positionChanged.emit(values)
         logger.debug('{:.2f} {:.2f}'.format(*values))
 
