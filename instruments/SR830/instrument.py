@@ -133,10 +133,14 @@ class QSR830(QSerialInstrument):
         self._register('synchronous_filter', 'SYNC', bool)
         self._register('time_constant',      'OFLT', int)
         # Output channels (read-only)
-        self.registerProperty('x',     getter=lambda: self.getValue('OUTP?1', float), setter=None, ptype=float)
-        self.registerProperty('y',     getter=lambda: self.getValue('OUTP?2', float), setter=None, ptype=float)
-        self.registerProperty('r',     getter=lambda: self.getValue('OUTP?3', float), setter=None, ptype=float)
-        self.registerProperty('theta', getter=lambda: self.getValue('OUTP?4', float), setter=None, ptype=float)
+        self.registerProperty('x', setter=None, ptype=float,
+                              getter=lambda: self.getValue('OUTP?1', float))
+        self.registerProperty('y', setter=None, ptype=float,
+                              getter=lambda: self.getValue('OUTP?2', float))
+        self.registerProperty('r', setter=None, ptype=float,
+                              getter=lambda: self.getValue('OUTP?3', float))
+        self.registerProperty('theta', setter=None, ptype=float,
+                              getter=lambda: self.getValue('OUTP?4', float))
 
     def _registerMethods(self) -> None:
         '''Register all instrument methods via ``registerMethod()``.

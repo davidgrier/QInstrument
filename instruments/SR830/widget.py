@@ -3,7 +3,7 @@ from QInstrument.instruments.SR830.instrument import QSR830
 
 
 class QSR830Widget(QInstrumentWidget):
-    '''Stanford Research Systems SR830 Lockin Amplifier
+    '''Stanford Research Systems SR830 Lock-in Amplifier
     '''
 
     UIFILE = 'SR830Widget.ui'

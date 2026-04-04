@@ -1,9 +1,14 @@
 SR830 Lock-in Amplifier
 =======================
 
+.. autoclass:: QInstrument.instruments.SR830.instrument.QSR830
+   :members:
+   :show-inheritance:
 
-.. note::
+.. autoclass:: QInstrument.instruments.SR830.fake.QFakeSR830
+   :members:
+   :show-inheritance:
 
-   API documentation for this instrument is pending migration to the current
-   registerProperty() design.  See instruments/DS345/ for the
-   reference implementation.
+.. autoclass:: QInstrument.instruments.SR830.widget.QSR830Widget
+   :members:
+   :show-inheritance:
