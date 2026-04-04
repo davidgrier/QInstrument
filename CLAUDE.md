@@ -167,7 +167,7 @@ Add type hints to all new and migrated instrument code. Use `str | None` union s
 - `instruments/DS345/` — reference implementation: `_register()` helper, type hints, full docstrings
 - `instruments/SR830/` — fully migrated: MRO fake, `auto_offset_x/y/r` wrappers, full docstrings
 - `instruments/SR844/` — fully migrated: MRO fake, `auto_offset_x/y/r` wrappers, full docstrings; legacy `Q*.py` files removed
-- `instruments/IPGLaser/` — new instrument added directly in current style
+- `instruments/IPGLaser/` — fully migrated: `_registerProperties()`, MRO fake with explicit `_store` getters (no `_register()` helper — properties derive from a hardware status bitfield), `status()` batch method, efficient `_poll`, `fault_detail()`; legacy `Ipglaser.py` removed
 - All `comm` dicts across all instruments — updated to long-form enum access
 
 ### Pending (still use `pyqtProperty` and old import patterns)
