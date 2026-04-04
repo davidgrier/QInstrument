@@ -1,21 +1,9 @@
+from __future__ import annotations
+
 import sys
 from enum import Enum
 from pathlib import Path
 from qtpy import QtCore, QtWidgets, QtGui, QtSvg
-
-
-class Color(Enum):
-    RED = 1
-    AMBER = 2
-    GREEN = 3
-    BLUE = 4
-    VIOLET = 5
-    WHITE = 6
-
-
-class State(Enum):
-    OFF = 0
-    ON = 1
 
 
 class QLedWidget(QtWidgets.QWidget):
@@ -37,6 +25,18 @@ class QLedWidget(QtWidgets.QWidget):
     state : QLedWidget.State
         ``ON``: LED is bright. ``OFF``: LED is dark.
     '''
+
+    class Color(Enum):
+        RED    = 1
+        AMBER  = 2
+        GREEN  = 3
+        BLUE   = 4
+        VIOLET = 5
+        WHITE  = 6
+
+    class State(Enum):
+        OFF = 0
+        ON  = 1
 
     RED    = Color.RED
     AMBER  = Color.AMBER
