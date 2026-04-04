@@ -37,8 +37,7 @@ class QOpus(QSerialInstrument):
                 eol='\r')
 
     def __init__(self, portName=None, **kwargs):
-        args = {**self.comm, **kwargs}
-        super().__init__(portName, **args)
+        super().__init__(portName, **(self.comm | kwargs))
 
     def identify(self):
         return 'MPC-D-1.0.07A' in self.handshake('VERSION?')
@@ -121,4 +120,4 @@ def example():
 
 
 if __name__ == '__main__':
-    example()
+    QOpus.example()

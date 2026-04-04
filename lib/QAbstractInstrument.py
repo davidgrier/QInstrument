@@ -13,9 +13,9 @@ class QAbstractInstrument(QtCore.QObject):
 
     Provides a transport-agnostic property and method registration
     system for controlling scientific instruments.  Concrete
-    instrument classes combine this base with a transport layer
-    (e.g. ``QSerialInterface``) that supplies ``transmit()`` and
-    ``receive()`` methods.
+    instrument classes inherit from this (via a transport-specific
+    subclass such as :class:`QSerialInstrument`) and must supply
+    ``transmit()`` and ``receive()`` methods.
 
     Properties are registered with :meth:`registerProperty` and
     accessed by name via :meth:`get` and :meth:`set`.  Methods are

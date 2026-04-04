@@ -41,13 +41,6 @@ class QProscan(QSerialInstrument):
 
     '''
 
-    comm = dict(baudRate=QSerialInstrument.BaudRate.Baud9600,
-                dataBits=QSerialInstrument.DataBits.Data8,
-                stopBits=QSerialInstrument.StopBits.OneStop,
-                parity=QSerialInstrument.Parity.NoParity,
-                flowControl=QSerialInstrument.FlowControl.NoFlowControl,
-                eol='\r')
-
     positionChanged = pyqtSignal(object)
 
     def Property(cmd, dtype=int, res='0'):
@@ -70,9 +63,15 @@ class QProscan(QSerialInstrument):
     zacceleration = Property('SAZ')
     zscurve = Property('SCZ')
 
+    comm = dict(baudRate=QSerialInstrument.BaudRate.Baud9600,
+                dataBits=QSerialInstrument.DataBits.Data8,
+                stopBits=QSerialInstrument.StopBits.OneStop,
+                parity=QSerialInstrument.Parity.NoParity,
+                flowControl=QSerialInstrument.FlowControl.NoFlowControl,
+                eol='\r')
+
     def __init__(self, portName=None, **kwargs):
-        args = self.comm | kwargs
-        super().__init__(portName, **args)
+        super().__init__(portName, **(self.comm | kwargs))
         self._mirror = False
         self._flip = False
 
@@ -258,3 +257,7 @@ class QProscan(QSerialInstrument):
             if 'END' in this:
                 break
         return response
+
+
+if __name__ == '__main__':
+    QProscan.example()

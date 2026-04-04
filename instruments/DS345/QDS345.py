@@ -105,8 +105,16 @@ class QDS345(QSerialInstrument):
                 eol='\n')
 
     def __init__(self, portName: str | None = None, **kwargs) -> None:
-        args = self.comm | kwargs
-        super().__init__(portName, **args)
+        super().__init__(portName, **(self.comm | kwargs))
+        self._registerProperties()
+        self._registerMethods()
+
+    def _registerProperties(self) -> None:
+        '''Register all instrument properties via ``registerProperty()``.
+
+        Called once from ``__init__``. Subclasses that extend the property
+        set should call ``super()._registerProperties()`` first.
+        '''
         self._muted: bool = False
         self._saved_amplitude: float
         register = self.registerProperty
@@ -136,6 +144,13 @@ class QDS345(QSerialInstrument):
         self._register('sweep_stop_frequency',   'SPFR')
         self._register('trigger_rate',           'TRAT')
         self._register('trigger_source',         'TSRC', int)
+
+    def _registerMethods(self) -> None:
+        '''Register all instrument methods via ``registerMethod()``.
+
+        Called once from ``__init__``. Subclasses that add methods should
+        call ``super()._registerMethods()`` first.
+        '''
         self.registerMethod('reset', self.reset)
         self.registerMethod('trigger', self.trigger)
 

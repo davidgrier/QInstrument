@@ -113,12 +113,6 @@ class QSR844(QSerialInstrument):
         Reset instrument to default settings
     '''
 
-    comm = dict(baudRate=QSerialInstrument.BaudRate.Baud19200,
-                dataBits=QSerialInstrument.DataBits.Data8,
-                stopBits=QSerialInstrument.StopBits.OneStop,
-                parity=QSerialInstrument.Parity.NoParity,
-                flowControl=QSerialInstrument.FlowControl.NoFlowControl,
-                eol='\r')
 
     def Property(pstr, dtype=int):
         def getter(self):
@@ -145,9 +139,15 @@ class QSR844(QSerialInstrument):
     low_pass_slope = Property('OFSL')
     time_constant = Property('OFLT')
 
+    comm = dict(baudRate=QSerialInstrument.BaudRate.Baud19200,
+                dataBits=QSerialInstrument.DataBits.Data8,
+                stopBits=QSerialInstrument.StopBits.OneStop,
+                parity=QSerialInstrument.Parity.NoParity,
+                flowControl=QSerialInstrument.FlowControl.NoFlowControl,
+                eol='\r')
+
     def __init__(self, portName=None, **kwargs):
-        args = self.comm | kwargs
-        super().__init__(portName, **args)
+        super().__init__(portName, **(self.comm | kwargs))
 
     def identify(self):
         return 'SR844' in self.handshake('*IDN?')
@@ -203,4 +203,4 @@ def example():
 
 
 if __name__ == '__main__':
-    example()
+    QSR844.example()

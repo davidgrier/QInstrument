@@ -10,13 +10,6 @@ logger.setLevel(logging.WARNING)
 
 
 class QPDUS210(QSerialInstrument):
-    comm = dict(baudRate=QSerialInstrument.BaudRate.Baud9600,
-                dataBits=QSerialInstrument.DataBits.Data8,
-                stopBits=QSerialInstrument.StopBits.OneStop,
-                parity=QSerialInstrument.Parity.NoParity,
-                flowControl=QSerialInstrument.FlowControl.NoFlowControl,
-                timeout=1000.,
-                eol='\r')
 
     def Property(pstr, dtype=int):
         def getter(self):
@@ -89,9 +82,16 @@ class QPDUS210(QSerialInstrument):
     current = Measured('CURRENT')
     temperature = Measured('TEMP', dtype=float)  # Celsius
 
+    comm = dict(baudRate=QSerialInstrument.BaudRate.Baud9600,
+                dataBits=QSerialInstrument.DataBits.Data8,
+                stopBits=QSerialInstrument.StopBits.OneStop,
+                parity=QSerialInstrument.Parity.NoParity,
+                flowControl=QSerialInstrument.FlowControl.NoFlowControl,
+                timeout=1000.,
+                eol='\r')
+
     def __init__(self, portName=None, **kwargs):
-        args = self.comm | kwargs
-        super().__init__(portName, **args)
+        super().__init__(portName, **(self.comm | kwargs))
 
     def identify(self):
         '''DISABLE returns FALSE to confirm the driver has been disabled,
@@ -120,3 +120,7 @@ class QPDUS210(QSerialInstrument):
         vals = unpack(data, '<7cx18f')
         state = dict(zip(keys, vals))
         return state
+
+
+if __name__ == '__main__':
+    QPDUS210.example()

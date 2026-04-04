@@ -110,12 +110,6 @@ class QSR830(QSerialInstrument):
         Reset instrument to default settings
     '''
 
-    comm = dict(baudRate=QSerialInstrument.BaudRate.Baud9600,
-                dataBits=QSerialInstrument.DataBits.Data8,
-                stopBits=QSerialInstrument.StopBits.OneStop,
-                parity=QSerialInstrument.Parity.NoParity,
-                flowControl=QSerialInstrument.FlowControl.NoFlowControl,
-                eol='\n')
 
     def Property(pstr, dtype=int):
         def getter(self):
@@ -146,9 +140,15 @@ class QSR830(QSerialInstrument):
     synchronous_filter = Property('SYNC', bool)
     time_constant = Property('OFLT')
 
+    comm = dict(baudRate=QSerialInstrument.BaudRate.Baud9600,
+                dataBits=QSerialInstrument.DataBits.Data8,
+                stopBits=QSerialInstrument.StopBits.OneStop,
+                parity=QSerialInstrument.Parity.NoParity,
+                flowControl=QSerialInstrument.FlowControl.NoFlowControl,
+                eol='\n')
+
     def __init__(self, portName=None, **kwargs):
-        args = self.comm | kwargs
-        super().__init__(portName, **args)
+        super().__init__(portName, **(self.comm | kwargs))
 
     def identify(self):
         return 'SR830' in self.handshake('*IDN?')
@@ -180,3 +180,7 @@ class QSR830(QSerialInstrument):
     def auto_offset(self, channel):
         '''Autorange offset'''
         self.transmit(f'AOFF{channel}')
+
+
+if __name__ == '__main__':
+    QSR830.example()

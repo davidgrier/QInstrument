@@ -9,12 +9,11 @@ class QTDS1000(QSerialInstrument):
                 dataBits=QSerialInstrument.DataBits.Data8,
                 stopBits=QSerialInstrument.StopBits.OneStop,
                 parity=QSerialInstrument.Parity.NoParity,
-                flowControl=QSerialInstrument.HardwareControl,
+                flowControl=QSerialInstrument.FlowControl.HardwareControl,
                 eol=b'\n')
 
     def __init__(self, portname=None, timeout=500, **kwargs):
-        args = self.comm | kwargs
-        super().__init__(portname, timeout=timeout, **args)
+        super().__init__(portname, timeout=timeout, **(self.comm | kwargs))
 
     def identify(self):
         return 'TEKTRONIX' in self.handshake('*IDN?')
@@ -56,4 +55,4 @@ def example():
 
 
 if __name__ == '__main__':
-    example()
+    QTDS1000.example()

@@ -51,8 +51,7 @@ class QIPGLaser(QSerialInstrument):
                 eol='\r')
 
     def __init__(self, portName=None, **kwargs):
-        args = self.comm | kwargs
-        super().__init__(portName, **args)
+        super().__init__(portName, **(self.comm | kwargs))
         self.flag['ERR'] = (self.flag['TMP'] | self.flag['BKR'] |
                             self.flag['PWR'] | self.flag['UNX'])
         self.registerProperty('keyswitch', ptype=bool, setter=None,
@@ -114,3 +113,7 @@ class QIPGLaser(QSerialInstrument):
     def temperature(self):
         '''Return laser diode temperature [C].'''
         return float(self._command('RCT'))
+
+
+if __name__ == '__main__':
+    QIPGLaser.example()

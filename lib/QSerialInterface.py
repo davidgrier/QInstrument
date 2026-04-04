@@ -1,7 +1,7 @@
 import logging
 
 from qtpy import QtCore
-from qtpy.QtSerialPort import QSerialPort, QSerialPortInfo
+from qtpy.QtSerialPort import QSerialPort
 
 
 logger = logging.getLogger(__name__)
@@ -10,28 +10,40 @@ logger = logging.getLogger(__name__)
 class QSerialInterface(QSerialPort):
     '''Base class for instruments connected to serial ports.
 
-    Wraps ``QSerialPort`` to provide instrument-oriented communication:
-    automatic port discovery via :meth:`find`, custom end-of-line handling
-    for :meth:`transmit` and :meth:`receive`, and optional non-blocking
-    (signal-driven) I/O.
+    Wraps ``QSerialPort`` to provide raw serial I/O with custom
+    end-of-line handling for :meth:`transmit` and :meth:`receive`,
+    and optional non-blocking (signal-driven) I/O.
+
+    Port discovery and device identification are handled by the
+    instrument layer (:class:`QSerialInstrument`), not here.
 
     Parameters
     ----------
-    portName : str | None
+    portName : str
         Name of the serial port to open on construction, without the
         system-dependent path prefix (e.g. ``'ttyUSB0'``, ``'COM1'``).
-        If ``None``, no port is opened.
+        Pass an empty string (default) to skip opening on construction.
     eol : bytes | str
         End-of-line sequence appended to outgoing strings by
         :meth:`transmit` and used as the read terminator by
         :meth:`receive`. Default: ``''`` (no terminator).
-    timeout : int
+    timeout : int | None
         Milliseconds to wait for incoming data before giving up.
-        Default: ``100``.
+        Default: ``None``, which is treated as ``100`` ms.
     blocking : bool
         If ``True`` (default), I/O is synchronous (polling).
         If ``False``, incoming data is handled by the
         :attr:`dataReady` signal.
+    baudRate : QSerialPort.BaudRate | None
+        Port baud rate. Uses the ``QSerialPort`` default if ``None``.
+    dataBits : QSerialPort.DataBits | None
+        Number of data bits. Uses the ``QSerialPort`` default if ``None``.
+    stopBits : QSerialPort.StopBits | None
+        Number of stop bits. Uses the ``QSerialPort`` default if ``None``.
+    parity : QSerialPort.Parity | None
+        Parity mode. Uses the ``QSerialPort`` default if ``None``.
+    flowControl : QSerialPort.FlowControl | None
+        Flow control mode. Uses the ``QSerialPort`` default if ``None``.
 
     Attributes
     ----------
@@ -41,6 +53,17 @@ class QSerialInterface(QSerialPort):
         Read timeout in milliseconds.
     blocking : bool
         Toggles between synchronous polling and signal-driven I/O.
+    BaudRate : type
+        Alias for ``QSerialPort.BaudRate``. Use as
+        ``QSerialInstrument.BaudRate.Baud9600`` in ``comm`` dicts.
+    DataBits : type
+        Alias for ``QSerialPort.DataBits``.
+    StopBits : type
+        Alias for ``QSerialPort.StopBits``.
+    Parity : type
+        Alias for ``QSerialPort.Parity``.
+    FlowControl : type
+        Alias for ``QSerialPort.FlowControl``.
 
     Signals
     -------
@@ -50,33 +73,40 @@ class QSerialInterface(QSerialPort):
 
     Examples
     --------
-    Synchronous use with automatic port discovery:
+    Synchronous use:
 
-    >>> instrument = QSerialInterface(eol='\\n').find()
+    >>> iface = QSerialInterface(eol='\\n')
+    >>> iface.open('ttyUSB0')
 
     Non-blocking use with a signal handler:
 
-    >>> instrument = QSerialInterface(eol='\\n', blocking=False)
-    >>> instrument.dataReady.connect(handle_response)
-    >>> instrument = instrument.find()
+    >>> iface = QSerialInterface(eol='\\n', blocking=False)
+    >>> iface.dataReady.connect(handle_response)
+    >>> iface.open('ttyUSB0')
     '''
 
     dataReady = QtCore.Signal(str)
+
+    BaudRate    = QSerialPort.BaudRate
+    DataBits    = QSerialPort.DataBits
+    StopBits    = QSerialPort.StopBits
+    Parity      = QSerialPort.Parity
+    FlowControl = QSerialPort.FlowControl
 
     def __init__(self,
                  portName: str = '',
                  eol: bytes | str = '',
                  timeout: int | None = None,
                  blocking: bool = True,
-                 baudRate=None,
-                 dataBits=None,
-                 stopBits=None,
-                 parity=None,
-                 flowControl=None,
+                 baudRate: QSerialPort.BaudRate | None = None,
+                 dataBits: QSerialPort.DataBits | None = None,
+                 stopBits: QSerialPort.StopBits | None = None,
+                 parity: QSerialPort.Parity | None = None,
+                 flowControl: QSerialPort.FlowControl | None = None,
                  **kwargs) -> None:
         super().__init__(**kwargs)
         if baudRate is not None:
-            self.setBaudRate(baudRate)
+            self.setBaudRate(baudRate.value)
         if dataBits is not None:
             self.setDataBits(dataBits)
         if stopBits is not None:
@@ -91,25 +121,8 @@ class QSerialInterface(QSerialPort):
         self._buffer = QtCore.QByteArray()
         self.open(portName)
 
-    def identify(self, **kwargs) -> bool:
-        '''Verify that the connected device is the expected instrument.
-
-        The base implementation always returns ``True``. Subclasses should
-        override this method to query the device and confirm its identity.
-
-        Returns
-        -------
-        bool
-            ``True`` if the device is recognized, ``False`` otherwise.
-        '''
-        return True
-
-    def open(self, portName: str, **kwargs) -> bool:
-        '''Open serial communication with the instrument.
-
-        Opens the specified port in read/write mode and calls
-        :meth:`identify` to confirm the correct device is connected.
-        The port is closed again if identification fails.
+    def open(self, portName: str) -> bool:
+        '''Open the serial port for read/write access.
 
         Parameters
         ----------
@@ -117,60 +130,25 @@ class QSerialInterface(QSerialPort):
             Name of the serial port device file, without the
             system-dependent path prefix.
             Examples: ``'ttyUSB0'``, ``'COM1'``.
-        **kwargs
-            Passed through to :meth:`identify`.
 
         Returns
         -------
         bool
-            ``True`` if the port was opened and the device identified
-            successfully.
+            ``True`` if the port was opened successfully.
         '''
-        if len(portName) == 0:
+        if not portName:
             return False
         self.setPortName(portName)
-        if super().open(QSerialPort.OpenModeFlag.ReadWrite):
-            self.clear()
-            if not self.identify(**kwargs):
-                logger.warning(f'Device on {portName} '
-                               f'is not {self.__class__.__name__}')
-                self.close()
-        else:
-            logger.warning(f'Could not open {portName}')
-        return self.isOpen()
-
-    def find(self, **kwargs) -> 'QSerialInterface':
-        '''Poll all available serial ports to locate the instrument.
-
-        Calls :meth:`open` on each port returned by
-        ``QSerialPortInfo.availablePorts()`` until one succeeds or all
-        ports are exhausted.
-
-        Parameters
-        ----------
-        **kwargs
-            Passed through to :meth:`identify`.
-
-        Returns
-        -------
-        QSerialInterface
-            The instance itself, whether or not a device was found.
-            Call :meth:`isOpen` to check the result.
-        '''
-        for port in QSerialPortInfo.availablePorts():
-            portName = port.portName()
-            logger.debug(f'Trying to open {portName}')
-            if self.open(portName, **kwargs):
-                break
-        else:
-            className = self.__class__.__name__
-            logger.error(f'Could not find {className}')
-        return self
+        if not super().open(QSerialPort.OpenModeFlag.ReadWrite):
+            logger.debug(f'Could not open {portName}')
+            return False
+        self.clear()
+        return True
 
     @property
     def blocking(self) -> bool:
-        '''bool: If ``True``, I/O is synchronous;
-           if ``False``, signal-driven.
+        '''bool: ``True`` for synchronous polling I/O; ``False`` for
+        signal-driven I/O via :attr:`dataReady`.
         '''
         return self._blocking
 

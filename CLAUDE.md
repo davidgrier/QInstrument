@@ -30,23 +30,25 @@ Tests cover `QSerialInterface` only; run with `pytest tests/`. No build step or 
 ```
 QtCore.QObject
 └── QAbstractInstrument          # Property/method registration, thread-safe access
-    └── QSerialInstrument        # Combines QAbstractInstrument + QSerialInterface
+    └── QSerialInstrument        # Holds QSerialInterface by composition; adds find/open
         └── QXXXInstrument       # Concrete instrument (e.g. QDS345, QIPGLaser)
 
 QtSerialPort.QSerialPort
-└── QSerialInterface             # Serial port I/O, port auto-detection
+└── QSerialInterface             # Raw serial I/O (owned by QSerialInstrument, not inherited)
 
 QWidget
 └── QInstrumentWidget            # Auto-binds Qt UI widgets to instrument properties
 ```
 
+Instruments *possess* an interface rather than *being* one. `QSerialInstrument` holds a `QSerialInterface` as `self._interface` and delegates `transmit()`/`receive()` through it. This means the same instrument class can be used with different transports (e.g. RS-232 and GPIB) by swapping out the interface object.
+
 ### Key Abstractions
 
 **`lib/QAbstractInstrument.py`** — Base for all instruments. Properties are explicitly registered via `registerProperty(name, getter, setter, ptype, **meta)`. Provides `get(key)`/`set(key, value)` Qt slots, `settings` dict, and `propertyValue(str, object)` signal (emitted by both `get` and `set`). Uses `QMutex` to protect the property registry; the lock is released before calling any getter/setter/method so that callables may safely re-enter the API without deadlocking.
 
-**`lib/QSerialInterface.py`** — Wraps `QSerialPort`. Key methods: `find(**kwargs)` (auto-detect device by scanning ports), `transmit(data)`, `receive(eol, raw)`. Supports blocking and non-blocking I/O via `blocking` property.
+**`lib/QSerialInterface.py`** — Wraps `QSerialPort`. Provides `transmit(data)`, `receive(eol, raw)`, `open(portName)`, and blocking/non-blocking I/O via the `blocking` property. Does **not** perform device identification — that is the instrument's responsibility.
 
-**`lib/QSerialInstrument.py`** — Thin multiple-inheritance combiner of `QAbstractInstrument` and `QSerialInterface`. This is what concrete instruments inherit from.
+**`lib/QSerialInstrument.py`** — Inherits `QAbstractInstrument`. Creates and holds a `QSerialInterface` in `__init__`. Implements `transmit()`/`receive()` by delegation, provides `open()` (with `identify()` check), `find()` (port scanning), `isOpen()`, and `close()`. Re-exports the `QSerialPort` enum types (`BaudRate`, `DataBits`, etc.) as class attributes so subclass `comm` dicts need no extra imports. This is what concrete instruments inherit from.
 
 **`lib/QInstrumentWidget.py`** — Loads a `.ui` file and auto-links named widgets to instrument properties by matching widget names to registered property names. Uses `device.get(key)` and `device.set(key, value)` (the Qt slots on `QAbstractInstrument`) — not `getattr`/`setattr`, which do not work with `registerProperty()`-based instruments. Calls `_identifyProperties()` / `_syncProperties()` / `_connectSignals()` automatically.
 
@@ -58,7 +60,7 @@ QWidget
 
 Each instrument lives in `instruments/<Name>/` and follows this pattern:
 
-1. **`QName.py`** — Inherits `QSerialInstrument`. In `__init__`, define a `comm` dict with serial parameters and call `super().__init__(portName, **args)`. Register each property using `registerProperty()` or the `_register()` helper (see below). Implement `identify()` to verify the connected device.
+1. **`QName.py`** — Inherits `QSerialInstrument`. Define a `comm` class attribute with serial parameters. In `__init__`, call `super().__init__(portName, **kwargs)` then `_registerProperties()` and `_registerMethods()`. Implement `identify()` to verify the connected device.
 2. **`QFakeName.py`** — Inherits `QFakeInstrument`. Mirrors the same properties for UI testing without hardware.
 3. **`QNameWidget.py`** — Inherits `QInstrumentWidget`. Points to a `.ui` file; widget names must match registered property names for auto-binding to work.
 4. **`__init__.py`** — Exports the main classes.
@@ -111,7 +113,7 @@ When an instrument method needs to read one of its own registered properties, us
 
 ### Serial enum constants
 
-**Always use long-form scoped enum access** in `comm` dicts:
+**Define `comm` as a class attribute** using long-form scoped enum access via `QSerialInstrument`:
 ```python
 comm = dict(baudRate=QSerialInstrument.BaudRate.Baud9600,
             dataBits=QSerialInstrument.DataBits.Data8,
@@ -119,8 +121,11 @@ comm = dict(baudRate=QSerialInstrument.BaudRate.Baud9600,
             parity=QSerialInstrument.Parity.NoParity,
             flowControl=QSerialInstrument.FlowControl.NoFlowControl,
             eol='\n')
+
+def __init__(self, portName=None, **kwargs):
+    super().__init__(portName, **(self.comm | kwargs))
 ```
-Short-form attributes (`QSerialInstrument.Baud9600` etc.) fail at class-definition time due to a sip multiple-inheritance limitation, even though they appear in `dir()`. The long form also works in PyQt6, which dropped short-form enum access entirely. No `QSerialPort` import is needed — the enum classes are accessible through `QSerialInstrument` inheritance.
+`QSerialInstrument` exposes `BaudRate`, `DataBits`, `StopBits`, `Parity`, and `FlowControl` as explicit class attributes (defined in `QSerialInterface`) so they are accessible at class-body evaluation time. Do **not** use short-form access (`QSerialInstrument.Baud9600` etc.) — short-form fails with PyQt6, which dropped it entirely. No `QSerialPort` import is needed in instrument files.
 
 ### Imports from `lib/`
 
