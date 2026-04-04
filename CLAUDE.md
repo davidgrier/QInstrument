@@ -170,11 +170,12 @@ Add type hints to all new and migrated instrument code. Use `str | None` union s
 - `instruments/IPGLaser/` — fully migrated: `_registerProperties()`, MRO fake with explicit `_store` getters (no `_register()` helper — properties derive from a hardware status bitfield), `status()` batch method, efficient `_poll`, `fault_detail()`; legacy `Ipglaser.py` removed
 - All `comm` dicts across all instruments — updated to long-form enum access
 
+- `instruments/Opus/` — fully migrated: `_registerProperties()`, IPGLaser-pattern fake with explicit `_store` getters, synchronous timer poll replacing broken async `dataReady` approach, `timers()` using `receive()` loop; `fake.py` added
+
 ### Pending (still use `pyqtProperty` and old import patterns)
 
 - `instruments/PiezoDrive/`
 - `instruments/Proscan/`
-- `instruments/Opus/`
 - `instruments/TDS1000/`
 
 Use `instruments/DS345/` as the template when migrating each of these.

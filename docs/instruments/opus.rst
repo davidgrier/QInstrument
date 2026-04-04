@@ -1,9 +1,14 @@
 Laser Quantum Opus
 ==================
 
+.. autoclass:: QInstrument.instruments.Opus.instrument.QOpus
+   :members:
+   :show-inheritance:
 
-.. note::
+.. autoclass:: QInstrument.instruments.Opus.fake.QFakeOpus
+   :members:
+   :show-inheritance:
 
-   API documentation for this instrument is pending migration to the current
-   registerProperty() design.  See instruments/DS345/ for the
-   reference implementation.
+.. autoclass:: QInstrument.instruments.Opus.widget.QOpusWidget
+   :members:
+   :show-inheritance:

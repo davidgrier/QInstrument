@@ -1,6 +1,6 @@
 import importlib
 
-_lazy = {'QOpus': 'instrument', 'QOpusWidget': 'widget'}
+_lazy = {'QOpus': 'instrument', 'QFakeOpus': 'fake', 'QOpusWidget': 'widget'}
 
 def __getattr__(name):
     if name in _lazy:
