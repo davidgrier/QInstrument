@@ -101,6 +101,9 @@
      <property name="buttonSymbols">
       <enum>QAbstractSpinBox::NoButtons</enum>
      </property>
+     <property name="keyboardTracking">
+      <bool>false</bool>
+     </property>
     </widget>
    </item>
    <item>
@@ -126,6 +129,10 @@
    </slots>
   </customwidget>
  </customwidgets>
+ <tabstops>
+  <tabstop>encoder</tabstop>
+  <tabstop>value</tabstop>
+ </tabstops>
  <resources/>
  <connections>
   <connection>

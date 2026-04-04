@@ -16,3 +16,5 @@ class QThreadedInstrumentWidget(QInstrumentWidget):
         del self._device
         super().closeEvent(event)
         event.accept()
+
+__all__ = ['QThreadedInstrumentWidget']

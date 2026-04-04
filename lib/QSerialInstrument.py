@@ -1,330 +1,188 @@
-from PyQt5.QtCore import (pyqtProperty, pyqtSlot, pyqtSignal, QByteArray)
-from PyQt5.QtSerialPort import (QSerialPort, QSerialPortInfo)
-from functools import wraps
 import logging
 
+from qtpy.QtSerialPort import QSerialPortInfo
+from QInstrument.lib.QAbstractInstrument import QAbstractInstrument
+from QInstrument.lib.QSerialInterface import QSerialInterface
+
+
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.ERROR)
 
 
-class QSerialInstrument(QSerialPort):
-    '''Base class for instruments connected to serial ports
+class QSerialInstrument(QAbstractInstrument):
+    '''Base class for instruments connected via serial ports.
 
-    ........
+    Holds a :class:`QSerialInterface` by composition and delegates all
+    I/O through it.  Concrete instrument classes inherit from this,
+    declare a :attr:`comm` class attribute with serial parameters, and
+    override :meth:`identify` to verify the connected device.
 
-    Inherits
-    --------
-    PyQt5.QtSerialPort.QSerialPort
+    Because the interface is a separate object, the same instrument class
+    can be instantiated with different transports (e.g. RS-232 today,
+    GPIB tomorrow) simply by swapping out the interface.
 
-    Properties
+    Attributes
     ----------
-    eol: bytes
-        End-of-line string (character) used to terminate
-        strings that are transmitted to the instrument.
-        Default: b''
-    timeout: float
-        Time to wait for characters from device [ms]
-        Default: 100.
-
-    Methods
-    -------
-    find(): QSerialInstrument
-        Poll serial ports to find the device.
-
-    Signals
-    -------
-    dataReady(str):
-        Emitted when asynchronous reading encounters
-        the eol character and transmits the received data
-        up to and including the eol character.
-
-    Slots
-    -----
-    set_value(value):
-        Intended as a slot for instrument widgets that
-        subclass QSerialInstrument.
-
-    Example
-    -------
-    >>> instrument = QSerialInstrument().find()
-
+    comm : dict
+        Serial parameters passed to :class:`QSerialInterface` on
+        construction.  Subclasses define this as a class attribute using
+        the enum aliases re-exported here (e.g.
+        ``baudRate=QSerialInstrument.BaudRate.Baud9600``).
+    BaudRate : type
+        Alias for ``QSerialPort.BaudRate``.
+    DataBits : type
+        Alias for ``QSerialPort.DataBits``.
+    StopBits : type
+        Alias for ``QSerialPort.StopBits``.
+    Parity : type
+        Alias for ``QSerialPort.Parity``.
+    FlowControl : type
+        Alias for ``QSerialPort.FlowControl``.
     '''
 
-    dataReady = pyqtSignal(str)
+    # Re-export serial enum types so subclass comm dicts need no extra imports.
+    BaudRate    = QSerialInterface.BaudRate
+    DataBits    = QSerialInterface.DataBits
+    StopBits    = QSerialInterface.StopBits
+    Parity      = QSerialInterface.Parity
+    FlowControl = QSerialInterface.FlowControl
 
-    def blocking(method):
-        '''Decorator for blocking communication methods'''
-        @wraps(method)
-        def wrapper(inst, *args, **kwargs):
-            inst.blockSignals(True)
-            result = method(inst, *args, **kwargs)
-            inst.blockSignals(False)
-            return result
-        return wrapper
+    comm: dict = {}
 
-    def __init__(self,
-                 portName=None,
-                 eol=b'',
-                 timeout=None,
-                 **kwargs):
-        super().__init__(**kwargs)
-        self.eol = eol.encode()
-        self.timeout = timeout or 100
-        self.readyRead.connect(self.receive)
-        self.buffer = QByteArray()
-        self.open(portName)
+    def __init__(self, portName: str | None = None, **kwargs) -> None:
+        super().__init__()
+        self._interface = QSerialInterface(**(self.comm | kwargs))
+        if portName:
+            self.open(portName)
 
-    def open(self, portName):
-        '''Open serial communications with instrument.
+    def identify(self) -> bool:
+        '''Return True if the connected device is the expected instrument.
 
-        open() succeeds if the specified port can be opened
-        in read/write mode, and if identify() returns True.
-        Subclasses of SerialInstrument are responsible for
-        overriding identify() to poll the instrument and
-        to ascertain that it is the correct device.
-
-        Arguments
-        ---------
-        portName: str, optional
-            Name of the serial port device file, without
-            system-dependent path.
-            Examples: 'ttyUSB0', 'COM1'
-        '''
-        if portName is None:
-            return False
-        self.setPortName(portName)
-        if super().open(QSerialPort.ReadWrite):
-            self.clear()
-            if not self.identify():
-                className = self.__class__.__name__
-                msg = f'Device on {portName} is not {className}'
-                logger.warning(msg)
-                self.close()
-        else:
-            logger.warning(f'Could not open {portName}')
-        return self.isOpen()
-
-    def find(self):
-        '''Poll all serial ports to identify suitable instrument
-
-        find() calls open() on each serial port on the system
-        until it either succeeds or exhausts all possibilities.
+        The base implementation always returns ``True``.  Subclasses
+        should override this to query the device and verify its identity
+        (e.g. via ``*IDN?``).
 
         Returns
         -------
-        instrument: SerialInstrument | None
-            Reference to the instrument object, if found,
-            else None if no instruments are identified
-        '''
-        for port in QSerialPortInfo.availablePorts():
-            logger.debug('Trying to open {}'.format(port.portName()))
-            if self.open(port.portName()):
-                break
-        else:
-            name = self.__class__.__name__
-            logger.error(f'Could not find {name}')
-        return self
-
-    def send(self, data):
-        '''Send data to the instrument
-
-        Arguments
-        ---------
-        data: str | bytes
-            Data to be communicated. Most data takes
-            the form of strings that represent commands
-            or queries to the instrument. A data string
-            will be terminated with the eol string.
-
-            Data provided as bytes are transmitted
-            without eol termination.
-        '''
-        if not self.isOpen():
-            logger.warn('Cannot send data: Device is not open.')
-            return
-        if type(data) == str:
-            data = data.encode() + self.eol
-        self.write(data)
-        self.flush()
-        logger.debug(f' sent: {data}')
-
-    def read_until(self, eol=None, raw=False):
-        '''Receive data from the instrument
-
-        Keywords
-        --------
-        eol: bytes [optional]
-            End-of-line character
-            Default: self.eol
-        raw: bool [optional]
-            True: Return raw data as bytes
-            False: Decode data into str [Default]
-
-        Returns
-        -------
-        response: str | bytes
-            Data received from the instrument.
-        '''
-        if not self.isOpen():
-            logger.warn('Cannot read data: Device is not open.')
-            return ''
-        eol = eol or self.eol
-        buffer = b''
-        while self.bytesAvailable() or self.waitForReadyRead(self.timeout):
-            char = bytes(self.read(1))
-            buffer += char
-            if char == eol:
-                break
-        logger.debug(f' received: {buffer}')
-        if raw:
-            return buffer
-        return buffer.decode().strip()
-
-    def readn(self, n=1):
-        '''Receive n bytes of data from the instrument
-
-        Keywords
-        --------
-        n: int
-            Number of bytes to receive
-
-        Returns
-        -------
-        response: bytes
-            Data received from the instrument
-        '''
-        if not self.isOpen():
-            logger.warn('Cannot read data: Device is not open.')
-            return ''
-        buffer = b''
-        while self.bytesAvailable() or self.waitForReadyRead(self.timeout):
-            char = bytes(self.read(1))
-            buffer += char
-            if len(buffer) >= n:
-                break
-        return buffer
-
-    @blocking
-    def handshake(self, query, raw=False):
-        '''Send command to the instrument and receive its response
-
-        Arguments
-        ---------
-        query: str
-            String to be communicated to the instrument that
-            will elicit a response.
-
-        Keywords
-        --------
-        raw: bool
-            True: Return raw data as bytes
-            False: Decode data into str [Default]
-
-        Returns
-        -------
-        response: str | bytes
-            Response from instrument
-        '''
-        self.send(query)
-        return self.read_until(raw=raw)
-
-    def expect(self, query, response):
-        '''Send query and check for anticipated response
-
-        Arguments
-        ---------
-        query: str
-            Command to instrument that will elicit response.
-        response: str
-            Anticipated response
-
-        Returns
-        -------
-        expect: bool
-            True: expected response was received
-            False: expected response was not received
-        '''
-        return response in self.handshake(query)
-
-    def get_value(self, query, dtype=float):
-        '''Send query and return response in specified data type
-
-        Arguments
-        ---------
-        query: str
-            Command to instrument that will elicit response.
-        dtype: type [optional]
-            Anticipated type of returned data.
-            Default: float
-
-        Returns
-        -------
-        value: dtype
-            Value elicited from instrument by query
-        '''
-        response = self.handshake(query)
-        try:
-            value = dtype(response)
-        except ValueError:
-            value = None
-            logger.error(f'Could not parse {response}')
-        return value
-
-    @pyqtSlot()
-    def receive(self):
-        '''Slot for nonblocking data communication'''
-        if not self.isOpen():
-            logger.warning('Cannot receive data: Device is not open.')
-            return
-        self.buffer.append(self.readAll())
-        if self.buffer.contains(self.eol):
-            len = self.buffer.indexOf(self.eol) + 1
-            if len < self.buffer.size():
-                data = bytes(self.buffer.left(len))
-                self.buffer.remove(0, len)
-            else:
-                data = bytes(self.buffer)
-                self.buffer.clear()
-            logger.debug('emitting {}'.format(data.decode('utf-8')))
-            self.dataReady.emit(data.decode('utf-8', 'backslashreplace'))
-        else:
-            logger.debug(f'buffered {self.buffer}')
-
-    @pyqtSlot(object)
-    def set_value(self, value):
-        name = str(self.sender().objectName())
-        if hasattr(self, name):
-            setattr(self, name, value)
-        else:
-            msg = f'Failed to set {name} ({value}): Not a valid property'
-            logger.warning(msg)
-
-    def identify(self):
-        '''Identify intended instrument
-
-        Subclasses are responsible for overriding identify().
-
-        Returns
-        -------
-        identify: bool
-            True: specified instrument is connected to the serial port
-            False: instrument on the port failed to identify correctly
+        bool
+            ``True`` if the device is recognized, ``False`` otherwise.
         '''
         return True
 
-    @pyqtProperty(list)
-    def properties(self):
-        p = vars(type(self)).items()
-        return [k for k, v in p if isinstance(v, pyqtProperty)]
+    def transmit(self, data: str | bytes) -> None:
+        '''Transmit data to the instrument via the serial interface.
 
-    @pyqtProperty(dict)
-    def settings(self):
-        return {key: getattr(self, key) for key in self.properties}
+        Parameters
+        ----------
+        data : str | bytes
+            Data to send.  See :meth:`QSerialInterface.transmit`.
+        '''
+        self._interface.transmit(data)
 
-    @settings.setter
-    def settings(self, settings):
-        for key, value in settings.items():
-            if hasattr(self, key):
-                setattr(self, key, value)
-            else:
-                logger.warning(f'invalid property: {key}')
+    def receive(self, **kwargs) -> str | bytes:
+        '''Read a response from the instrument via the serial interface.
+
+        Parameters
+        ----------
+        **kwargs
+            Passed through to :meth:`QSerialInterface.receive`.
+
+        Returns
+        -------
+        str | bytes
+            Response from the instrument.
+        '''
+        return self._interface.receive(**kwargs)
+
+    def open(self, portName: str) -> bool:
+        '''Open a specific serial port and verify the connected device.
+
+        Opens *portName* via the interface, then calls :meth:`identify`.
+        Closes the port and returns ``False`` if identification fails.
+
+        Parameters
+        ----------
+        portName : str
+            Serial port name without the system path prefix
+            (e.g. ``'ttyUSB0'``, ``'COM1'``).
+
+        Returns
+        -------
+        bool
+            ``True`` if the port is open and the device identified.
+        '''
+        if not self._interface.open(portName):
+            return False
+        if not self.identify():
+            logger.warning(f'Device on {portName} is not '
+                           f'{self.__class__.__name__}')
+            self._interface.close()
+        return self._interface.isOpen()
+
+    def find(self) -> 'QSerialInstrument':
+        '''Scan all available serial ports to locate the instrument.
+
+        Calls :meth:`open` on each port returned by
+        ``QSerialPortInfo.availablePorts()`` until one succeeds.
+
+        Returns
+        -------
+        QSerialInstrument
+            The instance itself, whether or not a device was found.
+            Call :meth:`isOpen` to check the result.
+        '''
+        for port in QSerialPortInfo.availablePorts():
+            portName = port.portName()
+            logger.debug(f'Trying {portName}')
+            if self.open(portName):
+                break
+        else:
+            logger.error(f'Could not find {self.__class__.__name__}')
+        return self
+
+    def isOpen(self) -> bool:
+        '''Return True if the serial interface is currently open.'''
+        return self._interface.isOpen()
+
+    def close(self) -> None:
+        '''Close the serial interface.'''
+        self._interface.close()
+
+    def __repr__(self) -> str:
+        if self.isOpen():
+            return f'{self.__class__.__name__}({self._interface.portName()})'
+        return f'{self.__class__.__name__}(not connected)'
+
+    @classmethod
+    def example(cls, portname: str | None = None) -> None:
+        '''Connect to an instrument and print its current settings.
+
+        Creates a ``QCoreApplication``, opens the instrument on *portname*
+        (or auto-detects it with :meth:`find` when *portname* is ``None``),
+        then prints the instrument repr showing all registered property values.
+
+        Intended to be run from ``__main__`` in each instrument module:
+
+        .. code-block:: python
+
+            if __name__ == '__main__':
+                QMyInstrument.example()
+
+        Parameters
+        ----------
+        portname : str | None, optional
+            Serial port to open (e.g. ``'/dev/ttyUSB0'``).
+            If ``None``, all available ports are scanned via :meth:`find`.
+        '''
+        from qtpy.QtCore import QCoreApplication
+        app = QCoreApplication.instance() or QCoreApplication([])
+        instrument = cls().find() if portname is None else cls(portname)
+        if not instrument.isOpen():
+            print(f'{cls.__name__}: instrument not found or not connected.')
+            return
+        print(instrument)
+
+
+if __name__ == '__main__':
+    QSerialInstrument.example()
+
+__all__ = ['QSerialInstrument']

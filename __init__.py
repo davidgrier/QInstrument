@@ -1,10 +1,7 @@
-from .instruments import (QDS345, QFakeDS345, QDS345Widget,
-                          QSR830, QFakeSR830, QSR830Widget,
-                          QProscan, QProscanWidget,
-                          QPDUS210, QPDUS210Widget)
+from importlib.metadata import version, PackageNotFoundError
 
-
-__all__ = ['QDS345', 'QFakeDS345', 'QDS345Widget',
-           'QSR830', 'QFakeSR830', 'QSR830Widget',
-           'QProscan', 'QProscanWidget',
-           'QPDUS210', 'QPDUS210Widget']
+try:
+    __version__ = version('QInstrument')
+except PackageNotFoundError:
+    # Package is not installed (e.g. running directly from the source tree)
+    __version__ = None
