@@ -1,114 +1,132 @@
-from PyQt5.QtWidgets import QWidget
-from PyQt5.QtGui import (QPainter, QColor)
-from PyQt5.QtCore import (Qt, QPointF, QLineF, QRectF, pyqtSignal)
-import numpy as np
+from __future__ import annotations
+
+import sys
 import logging
+from qtpy import QtWidgets, QtGui, QtCore
+import numpy as np
 
 
-logging.basicConfig()
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.WARNING)
 
 
-class QJoystick(QWidget):
+class QJoystick(QtWidgets.QWidget):
+    '''Mouse-controlled joystick widget.
 
-    positionChanged = pyqtSignal(object)
+    Renders a circular pad with a draggable knob. Emits
+    :attr:`positionChanged` with a two-element NumPy array
+    ``[x, y]`` scaled by :attr:`fullscale` whenever the knob
+    moves beyond the dead-band tolerance.
+
+    Properties
+    ==========
+    fullscale : float
+        Maximum output magnitude along each axis. Default: 1.0.
+    tolerance : float
+        Fractional dead-band; changes smaller than this fraction of
+        fullscale are suppressed. Default: 0.05.
+    '''
+
+    positionChanged = QtCore.Signal(object)
 
     def __init__(self, *args,
-                 fullscale=None,
-                 **kwargs):
+                 fullscale: float | None = None,
+                 **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.sizePolicy().setHeightForWidth(True)
         self.padding = 0.1
         self.knobSize = 0.3
         self.fullscale = fullscale or 1.
         self.tolerance = 0.05
-        self.position = QPointF(0, 0)
+        self.position = QtCore.QPointF(0, 0)
         self._values = np.zeros(2)
         self.active = False
 
-    def resizeEvent(self, event):
+    def resizeEvent(self, event: QtGui.QResizeEvent) -> None:
         self.radius = min(self.size().width(), self.size().height()) / 2
         self.radius *= (1. - self.padding)
         self.limit = (1. - self.knobSize) * self.radius
 
-    def paintEvent(self, event):
+    def paintEvent(self, event: QtGui.QPaintEvent) -> None:
         if self.isEnabled():
-            pen, bg, knob = Qt.black, QColor('#F8EEFF'), Qt.gray
+            pen = QtCore.Qt.GlobalColor.black
+            bg = QtGui.QColor('#F8EEFF')
+            knob = QtCore.Qt.GlobalColor.gray
         else:
-            pen, bg, knob = Qt.darkGray, QColor('#F8F8F8'), Qt.lightGray
-        painter = QPainter(self)
-        painter.setRenderHint(QPainter.Antialiasing, True)
+            pen = QtCore.Qt.GlobalColor.darkGray
+            bg = QtGui.QColor('#F8F8F8')
+            knob = QtCore.Qt.GlobalColor.lightGray
+        painter = QtGui.QPainter(self)
+        painter.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing, True)
         painter.setPen(pen)
         painter.setBrush(bg)
         painter.drawEllipse(self._limitRect())
         painter.setBrush(knob)
         painter.drawEllipse(self._knobRect())
 
-    def _limitRect(self):
+    def _limitRect(self) -> QtCore.QRectF:
         rect = np.array([-1, -1, 2, 2]) * self.radius
-        return QRectF(*rect).translated(self._center())
+        return QtCore.QRectF(*rect).translated(self._center())
 
-    def _knobRect(self):
+    def _knobRect(self) -> QtCore.QRectF:
         size = self.radius * self.knobSize
         rect = np.array([-1, -1, 2, 2]) * size
         pos = self.position if self.active else self._center()
-        return QRectF(*rect).translated(pos)
+        return QtCore.QRectF(*rect).translated(pos)
 
-    def _center(self):
-        return QPointF(self.width()/2, self.height()/2)
+    def _center(self) -> QtCore.QPointF:
+        return QtCore.QPointF(self.width() / 2, self.height() / 2)
 
-    def _limited(self, point):
-        limitLine = QLineF(self._center(), point)
-        if (limitLine.length() > self.limit):
-            limitLine.setLength(self.limit)
-        return limitLine.p2()
+    def _limited(self, point: QtCore.QPointF) -> QtCore.QPointF:
+        limit_line = QtCore.QLineF(self._center(), point)
+        if limit_line.length() > self.limit:
+            limit_line.setLength(self.limit)
+        return limit_line.p2()
 
-    def mousePressEvent(self, ev):
-        self.active = self._knobRect().contains(ev.pos())
-        return super().mousePressEvent(ev)
+    def mousePressEvent(self, event: QtGui.QMouseEvent) -> None:
+        self.active = self._knobRect().contains(event.pos())
+        super().mousePressEvent(event)
 
-    def mouseReleaseEvent(self, event):
+    def mouseReleaseEvent(self, event: QtGui.QMouseEvent) -> None:
         self.active = False
-        self.position = QPointF(0, 0)
+        self.position = QtCore.QPointF(0, 0)
         self.update()
-        self.emitSignal()
+        self._emitSignal()
 
-    def mouseMoveEvent(self, event):
+    def mouseMoveEvent(self, event: QtGui.QMouseEvent) -> None:
         self.position = self._limited(event.pos())
         self.update()
-        self.emitSignal()
+        self._emitSignal()
 
-    def _fractions(self):
+    def _fractions(self) -> np.ndarray:
         if self.active:
-            displacement = QLineF(self._center(), self.position)
+            displacement = QtCore.QLineF(self._center(), self.position)
             fx = min(displacement.dx() / self.limit, 1.)
             fy = -min(displacement.dy() / self.limit, 1.)
         else:
             fx, fy = 0., 0.
         return np.array([fx, fy])
 
-    def emitSignal(self):
+    def _emitSignal(self) -> None:
         values = self._fractions()
         if np.allclose(values, self._values, self.tolerance):
             return
         self._values = values
-        values *= self.fullscale
+        values = values * self.fullscale
         self.positionChanged.emit(values)
         logger.debug('{:.2f} {:.2f}'.format(*values))
 
 
-def example():
-    from PyQt5.QtWidgets import QApplication
+def example() -> None:
+    from qtpy.QtWidgets import QApplication
 
-    def report(xy):
+    def report(xy: np.ndarray) -> None:
         print('position: ({:+.2f}, {:+.2f})'.format(*xy), end='\r')
 
-    app = QApplication([])
+    app = QApplication.instance() or QApplication(sys.argv)
     joystick = QJoystick(fullscale=2.)
     joystick.positionChanged.connect(report)
     joystick.show()
-    app.exec()
+    sys.exit(app.exec())
 
 
 __all__ = ['QJoystick']
