@@ -35,6 +35,7 @@ MANIFEST
 # Virtual environments
 .env
 .venv
+.qi/
 env/
 venv/
 ENV/

@@ -79,5 +79,8 @@ def example():
     app.exec()
 
 
+__all__ = ['QRotaryEncoder']
+
+
 if __name__ == '__main__':
     example()

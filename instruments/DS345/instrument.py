@@ -17,21 +17,22 @@ class QDS345(QSerialInstrument):
     ---------------
     amplitude: float [V]
         Peak-to-peak output amplitude.
-        Range: 0 <= amplitude <= 5, amplitude + |offset| <= 5
+        Range: 0 <= amplitude <= 5, amplitude + \\|offset\\| <= 5
     frequency: float [Hz]
         Output frequency.
         Range by waveform:
-            sine, square:   1 uHz – 30.2 MHz
-            triangle, ramp: 1 uHz – 100 kHz
-            arbitrary:      2.329 mHz – 40 MHz (sampling rate)
-            noise:          10 MHz (fixed)
+
+        - sine, square: 1 uHz – 30.2 MHz
+        - triangle, ramp: 1 uHz – 100 kHz
+        - arbitrary: 2.329 mHz – 40 MHz (sampling rate)
+        - noise: 10 MHz (fixed)
     invert: bool
         True: invert output polarity.
     mute: bool
         True: silence output (saves and restores amplitude).
     offset: float [V]
         DC offset voltage.
-        Range: -5 <= offset <= 5, amplitude + |offset| <= 5
+        Range: -5 <= offset <= 5, amplitude + \\|offset\\| <= 5
     phase: float [degrees]
         Output waveform phase.
         Range: 0.001 – 7199.999
@@ -74,7 +75,7 @@ class QDS345(QSerialInstrument):
         Range: 0 – waveform maximum
     sweep_span: float [Hz]
         Span for frequency sweep. Negative values sweep downward.
-        Range: |sweep_span| <= 2 * sweep_center_frequency
+        Range: \\|sweep_span\\| <= 2 * sweep_center_frequency
     sweep_start_frequency: float [Hz]
         Start frequency for sweep.
         Range: 0 – waveform maximum

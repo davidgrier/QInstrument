@@ -151,5 +151,8 @@ def example():
     app.exec()
 
 
+__all__ = ['QLedWidget']
+
+
 if __name__ == '__main__':
     example()

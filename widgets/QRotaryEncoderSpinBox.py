@@ -148,5 +148,8 @@ def example():
     app.exec()
 
 
+__all__ = ['QRotaryEncoderSpinBox']
+
+
 if __name__ == '__main__':
     example()

@@ -111,5 +111,8 @@ def example():
     app.exec()
 
 
+__all__ = ['QJoystick']
+
+
 if __name__ == '__main__':
     example()

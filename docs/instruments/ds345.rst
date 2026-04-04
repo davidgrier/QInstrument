@@ -1,0 +1,14 @@
+DS345 Function Generator
+========================
+
+.. autoclass:: QInstrument.instruments.DS345.instrument.QDS345
+   :members:
+   :show-inheritance:
+
+.. autoclass:: QInstrument.instruments.DS345.fake.QFakeDS345
+   :members:
+   :show-inheritance:
+
+.. autoclass:: QInstrument.instruments.DS345.widget.QDS345Widget
+   :members:
+   :show-inheritance:
