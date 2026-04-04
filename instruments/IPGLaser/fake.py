@@ -11,6 +11,20 @@ class QFakeIPGLaser(QFakeInstrument, QIPGLaser):
     rather than relying on MRO auto-mock interception.
     '''
 
+    def status(self) -> dict[str, bool | float]:
+        '''Return all status properties from the in-memory store.
+
+        Overrides the real ``status()`` to avoid calling ``_flags()``
+        and ``_getPower()``, which would attempt serial communication.
+        '''
+        return {
+            'keyswitch': self._store.get('keyswitch', True),
+            'aiming':    self._store.get('aiming', False),
+            'emission':  self._store.get('emission', False),
+            'fault':     self._store.get('fault', False),
+            'power':     self._store.get('power', 0.),
+        }
+
     def _registerProperties(self) -> None:
         self.registerProperty('keyswitch', ptype=bool, setter=None,
                               getter=lambda: self._store.get('keyswitch', True))
