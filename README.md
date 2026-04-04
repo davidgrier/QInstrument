@@ -64,7 +64,7 @@ widget.show()
 app.exec()
 ```
 
-<img src="docs/QDS345Widget.png" width="50%" alt="DS345 Widget">
+<img src="https://raw.githubusercontent.com/davidgrier/QInstrument/main/docs/QDS345Widget.png" width="50%" alt="DS345 Widget">
 
 ### Using a simulated instrument
 
