@@ -141,6 +141,9 @@ class QSR844(QSerialInstrument):
         self.registerMethod('auto_close_reserve', self.auto_close_reserve)
         self.registerMethod('auto_wide_reserve',  self.auto_wide_reserve)
         self.registerMethod('auto_phase',         self.auto_phase)
+        self.registerMethod('auto_offset_x',      self.auto_offset_x)
+        self.registerMethod('auto_offset_y',      self.auto_offset_y)
+        self.registerMethod('auto_offset_r',      self.auto_offset_r)
 
     def _register(self, name: str, cmd: str, dtype: type = float) -> None:
         '''Register a standard instrument property.
@@ -207,6 +210,18 @@ class QSR844(QSerialInstrument):
     def auto_phase(self) -> None:
         '''Automatically adjust the reference phase.'''
         self.transmit('APHS')
+
+    def auto_offset_x(self) -> None:
+        '''Automatically offset the X output channel to zero.'''
+        self.auto_offset(1)
+
+    def auto_offset_y(self) -> None:
+        '''Automatically offset the Y output channel to zero.'''
+        self.auto_offset(2)
+
+    def auto_offset_r(self) -> None:
+        '''Automatically offset the R output channel to zero.'''
+        self.auto_offset(3)
 
     def auto_offset(self, channel: int) -> None:
         '''Automatically offset the specified output channel to zero.
