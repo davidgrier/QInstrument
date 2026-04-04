@@ -288,3 +288,5 @@ class QSerialInterface(QSerialPort):
             self.dataReady.emit(data.decode('utf-8', 'backslashreplace'))
         else:
             logger.debug(f'buffered {bytes(self._buffer)}')
+
+__all__ = ['QSerialInterface']

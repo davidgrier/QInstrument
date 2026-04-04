@@ -124,3 +124,5 @@ class QPDUS210(QSerialInstrument):
 
 if __name__ == '__main__':
     QPDUS210.example()
+
+__all__ = ['QPDUS210']

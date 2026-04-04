@@ -2,7 +2,7 @@ import numpy as np
 from QInstrument.lib.QFakeInstrument import QFakeInstrument
 
 
-class QFakeSR844(QFakeInstrument):
+class QFakeSR830(QFakeInstrument):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -34,10 +34,12 @@ class QFakeSR844(QFakeInstrument):
         self.registerProperty('sensitivity', ptype=int)
         self.registerProperty('synchronous_filter', ptype=bool)
         self.registerProperty('time_constant', ptype=int)
-        self.identification = 'Fake SR844 RF Lockin Amplifier'
+        self.identification = 'Fake SR830 Lockin Amplifier'
 
     def report(self):
         '''Return [frequency, amplitude, phase]'''
         data = np.random.rand(3)
         data[2] *= 360.
         return data.tolist()
+
+__all__ = ['QFakeSR830']

@@ -1,6 +1,6 @@
 from qtpy import QtCore
 from QInstrument.lib.QInstrumentWidget import QInstrumentWidget
-from .QIPGLaser import QIPGLaser
+from QInstrument.instruments.IPGLaser.instrument import QIPGLaser
 
 
 class QIPGLaserWidget(QInstrumentWidget):
@@ -11,14 +11,12 @@ class QIPGLaserWidget(QInstrumentWidget):
     read-only status fields.
     '''
 
+    UIFILE = 'IPGLaserWidget.ui'
     poll_interval = 500  # ms
 
     def __init__(self, *args, device=None, **kwargs):
         device = device or QIPGLaser().find()
-        super().__init__(*args,
-                         uiFile='IPGLaserWidget.ui',
-                         device=device,
-                         **kwargs)
+        super().__init__(*args, device=device, **kwargs)
         self._timer = QtCore.QTimer(self)
         self._timer.setInterval(self.poll_interval)
         self._timer.timeout.connect(self._poll)
@@ -31,15 +29,7 @@ class QIPGLaserWidget(QInstrumentWidget):
             self.set(prop)
 
 
-def main():
-    import sys
-    from qtpy.QtWidgets import QApplication
-
-    app = QApplication(sys.argv)
-    widget = QIPGLaserWidget()
-    widget.show()
-    sys.exit(app.exec())
-
-
 if __name__ == '__main__':
-    main()
+    QIPGLaserWidget.example()
+
+__all__ = ['QIPGLaserWidget']

@@ -126,3 +126,5 @@ class Configure(QtCore.QObject):
         response = msg.exec()
         if response = mbox.StandardButton.Yes:
             self.save(obj)
+
+__all__ = ['Configure']

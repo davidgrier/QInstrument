@@ -60,10 +60,10 @@ Instruments *possess* an interface rather than *being* one. `QSerialInstrument` 
 
 Each instrument lives in `instruments/<Name>/` and follows this pattern:
 
-1. **`QName.py`** — Inherits `QSerialInstrument`. Define a `comm` class attribute with serial parameters. In `__init__`, call `super().__init__(portName, **kwargs)` then `_registerProperties()` and `_registerMethods()`. Implement `identify()` to verify the connected device.
-2. **`QFakeName.py`** — Inherits `QFakeInstrument`. Mirrors the same properties for UI testing without hardware.
-3. **`QNameWidget.py`** — Inherits `QInstrumentWidget`. Points to a `.ui` file; widget names must match registered property names for auto-binding to work.
-4. **`__init__.py`** — Exports the main classes.
+1. **`instrument.py`** — Inherits `QSerialInstrument`. Define a `comm` class attribute with serial parameters. In `__init__`, call `super().__init__(portName, **kwargs)` then `_registerProperties()` and `_registerMethods()`. Implement `identify()` to verify the connected device.
+2. **`fake.py`** — Inherits `QFakeInstrument`. Mirrors the same properties for UI testing without hardware.
+3. **`widget.py`** — Inherits `QInstrumentWidget`. Points to a `.ui` file; widget names must match registered property names for auto-binding to work. Set `FAKEDEVICE` to the fake class so `example()` can fall back to it.
+4. **`__init__.py`** — Exports the main classes by name: `from .instrument import QName`, etc.
 
 See `instruments/DS345/` for the reference implementation.
 

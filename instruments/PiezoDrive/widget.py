@@ -1,5 +1,5 @@
-from QInstrument.lib import QInstrumentWidget
-from QInstrument.instruments.PiezoDrive.QPDUS210 import QPDUS210
+from QInstrument.lib.QInstrumentWidget import QInstrumentWidget
+from QInstrument.instruments.PiezoDrive.instrument import QPDUS210
 from PyQt5.QtCore import (pyqtProperty, pyqtSlot, QTimer)
 
 
@@ -7,12 +7,11 @@ class QPDUS210Widget(QInstrumentWidget):
     '''PiezoDrive 210 Ultrasonic Amplifier
     '''
 
+    UIFILE = 'PDUS210Widget.ui'
+
     def __init__(self, *args, **kwargs):
         device = QPDUS210().find()
-        super().__init__(*args,
-                         uiFile='PDUS210Widget.ui',
-                         device=device,
-                         **kwargs)
+        super().__init__(*args, device=device, **kwargs)
         self.setupTimer()
         self.interval = 0.2
 
@@ -38,15 +37,7 @@ class QPDUS210Widget(QInstrumentWidget):
         self.time.setInterval(interval)
 
 
-def main():
-    import sys
-    from PyQt5.QtWidgets import QApplication
-
-    app = QApplication(sys.argv)
-    widget = QPDUS210Widget()
-    widget.show()
-    sys.exit(app.exec_())
-
-
 if __name__ == '__main__':
-    main()
+    QPDUS210Widget.example()
+
+__all__ = ['QPDUS210Widget']

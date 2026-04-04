@@ -1,5 +1,5 @@
-from QInstrument.lib import QInstrumentWidget
-from QInstrument.instruments.Opus.QOpus import QOpus
+from QInstrument.lib.QInstrumentWidget import QInstrumentWidget
+from QInstrument.instruments.Opus.instrument import QOpus
 from PyQt5.QtCore import (pyqtSlot, QTimer)
 import logging
 
@@ -11,12 +11,11 @@ logger.setLevel(logging.DEBUG)
 
 class QOpusWidget(QInstrumentWidget):
 
+    UIFILE = 'OpusWidget.ui'
+
     def __init__(self, *args, interval=None, **kwargs):
         device = QOpus().find()
-        super().__init__(*args,
-                         uiFile='OpusWidget.ui',
-                         device=device,
-                         **kwargs)
+        super().__init__(*args, device=device, **kwargs)
         self.interval = interval or 200
         self.timer = QTimer()
         self.connectSignals()
@@ -24,12 +23,12 @@ class QOpusWidget(QInstrumentWidget):
 
     def connectSignals(self):
         self.timer.timeout.connect(self.poll)
-        self.ui.PowerDial.valueChanged.connect(self.updatePower)
-        self.ui.Power.editingFinished.connect(self.updatePowerDial)
-        self.ui.PowerDial.valueChanged.connect(self.uncheck)
-        self.ui.SendPower.clicked.connect(self.check)
+        self.PowerDial.valueChanged.connect(self.updatePower)
+        self.Power.editingFinished.connect(self.updatePowerDial)
+        self.PowerDial.valueChanged.connect(self.uncheck)
+        self.SendPower.clicked.connect(self.check)
         self.device.dataReady.connect(self.updateValues)
-        self.ui.Disable.clicked.connect(self.disable)
+        self.Disable.clicked.connect(self.disable)
 
     def startPolling(self):
         if self.isEnabled():
@@ -47,7 +46,7 @@ class QOpusWidget(QInstrumentWidget):
 
     @pyqtSlot(int)
     def updatePower(self, value):
-        self.ui.Power.setValue(value)
+        self.Power.setValue(value)
 
     @pyqtSlot(str)
     def updateValues(self, data):
@@ -56,43 +55,35 @@ class QOpusWidget(QInstrumentWidget):
             numeric_filter = filter(str.isdigit, data)
             p = float((int("".join(numeric_filter))/10))
             if p == 0.0:
-                self.ui.EnableSwitch.setChecked(False)
+                self.EnableSwitch.setChecked(False)
             if p != 0.0:
-                self.ui.EnableSwitch.setChecked(True)
-            self.ui.ActualPower.setValue(p)
+                self.EnableSwitch.setChecked(True)
+            self.ActualPower.setValue(p)
         if '%' in data:
             numeric_filter = filter(str.isdigit, data)
             p = float((int("".join(numeric_filter))/10))
-            self.ui.CurrentBox.setValue(p)
+            self.CurrentBox.setValue(p)
 
     @pyqtSlot()
     def check(self):
-        self.ui.sentCheck.setChecked(True)
-        a = self.ui.Power.value()
+        self.sentCheck.setChecked(True)
+        a = self.Power.value()
         self.device.set_power(a)
 
     @pyqtSlot()
     def uncheck(self):
-        self.ui.sentCheck.setChecked(False)
+        self.sentCheck.setChecked(False)
 
     @pyqtSlot()
     def updatePowerDial(self):
-        value = self.ui.Power.value()
-        self.ui.PowerDial.setValue(int(value))
+        value = self.Power.value()
+        self.PowerDial.setValue(int(value))
 
     def disable(self):
         self.device.transmit('OFF')
 
 
-def main():
-    import sys
-    from PyQt5.QtWidgets import QApplication
-
-    app = QApplication(sys.argv)
-    widget = QOpusWidget()
-    widget.show()
-    sys.exit(app.exec_())
-
-
 if __name__ == '__main__':
-    main()
+    QOpusWidget.example()
+
+__all__ = ['QOpusWidget']

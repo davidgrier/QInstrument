@@ -147,6 +147,11 @@ class QSerialInstrument(QAbstractInstrument):
         '''Close the serial interface.'''
         self._interface.close()
 
+    def __repr__(self) -> str:
+        if self.isOpen():
+            return f'{self.__class__.__name__}({self._interface.portName()})'
+        return f'{self.__class__.__name__}(not connected)'
+
     @classmethod
     def example(cls, portname: str | None = None) -> None:
         '''Connect to an instrument and print its current settings.
@@ -179,3 +184,5 @@ class QSerialInstrument(QAbstractInstrument):
 
 if __name__ == '__main__':
     QSerialInstrument.example()
+
+__all__ = ['QSerialInstrument']

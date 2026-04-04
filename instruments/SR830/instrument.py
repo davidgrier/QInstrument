@@ -2,38 +2,14 @@ from PyQt5.QtCore import (pyqtProperty, pyqtSlot)
 from QInstrument.lib.QSerialInstrument import QSerialInstrument
 
 
-class Parameter(pyqtProperty):
-
-    def __init__(self, pstr, min=0, max=1, dtype=int, **kwargs):
-        super().__init__(dtype, self.getter, self.setter, **kwargs)
-        self.pstr = pstr
-        self.dtype = dtype
-        self.min = dtype(min)
-        self.max = dtype(max)
-
-    def getter(self, inst=None):
-        return self.get_value(f'{self.pstr}?', self.dtype)
-
-    def setter(self, inst=None, value=None):
-        if self.dtype == bool:
-            value = int(value)
-        elif value < self.min:
-            value = self.min
-        elif value > self.max:
-            value = self.max
-        else:
-            value = self.dtype(value)
-        self.transmit(f'{self.pstr}{value}')
-
-
-class QSR844(QSerialInstrument):
-    '''SRS SR844 Lockin Amplifier
+class QSR830(QSerialInstrument):
+    '''SRS SR830 Lockin Amplifier
 
     .....
 
     Inherits
     --------
-    SerialInstrument
+    QInstrument.lib.QSerialInstrument
 
     Properties
     ==========
@@ -43,6 +19,10 @@ class QSR844(QSerialInstrument):
 
     Reference and Phase
     -------------------
+    amplitude: int
+        Amplitude of reference sine output [V]
+        Rounted to 0.002V.
+        Range: 0.004V <= output_amplitude <= 5.000V
     frequency: float
         Reference frequency for internal oscillator [Hz]
         Rounded to 5 digits or 0.0001 Hz, whichever is greater.
@@ -56,26 +36,36 @@ class QSR844(QSerialInstrument):
     phase: float
         Reference phase shift [degrees]
         Range: -360 degrees <= phase <= 729.99 degrees, mod 180 degrees
-    reference_impedance: int
-        Reference input impedance
-        0: 50 Ohm
-        1: 10 kOhm
+    reference_trigger: int
+        Select reference trigger for external reference
+        0: sine zero crossing
+        1: TTL rising edge
+        2: TTL falling edge
+        Must be set to either 1 or 2 when frequency < 1 Hz.
 
-    Signal Input
-    ------------
-    input_impedance: int
-        0: 50 Ohm
-        1: 1 MOhm
-
-    wide_reserve: int
-        Wide reserve mode
-        0: High dynamic reserve
-        1: Normal
-        2: Low
+    Input and Filter
+    ----------------
+    dc_coupling: bool
+        True: inputs use DC coupling
+        False: inputs use AC coupling
+    input_configuration: int
+        0: channel A
+        1: A - B
+        2: I (1 Mohm)
+        3: I (100 Mohm)
+    line_filter: int
+        Input line notch filter configuration
+        0: no filters
+        1: use line notch filter
+        2: use 2x line notch filter
+        3: use both notch filters
+    shield_grounding: bool
+        True: input shielding is grounded
+        False: input shielding is floating
 
     Gain and Time Constant
     ----------------------
-    close_reserve: int
+    dynamic_reserve: int
         0: High dynamic reserve, suitable for noisy signals
         1: Normal dynamic reserve
         2: Low noise
@@ -85,25 +75,32 @@ class QSR844(QSerialInstrument):
         2: 18 dB/octave
         3: 24 dB/octave
     sensitivity: int
-        0: 100 nVrms / -127 dBm   8:   1 mVrms / -47 dBm
-        1: 300 nVrms / -117 dBm   9:   3 mVrms / -37 dBm
-        2:   1 uVrms / -107 dBm  10:  10 mVrms / -27 dBm
-        3:   3 uVrms /  -97 dBm  11:  30 mVrms / -17 dBm
-        4:  10 uVrms /  -87 dBm  12: 100 mVrms /  -7 dBm
-        5:  30 uVrms /  -77 dBm  13: 300 mVrms /  +3 dBm
-        6: 100 uVrms /  -67 dBm  14:   1  Vrms / +13 dBm
-        7: 300 uVrms /  -57 dBm
+        0:   2 nV/fA    10:   5 uV/pA    20:  10 mV/nA
+        1:   5 nV/fA    11:  10 uV/pA    21:  20 mV/nA
+        2:  10 nV/fA    12:  20 uV/pA    22:  50 mV/nA
+        3:  20 nV/fA    13:  50 uV/pA    23: 100 mV/nA
+        4:  50 nV/fA    14: 100 uV/pA    24: 200 mV/nA
+        5: 100 nV/fA    15: 200 uV/pA    25: 500 mV/nA
+        6: 200 nV/fA    16: 500 uV/pA    26:   1  V/uA
+        7: 500 nV/fA    17:   1 mV/nA
+        8:   1 uV/pA    18:   2 mV/nA
+        9:   2 uV/pA    19:   5 mV/nA
+    synchronous_filter: bool
+        True: synchronous filtering below 200 Hz
+            Only engaged if harmonic * frequency < 200 Hz
+        False: no synchronous filter
     time_constant: int
         Input filter time constant
-        0: 100 us     9:   3 s
-        1: 300 us    10:  10 s
-        2:   1 ms    11:  30 s
-        3:   3 ms    12: 100 s
-        4:  10 ms    13: 300 s
-        5:  30 ms    14:   1 ks
-        6: 100 ms    15:   3 ks
-        7: 300 ms    16:  10 ks
-        8:   1 s    17:  30 ks
+        0:  20 us    10:   1 s
+        1:  30 us    11:   3 s
+        2: 100 us    12:  10 s
+        3: 300 us    13:  30 s
+        4:   1 ms    14: 100 s
+        5:   3 ms    15: 300 s
+        6:  10 ms    16:   1 ks
+        7:  30 ms    17:   3 ks
+        8: 100 ms    18:  10 ks
+        9: 300 ms    19:  30 ks
 
     Methods
     =======
@@ -125,44 +122,40 @@ class QSR844(QSerialInstrument):
         return pyqtProperty(dtype, getter, setter)
 
     # Reference and Phase
+    amplitude = Property('SLVL', float)
     frequency = Property('FREQ', float)
     harmonic = Property('HARM')
     internal_reference = Property('FMOD', bool)
     phase = Property('PHAS', float)
-    reference_impedance = Property('REFZ')
-    # Input Signal
-    wide_reserve = Property('WRSV')
-    input_impedance = Property('INPZ')
+    reference_trigger = Property('RSLP')
+    # Input and Filter
+    dc_coupling = Property('ICPL', bool)
+    input_configuration = Property('ISRC')
+    line_filter = Property('ILIN')
+    shield_grounding = Property('IGND', bool)
     # Gain and Time Constant
-    sensitivity = Property('SENS')
-    close_reserve = Property('CRSV')
+    dynamic_reserve = Property('RMOD')
     low_pass_slope = Property('OFSL')
+    sensitivity = Property('SENS')
+    synchronous_filter = Property('SYNC', bool)
     time_constant = Property('OFLT')
 
-    comm = dict(baudRate=QSerialInstrument.BaudRate.Baud19200,
+    comm = dict(baudRate=QSerialInstrument.BaudRate.Baud9600,
                 dataBits=QSerialInstrument.DataBits.Data8,
                 stopBits=QSerialInstrument.StopBits.OneStop,
                 parity=QSerialInstrument.Parity.NoParity,
                 flowControl=QSerialInstrument.FlowControl.NoFlowControl,
-                eol='\r')
+                eol='\n')
 
     def __init__(self, portName=None, **kwargs):
         super().__init__(portName, **(self.comm | kwargs))
 
     def identify(self):
-        return 'SR844' in self.handshake('*IDN?')
+        return 'SR830' in self.handshake('*IDN?')
 
     def report(self):
         response = self.handshake('SNAP?9,3,4')
         return list(map(float, response.split(',')))
-
-    @pyqtProperty(int)
-    def reference_frequency(self):
-        return int(self.handshake('FRAQ?'))
-
-    @pyqtProperty(int)
-    def if_frequency(self):
-        return int(self.handshake('FRIQ?'))
 
     @pyqtSlot()
     def reset(self):
@@ -174,14 +167,9 @@ class QSR844(QSerialInstrument):
         self.transmit('AGAN')
 
     @pyqtSlot()
-    def auto_close_reserve(self):
-        '''Autorange close dynamic reserve'''
-        self.transmit('ACRS')
-
-    @pyqtSlot()
-    def auto_wide_reserve(self):
-        '''Autorange wide dynamic reserve'''
-        self.transmit('AWRS')
+    def auto_reserve(self):
+        '''Autorange dynamic reserve'''
+        self.transmit('ARSV')
 
     @pyqtSlot()
     def auto_phase(self):
@@ -191,16 +179,10 @@ class QSR844(QSerialInstrument):
     @pyqtSlot()
     def auto_offset(self, channel):
         '''Autorange offset'''
-        self.transmit('AOFF{channel}')
-
-
-def example():
-    from PyQt5.QtCore import QCoreApplication
-
-    app = QCoreApplication([])
-    lockin = QSR844().find()
-    print(lockin)
+        self.transmit(f'AOFF{channel}')
 
 
 if __name__ == '__main__':
-    QSR844.example()
+    QSR830.example()
+
+__all__ = ['QSR830']

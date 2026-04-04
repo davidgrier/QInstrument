@@ -16,3 +16,5 @@ class QFakeIPGLaser(QFakeInstrument):
         self.registerProperty('power', ptype=float, setter=None)
         self.registerProperty('fault', ptype=bool, setter=None)
         self.identification = 'Fake IPG Fiber Laser'
+
+__all__ = ['QFakeIPGLaser']

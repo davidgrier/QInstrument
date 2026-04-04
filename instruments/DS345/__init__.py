@@ -1,6 +1,11 @@
-from .QDS345 import QDS345
-from .QFakeDS345 import QFakeDS345
-from .QDS345Widget import QDS345Widget
+import importlib
 
+_lazy = {'QDS345': 'instrument', 'QFakeDS345': 'fake', 'QDS345Widget': 'widget'}
 
-__all__ = ['QDS345', 'QFakeDS345', 'QDS345Widget']
+def __getattr__(name):
+    if name in _lazy:
+        mod = importlib.import_module(f'.{_lazy[name]}', package=__name__)
+        return getattr(mod, name)
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+__all__ = list(_lazy)

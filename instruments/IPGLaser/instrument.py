@@ -117,3 +117,5 @@ class QIPGLaser(QSerialInstrument):
 
 if __name__ == '__main__':
     QIPGLaser.example()
+
+__all__ = ['QIPGLaser']

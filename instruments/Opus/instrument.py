@@ -121,3 +121,5 @@ def example():
 
 if __name__ == '__main__':
     QOpus.example()
+
+__all__ = ['QOpus']

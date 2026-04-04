@@ -261,3 +261,5 @@ class QProscan(QSerialInstrument):
 
 if __name__ == '__main__':
     QProscan.example()
+
+__all__ = ['QProscan']

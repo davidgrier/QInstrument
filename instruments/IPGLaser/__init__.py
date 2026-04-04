@@ -1,6 +1,11 @@
-from .QIPGLaser import QIPGLaser
-from .QFakeIPGLaser import QFakeIPGLaser
-from .QIPGLaserWidget import QIPGLaserWidget
+import importlib
 
+_lazy = {'QIPGLaser': 'instrument', 'QFakeIPGLaser': 'fake', 'QIPGLaserWidget': 'widget'}
 
-__all__ = ['QIPGLaser', 'QFakeIPGLaser', 'QIPGLaserWidget']
+def __getattr__(name):
+    if name in _lazy:
+        mod = importlib.import_module(f'.{_lazy[name]}', package=__name__)
+        return getattr(mod, name)
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+__all__ = list(_lazy)

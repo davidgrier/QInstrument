@@ -56,3 +56,5 @@ def example():
 
 if __name__ == '__main__':
     QTDS1000.example()
+
+__all__ = ['QTDS1000']

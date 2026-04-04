@@ -41,16 +41,13 @@ class QAbstractInstrument(QtCore.QObject):
         self._methods = {}
 
     def __repr__(self) -> str:
-        name = self.__class__.__name__
-        tab = ' ' * (len(name) + 1)
-        args = f',\n{tab}'.join(f'{k}={v}' for k, v in self.settings.items())
-        return f'{name}({args})'
+        return f'{self.__class__.__name__}()'
 
     def handshake(self, data: str, **kwargs) -> str:
         '''Transmit a command and return the instrument's response.
 
         Delegates to ``transmit()`` and ``receive()``, which must be
-        provided by the transport layer mixed in with this class.
+        provided by the concrete instrument class.
 
         Parameters
         ----------
@@ -67,21 +64,21 @@ class QAbstractInstrument(QtCore.QObject):
         self.transmit(data)
         return self.receive(**kwargs)
 
-    def getValue(self, query: str, dtype=float):
+    def getValue(self, query: str, dtype: type = float) -> PropertyValue | None:
         '''Query the instrument and return a typed value.
 
         Parameters
         ----------
         query : str
             Command string that elicits a single-value response.
-        dtype : callable, optional
+        dtype : type, optional
             Converts the response string to the desired type.
             Default: ``float``.
 
         Returns
         -------
-        dtype or None
-            Converted value, or ``None`` if conversion fails.
+        PropertyValue or None
+            Value converted by *dtype*, or ``None`` if conversion fails.
         '''
         response = self.handshake(query)
         try:
@@ -112,9 +109,9 @@ class QAbstractInstrument(QtCore.QObject):
 
     def registerProperty(self,
                          name: str,
-                         getter=_AUTO,
-                         setter=_AUTO,
-                         ptype=float, **meta) -> None:
+                         getter: Callable | None = _AUTO,
+                         setter: Callable | None = _AUTO,
+                         ptype: type = float, **meta) -> None:
         '''Register a named instrument property.
 
         By default both getter and setter are auto-generated from the
@@ -247,7 +244,7 @@ class QAbstractInstrument(QtCore.QObject):
         '''
         return False
 
-    def registerMethod(self, name: str, method: Callable) -> None:
+    def registerMethod(self, name: str, method: Callable[[], None]) -> None:
         '''Register a named zero-argument callable.
 
         Registered methods can be invoked by name via :meth:`execute`.
@@ -284,3 +281,5 @@ class QAbstractInstrument(QtCore.QObject):
                 return
             method = self._methods[key]
         method()
+
+__all__ = ['QAbstractInstrument']

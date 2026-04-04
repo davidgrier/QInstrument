@@ -289,3 +289,5 @@ class QDS345(QSerialInstrument):
 
 if __name__ == '__main__':
     QDS345.example()
+
+__all__ = ['QDS345']

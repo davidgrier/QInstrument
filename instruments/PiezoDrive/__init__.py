@@ -1,5 +1,11 @@
-from .QPDUS210 import QPDUS210
-from .QPDUS210Widget import QPDUS210Widget
+import importlib
 
+_lazy = {'QPDUS210': 'instrument', 'QPDUS210Widget': 'widget'}
 
-__all__ = ['QPDUS210', 'QPDUS210Widget']
+def __getattr__(name):
+    if name in _lazy:
+        mod = importlib.import_module(f'.{_lazy[name]}', package=__name__)
+        return getattr(mod, name)
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+__all__ = list(_lazy)
