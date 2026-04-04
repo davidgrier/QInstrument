@@ -109,7 +109,7 @@ class QJoystick(QtWidgets.QWidget):
 
     def mousePressEvent(self, event: QtGui.QMouseEvent) -> None:
         '''Activate dragging when the press lands inside the knob.'''
-        self.active = self._knobRect().contains(event.pos())
+        self.active = self._knobRect().contains(QtCore.QPointF(event.pos()))
         super().mousePressEvent(event)
 
     def mouseReleaseEvent(self, event: QtGui.QMouseEvent) -> None:
@@ -121,7 +121,7 @@ class QJoystick(QtWidgets.QWidget):
 
     def mouseMoveEvent(self, event: QtGui.QMouseEvent) -> None:
         '''Update knob position while dragging.'''
-        self.position = self._limited(event.pos())
+        self.position = self._limited(QtCore.QPointF(event.pos()))
         self.update()
         self._emitSignal()
 
