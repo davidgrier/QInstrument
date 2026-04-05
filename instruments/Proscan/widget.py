@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-import sys
 import logging
 from pathlib import Path
-from qtpy import QtCore, QtWidgets
+from qtpy import QtCore
 from QInstrument.lib.QInstrumentWidget import QInstrumentWidget
 from QInstrument.instruments.Proscan.instrument import QProscan
 from QInstrument.instruments.Proscan.fake import QFakeProscan
@@ -24,12 +23,13 @@ class QProscanWidget(QInstrumentWidget):
 
     def __init__(self, *args, device: QProscan | None = None,
                  interval: int | None = None, **kwargs) -> None:
+        device = device or QProscan().find()
         super().__init__(*args, device=device, **kwargs)
         self.joystick.setRange(-200., 200.)
-        self._interval = interval or 200
         self._timer = QtCore.QTimer(self)
-        self._connectSignals()
-        self._timer.start(self._interval)
+        self._timer.timeout.connect(self._poll)
+        if self.device is not None and self.device.isOpen():
+            self._timer.start(interval or 200)
 
     def _connectSignals(self) -> None:
         super()._connectSignals()
@@ -38,7 +38,6 @@ class QProscanWidget(QInstrumentWidget):
         self.zdial.stepDown.connect(self.device.stepDown)
         self.stop.clicked.connect(self.device.stop)
         self.set_origin.clicked.connect(self.device.set_origin)
-        self._timer.timeout.connect(self._poll)
 
     @QtCore.Slot()
     def _poll(self) -> None:
@@ -56,15 +55,6 @@ class QProscanWidget(QInstrumentWidget):
         '''Forward joystick position to the stage as a velocity command.'''
         logger.debug(f'velocity: {velocity}')
         self.device.set_velocity(velocity)
-
-    @classmethod
-    def example(cls) -> None:
-        app = QtWidgets.QApplication.instance() or QtWidgets.QApplication(sys.argv)
-        device = QProscan().find() or QFakeProscan()
-        widget = cls(device=device)
-        widget.show()
-        sys.exit(app.exec())
-
 
 __all__ = ['QProscanWidget']
 
