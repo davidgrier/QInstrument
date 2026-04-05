@@ -9,4 +9,5 @@ API Reference
    serial_instrument
    fake_instrument
    instrument_widget
+   instrument_rack
    configure

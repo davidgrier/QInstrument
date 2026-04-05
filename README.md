@@ -36,27 +36,52 @@ Any Qt binding (PyQt5, PyQt6, PySide2, PySide6) is supported via `qtpy`.
 ## Installation
 
 ```bash
+pip install QInstrument
+pip install PyQt6          # or PyQt5, PySide2, PySide6
+```
+
+Installing from PyPI also places a `qinstrument` command on your PATH.
+
+To install from source:
+
+```bash
 git clone https://github.com/davidgrier/QInstrument
 cd QInstrument
 python -m venv .qi
 source .qi/bin/activate
-pip install -r requirements.txt
+pip install -e ".[dev]"
 ```
 
 ## Quick start
 
-Each instrument widget has a built-in `example()` entry point.
-Run it directly from the command line:
+### Rack application
+
+Launch the rack to control multiple instruments at once:
+
+```bash
+qinstrument DS345 SR830
+```
+
+On subsequent runs, `qinstrument` with no arguments restores the
+last-used instrument list automatically.  Use the **Add instrument…**
+button to add instruments at runtime, or right-click any instrument
+to remove it.
+
+<img src="https://raw.githubusercontent.com/davidgrier/QInstrument/main/docs/QDS345Widget.png" width="50%" alt="DS345 Widget">
+
+### Single instrument widget
+
+Each instrument widget also has a built-in `example()` entry point:
 
 ```bash
 python -m QInstrument.instruments.DS345.widget
 ```
 
 This finds a connected DS345 and opens its control panel.
-If no instrument is detected it falls back automatically to a simulated
-(fake) device so the UI is always usable.
+If no instrument is detected it falls back automatically to a
+simulated (fake) device so the UI is always usable.
 
-You can also drive the widget from your own application:
+### Embedding a widget in your application
 
 ```python
 from qtpy.QtWidgets import QApplication
@@ -68,11 +93,9 @@ widget.show()
 app.exec()
 ```
 
-<img src="https://raw.githubusercontent.com/davidgrier/QInstrument/main/docs/QDS345Widget.png" width="50%" alt="DS345 Widget">
-
 ### Using a simulated instrument
 
-When hardware is not available, import the fake class directly:
+When hardware is not available, pass a fake device directly:
 
 ```python
 from QInstrument.instruments.DS345 import QDS345Widget, QFakeDS345
@@ -87,7 +110,7 @@ app.exec()
 
 ```
 QtCore.QObject
-└── QAbstractInstrument      # property/method registry, thread-safe get/set, settings I/O
+└── QAbstractInstrument      # property/method registry, thread-safe get/set
     └── QSerialInstrument    # holds QSerialInterface; adds open/find/identify
         └── QXxxInstrument   # concrete instrument
 
@@ -95,7 +118,10 @@ QtSerialPort.QSerialPort
 └── QSerialInterface         # raw serial I/O (owned by QSerialInstrument)
 
 QWidget
-└── QInstrumentWidget        # loads .ui file, auto-binds widgets to registered properties
+├── QInstrumentWidget        # loads .ui file; auto-binds widgets to properties;
+│                            # saves/restores device state via Configure
+└── QInstrumentRack          # holds multiple QInstrumentWidgets; runtime
+                             # add/remove; saves/restores instrument list
 ```
 
 Each instrument lives in `instruments/<Name>/` with three files:

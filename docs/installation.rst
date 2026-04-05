@@ -16,10 +16,13 @@ Install from PyPI
 
    pip install QInstrument
 
-A Qt binding is not installed automatically.  Install one separately, for
-example::
+A Qt binding is not installed automatically.  Install one separately,
+for example::
 
    pip install PyQt6
+
+Installing from PyPI also places a ``qinstrument`` command on your
+PATH that launches the rack application.
 
 Install from source
 -------------------

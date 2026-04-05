@@ -13,15 +13,20 @@ Active development happens on the `devel` branch. The `lib/` foundations are ful
 The virtual environment lives in `.qi/` (not `venv/`):
 ```bash
 source .qi/bin/activate
-pip install -r requirements.txt
+pip install -e ".[dev]"
+```
+
+Run the rack application:
+```bash
+python -m QInstrument DS345 SR830
 ```
 
 Run a specific instrument widget interactively:
 ```bash
-python -c "from qtpy.QtWidgets import QApplication; import sys; from instruments.DS345 import QDS345Widget; app = QApplication(sys.argv); w = QDS345Widget(); w.show(); sys.exit(app.exec())"
+python -m QInstrument.instruments.DS345.widget
 ```
 
-Tests cover `QSerialInterface` only; run with `pytest tests/`. No build step or linter configuration.
+Tests cover `QSerialInterface` and `QInstrumentWidget`; run with `pytest tests/`. No build step or linter configuration.
 
 ## Architecture
 
@@ -37,7 +42,8 @@ QtSerialPort.QSerialPort
 └── QSerialInterface             # Raw serial I/O (owned by QSerialInstrument, not inherited)
 
 QWidget
-└── QInstrumentWidget            # Auto-binds Qt UI widgets to instrument properties
+├── QInstrumentWidget            # Auto-binds Qt UI widgets to instrument properties
+└── QInstrumentRack              # Holds multiple QInstrumentWidgets; runtime add/remove
 ```
 
 Instruments *possess* an interface rather than *being* one. `QSerialInstrument` holds a `QSerialInterface` as `self._interface` and delegates `transmit()`/`receive()` through it. This means the same instrument class can be used with different transports (e.g. RS-232 and GPIB) by swapping out the interface object.
@@ -50,9 +56,11 @@ Instruments *possess* an interface rather than *being* one. `QSerialInstrument` 
 
 **`lib/QSerialInstrument.py`** — Inherits `QAbstractInstrument`. Creates and holds a `QSerialInterface` in `__init__`. Implements `transmit()`/`receive()` by delegation, provides `open()` (with `identify()` check), `find()` (port scanning), `isOpen()`, and `close()`. Re-exports the `QSerialPort` enum types (`BaudRate`, `DataBits`, etc.) as class attributes so subclass `comm` dicts need no extra imports. This is what concrete instruments inherit from.
 
-**`lib/QInstrumentWidget.py`** — Loads a `.ui` file and auto-links named widgets to instrument properties by matching widget names to registered property names. Uses `device.get(key)` and `device.set(key, value)` (the Qt slots on `QAbstractInstrument`) — not `getattr`/`setattr`, which do not work with `registerProperty()`-based instruments. Calls `_identifyProperties()` / `_syncProperties()` / `_connectSignals()` automatically.
+**`lib/QInstrumentWidget.py`** — Loads a `.ui` file and auto-links named widgets to instrument properties by matching widget names to registered property names. Uses `device.get(key)` and `device.set(key, value)` (the Qt slots on `QAbstractInstrument`) — not `getattr`/`setattr`, which do not work with `registerProperty()`-based instruments. Calls `_identifyProperties()` / `_syncProperties()` / `_connectSignals()` automatically. Integrates `Configure`: on first `showEvent` the device's saved settings are restored and the UI re-synced; on `closeEvent` the device settings are saved. Save/restore is gated on `_shown` so test widgets closed during teardown do not write config files.
 
-**`lib/Configure.py`** — Saves/restores `object.settings` as JSON to `~/.QInstrument/<ClassName>.json`. Also provides timestamped data filenames under `~/data/`.
+**`lib/Configure.py`** — Saves/restores `object.settings` as JSON to `~/.QInstrument/<ClassName>.json`. Also provides timestamped data filenames under `~/data/`. Used directly by `QInstrumentWidget` and `QInstrumentRack`; any object with a `settings` dict property can use it.
+
+**`QInstrumentRack.py`** — Top-level widget that holds multiple `QInstrumentWidget` instances in a vertical layout. Provides an "Add instrument…" toolbar button (opens a picker dialog built from `availableInstruments()`, which scans `instruments/` for subpackages with `widget.py`) and a right-click context menu on each slot for removal. Persists the instrument list via `Configure` using the same `_shown`-gated save/restore pattern as `QInstrumentWidget`. `python -m QInstrument [NAME ...]` and the installed `qinstrument` CLI both use this as the entry point; bare invocation restores the last session.
 
 **`lib/QFakeInstrument.py`** — Mock instrument base for UI development without hardware.
 
