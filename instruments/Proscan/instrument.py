@@ -17,7 +17,7 @@ class QProscan(QSerialInstrument):
     -------
     positionChanged(list[int])
         Emitted by :meth:`position` with the current ``[x, y, z]``
-        coordinates in micrometers.
+        coordinates in µm.
 
     Properties
     ==========
@@ -28,7 +28,7 @@ class QProscan(QSerialInstrument):
     scurve : int
         Time derivative of XY stage acceleration. Range [1, 100].
     stepsize : float
-        XY single-step size [um].
+        XY single-step size [µm].
     zspeed : int
         Maximum focus drive speed. Range [1, 100].
     zacceleration : int
@@ -36,9 +36,9 @@ class QProscan(QSerialInstrument):
     zscurve : int
         Time derivative of focus acceleration. Range [1, 100].
     zstepsize : float
-        Focus drive single-step size [um].
+        Focus drive single-step size [µm].
     resolution : float
-        Stage encoder resolution [um/step].
+        Stage encoder resolution [µm/step].
     flip : bool
         True: invert Y axis direction.
     mirror : bool
@@ -125,7 +125,7 @@ class QProscan(QSerialInstrument):
         -------
         list[int]
             ``[x, y, z]`` coordinates of the current stage position
-            in micrometers.
+            in µm.
         '''
         pos = list(map(int, self.handshake('P').split(',')))
         self.positionChanged.emit(pos)
@@ -138,7 +138,7 @@ class QProscan(QSerialInstrument):
         ----------
         position : list[int]
             ``[x, y]`` or ``[x, y, z]`` coordinates to assign to the
-            current stage position, in micrometers.
+            current stage position, in µm.
 
         Returns
         -------
@@ -166,7 +166,7 @@ class QProscan(QSerialInstrument):
         Parameters
         ----------
         position : list[int]
-            ``[x, y]`` target coordinates in micrometers.
+            ``[x, y]`` target coordinates in µm.
         relative : bool
             True: move by ``position`` relative to current location.
             False: move to the absolute coordinates. Default: False.
@@ -200,7 +200,7 @@ class QProscan(QSerialInstrument):
         Parameters
         ----------
         velocity : list[float]
-            ``[vx, vy]`` velocity components in micrometers per second.
+            ``[vx, vy]`` velocity components in µm/s.
         '''
         v = ','.join(map(str, velocity))
         self.expect(f'VS,{v}', 'R')
