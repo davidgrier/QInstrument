@@ -177,3 +177,23 @@ Add type hints to all new and migrated instrument code. Use `str | None` union s
 ### In Development
 
 - `instruments/TDS1000/` — experimental; supports waveform data acquisition only (no property-based control, no widget, no fake). Not subject to migration requirements until the scope is defined.
+
+## TODO
+
+### QInstrumentTree
+
+Implement `QInstrumentTree` that presents an instrument's registered properties
+and methods in a `pyqtgraph.ParameterTree`.
+
+- Lives in `lib/QInstrumentTree.py`, analogous to `lib/QInstrumentWidget.py`
+- Each instrument package gets a `tree.py` alongside the existing `widget.py`,
+  exporting `QXxxTree`
+- The tree is built from `device.properties` and `device.methods` at runtime —
+  no `.ui` file required
+- Property metadata (`ptype`, `minimum`, `maximum`, `step`) registered via
+  `registerProperty(**meta)` maps directly to `pyqtgraph` parameter types and
+  limits
+- Read-only properties (`setter=None`) appear as non-editable display items
+- Methods registered via `registerMethod()` appear as action buttons
+- `pyqtgraph` is an optional dependency; add it to `[project.optional-dependencies]`
+  in `pyproject.toml` under a new `[tree]` extra
