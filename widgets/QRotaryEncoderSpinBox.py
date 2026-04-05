@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 import sys
 from pathlib import Path
-from qtpy import uic, QtCore
+from qtpy import uic, QtCore, QtGui
 from qtpy.QtWidgets import QWidget
-from matplotlib.colors import to_rgb, to_hex
-import numpy as np
 
 
 class _SuppressArrowKeys(QtCore.QObject):
@@ -36,7 +36,7 @@ class QRotaryEncoderSpinBox(QWidget):
     colors : tuple[str, str]
         Background color interpolates from ``colors[0]`` at minimum to
         ``colors[1]`` at maximum.  Accepts any color string recognized
-        by ``matplotlib.colors`` (e.g. ``'white'``, ``'#68ff00'``).
+        by ``QColor`` (e.g. ``'white'``, ``'#68ff00'``).
         Default: ``('white', 'red')``.
 
     The following ``QDoubleSpinBox`` properties are delegated directly:
@@ -86,8 +86,8 @@ class QRotaryEncoderSpinBox(QWidget):
         if colors is None:
             self.valueChanged.disconnect(self._setColor)
         else:
-            self._c1 = np.array(to_rgb(colors[0]))
-            self._c2 = np.array(to_rgb(colors[1]))
+            self._c1 = QtGui.QColor(colors[0])
+            self._c2 = QtGui.QColor(colors[1])
             self.valueChanged.connect(self._setColor)
 
     @QtCore.Slot(float)
@@ -101,7 +101,10 @@ class QRotaryEncoderSpinBox(QWidget):
             endpoint colors.
         '''
         f = (value - self.minimum()) / (self.maximum() - self.minimum())
-        color = to_hex((1 - f) * self._c1 + f * self._c2)
+        r = (1. - f) * self._c1.redF()   + f * self._c2.redF()
+        g = (1. - f) * self._c1.greenF() + f * self._c2.greenF()
+        b = (1. - f) * self._c1.blueF()  + f * self._c2.blueF()
+        color = QtGui.QColor.fromRgbF(r, g, b).name()
         style = (f'QDoubleSpinBox {{'
                  f' background-color: {color};'
                  f' selection-background-color: {color}; }}')
