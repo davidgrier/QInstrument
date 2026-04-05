@@ -59,22 +59,27 @@ class QRotaryEncoderSpinBox(QWidget):
     def _inheritMethods(self) -> None:
         '''Delegate QDoubleSpinBox methods to the embedded spinbox widget.'''
         for method in ('decimals', 'setDecimals',
-                       'maximum', 'setMaximum',
-                       'minimum', 'setMinimum',
-                       'setRange',
+                       'maximum', 'minimum',
                        'prefix', 'setPrefix',
                        'suffix', 'setSuffix',
                        'singleStep', 'setSingleStep',
                        'stepType', 'setStepType',
                        'value', 'setValue', 'valueChanged'):
             setattr(self, method, getattr(self._spinbox, method))
+        sb = self._spinbox
+        self.setMinimum = lambda v:      (sb.setMinimum(v),      self._refreshColor())
+        self.setMaximum = lambda v:      (sb.setMaximum(v),      self._refreshColor())
+        self.setRange   = lambda lo, hi: (sb.setRange(lo, hi),   self._refreshColor())
 
-    def colors(self) -> tuple[str, str]:
-        '''Return the current color pair.'''
+    def colors(self) -> tuple[str, str] | None:
+        '''Return the current color pair, or ``None`` if disabled.'''
         return self._colors
 
     def setColors(self, colors: tuple[str, str] | None) -> None:
         '''Set the spinbox background color gradient.
+
+        Idempotent: safe to call multiple times with the same or
+        different colors without double-connecting the update slot.
 
         Parameters
         ----------
@@ -83,12 +88,20 @@ class QRotaryEncoderSpinBox(QWidget):
             color interpolation and disconnect the color-update slot.
         '''
         self._colors = colors
-        if colors is None:
+        try:
             self.valueChanged.disconnect(self._setColor)
-        else:
+        except (RuntimeError, TypeError):
+            pass
+        if colors is not None:
             self._c1 = QtGui.QColor(colors[0])
             self._c2 = QtGui.QColor(colors[1])
             self.valueChanged.connect(self._setColor)
+            self._refreshColor()
+
+    def _refreshColor(self) -> None:
+        '''Repaint the spinbox background for the current value.'''
+        if self._colors is not None:
+            self._setColor(self.value())
 
     @QtCore.Slot(float)
     def _setColor(self, value: float) -> None:
@@ -100,7 +113,10 @@ class QRotaryEncoderSpinBox(QWidget):
             Current spinbox value, used to interpolate between the two
             endpoint colors.
         '''
-        f = (value - self.minimum()) / (self.maximum() - self.minimum())
+        span = self.maximum() - self.minimum()
+        if span == 0.:
+            return
+        f = (value - self.minimum()) / span
         r = (1. - f) * self._c1.redF()   + f * self._c2.redF()
         g = (1. - f) * self._c1.greenF() + f * self._c2.greenF()
         b = (1. - f) * self._c1.blueF()  + f * self._c2.blueF()
