@@ -47,8 +47,8 @@ Access instrument properties programmatically
 
    from QInstrument.instruments.DS345 import QDS345
 
-   ds345 = QDS345()
-   if ds345.find():
+   ds345 = QDS345().find()
+   if ds345.isOpen():
        print(ds345.get('frequency'))
        ds345.set('frequency', 1000.0)
        ds345.close()

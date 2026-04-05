@@ -1,9 +1,14 @@
 PiezoDrive PDUS210
 ==================
 
+.. autoclass:: QInstrument.instruments.PiezoDrive.instrument.QPDUS210
+   :members:
+   :show-inheritance:
 
-.. note::
+.. autoclass:: QInstrument.instruments.PiezoDrive.fake.QFakePDUS210
+   :members:
+   :show-inheritance:
 
-   API documentation for this instrument is pending migration to the current
-   registerProperty() design.  See instruments/DS345/ for the
-   reference implementation.
+.. autoclass:: QInstrument.instruments.PiezoDrive.widget.QPDUS210Widget
+   :members:
+   :show-inheritance:

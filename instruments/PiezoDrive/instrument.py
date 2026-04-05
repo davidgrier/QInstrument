@@ -1,115 +1,168 @@
-from QInstrument.lib import QSerialInstrument
-from PyQt5.QtCore import pyqtProperty
-from struct import unpack
+from __future__ import annotations
+
 import logging
+from struct import unpack
+from QInstrument.lib.QSerialInstrument import QSerialInstrument
 
-
-logging.basicConfig()
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.WARNING)
 
 
 class QPDUS210(QSerialInstrument):
+    '''PiezoDrive PDUS210 Ultrasonic Power Amplifier.
 
-    def Property(pstr, dtype=int):
-        def getter(self):
-            return self.get_value(f'get{pstr}', dtype)
+    Controls a PiezoDrive PDUS210 piezoelectric amplifier over RS-232.
 
-        def setter(self, value):
-            value = int(value) if (dtype == bool) else dtype(value)
-            self.transmit(f'set{pstr}{value}')
+    Properties
+    ==========
 
-        return pyqtProperty(dtype, getter, setter)
+    Setpoints
+    ---------
+    frequency : float [Hz]
+        Output drive frequency.
+    targetVoltage : int [V pp]
+        Target output voltage, peak-to-peak.
+    maxFrequency : int [Hz]
+        Maximum allowed drive frequency.
+    minFrequency : int [Hz]
+        Minimum allowed drive frequency.
+    targetPhase : int [degrees]
+        Target phase between voltage and current.
+    maxLoadPower : int [W]
+        Maximum load power limit.
+    targetPower : int [W]
+        Target drive power.
+    targetCurrent : int [mA]
+        Target drive current.
 
-    def GainProperty(gstr, sstr, dtype=int):
-        def getter(self):
-            return self.get_value(f'get{gstr}', dtype=dtype)
+    Control Gains
+    -------------
+    phaseGain : int
+        Gain of the phase-tracking control loop.
+    powerGain : int
+        Gain of the power-tracking control loop.
+    currentGain : int
+        Gain of the current-tracking control loop.
 
-        def setter(self, value):
-            value = int(value) if (dtype == bool) else dtype(value)
-            self.transmit(f'set{sstr}{value}')
+    Tracking Modes
+    --------------
+    phaseTracking : bool
+        True: enable phase-tracking mode.
+    powerTracking : bool
+        True: enable power-tracking mode.
+    currentTracking : bool
+        True: enable current-tracking mode.
+    frequencyWrapping : bool
+        True: enable frequency wrapping at the frequency limits.
+    enabled : bool
+        True: enable the amplifier output.
 
-        return pyqtProperty(dtype, getter, setter)
-
-    def Toggle(pstr):
-        def getter(self):
-            response = self.get_value(f'is{pstr}', dtype=str)
-            return (response == 'TRUE')
-
-        def setter(self, enable):
-            if enable:
-                cmd = 'ENABLE' if (pstr == 'ENABLE') else f'en{pstr}'
-            else:
-                cmd = 'DISABLE' if (pstr == 'ENABLE') else f'dis{pstr}'
-            self.transmit(cmd)
-
-        return pyqtProperty(int, getter, setter)
-
-    def Measured(pstr, dtype=int):
-        def getter(self):
-            result = self.get_value(f'read{pstr}', dtype=dtype)
-            return result
-
-        return pyqtProperty(dtype, getter, fset=None)
-
-    # Setpoints
-    frequency = Property('FREQ', dtype=float)  # Hz
-    targetVoltage = Property('VOLT')    # Volts pp
-    maxFrequency = Property('MAXFREQ')
-    minFrequency = Property('MINFREQ')
-    targetPhase = Property('PHASE')
-    maxLoadPower = Property('MAXLPOW')
-    targetPower = Property('TARPOW')
-    targetCurrent = Property('CURRENT')
-
-    # Gain properties
-    phaseGain = GainProperty('PHASEGAIN', 'GAINPHASE')
-    powerGain = GainProperty('POWERGAIN', 'GAINPOWER')
-    currentGain = GainProperty('CURRENTGAIN', 'GAINCURRENT')
-
-    # Toggleable Settings
-    phaseTracking = Toggle('PHASE')
-    powerTracking = Toggle('POWER')
-    currentTracking = Toggle('CURRENT')
-    frequencyWrapping = Toggle('WRAP')
-    enabled = Toggle('ENABLE')
-
-    # Measurable Values
-    phase = Measured('PHASE')
-    impedance = Measured('IMP')
-    loadPower = Measured('LPOW')
-    amplifierPower = Measured('APOW')
-    current = Measured('CURRENT')
-    temperature = Measured('TEMP', dtype=float)  # Celsius
+    Measurements (read-only)
+    ------------------------
+    phase : int [degrees]
+        Measured phase between voltage and current.
+    impedance : int [Ω]
+        Measured load impedance.
+    loadPower : int [W]
+        Measured load power.
+    amplifierPower : int [W]
+        Measured total amplifier power.
+    current : int [mA]
+        Measured drive current.
+    temperature : float [°C]
+        Measured amplifier temperature.
+    '''
 
     comm = dict(baudRate=QSerialInstrument.BaudRate.Baud9600,
                 dataBits=QSerialInstrument.DataBits.Data8,
                 stopBits=QSerialInstrument.StopBits.OneStop,
                 parity=QSerialInstrument.Parity.NoParity,
                 flowControl=QSerialInstrument.FlowControl.NoFlowControl,
-                timeout=1000.,
+                timeout=1000,
                 eol='\r')
 
-    def __init__(self, portName=None, **kwargs):
+    def __init__(self, portName: str | None = None, **kwargs) -> None:
         super().__init__(portName, **(self.comm | kwargs))
+        self._registerProperties()
 
-    def identify(self):
-        '''DISABLE returns FALSE to confirm the driver has been disabled,
-        and also defaults the driver to its (safer) disabled state'''
+    def _registerProperties(self) -> None:
+        for name, cmd, dtype in (
+                ('frequency',     'FREQ',    float),
+                ('targetVoltage', 'VOLT',    int),
+                ('maxFrequency',  'MAXFREQ', int),
+                ('minFrequency',  'MINFREQ', int),
+                ('targetPhase',   'PHASE',   int),
+                ('maxLoadPower',  'MAXLPOW', int),
+                ('targetPower',   'TARPOW',  int),
+                ('targetCurrent', 'CURRENT', int)):
+            self.registerProperty(
+                name,
+                getter=lambda c=cmd, t=dtype: self.getValue(f'get{c}', t),
+                setter=lambda v, c=cmd, t=dtype: self.transmit(f'set{c}{t(v)}'),
+                ptype=dtype)
+        for name, gcmd, scmd in (
+                ('phaseGain',   'PHASEGAIN',   'GAINPHASE'),
+                ('powerGain',   'POWERGAIN',   'GAINPOWER'),
+                ('currentGain', 'CURRENTGAIN', 'GAINCURRENT')):
+            self.registerProperty(
+                name,
+                getter=lambda g=gcmd: self.getValue(f'get{g}', int),
+                setter=lambda v, s=scmd: self.transmit(f'set{s}{int(v)}'),
+                ptype=int)
+        for name, pstr in (
+                ('phaseTracking',     'PHASE'),
+                ('powerTracking',     'POWER'),
+                ('currentTracking',   'CURRENT'),
+                ('frequencyWrapping', 'WRAP'),
+                ('enabled',           'ENABLE')):
+            self.registerProperty(
+                name,
+                getter=lambda p=pstr: self.getValue(f'is{p}', str) == 'TRUE',
+                setter=lambda v, p=pstr: self._toggle(p, bool(v)),
+                ptype=bool)
+        for name, cmd, dtype in (
+                ('phase',          'PHASE',   int),
+                ('impedance',      'IMP',     int),
+                ('loadPower',      'LPOW',    int),
+                ('amplifierPower', 'APOW',    int),
+                ('current',        'CURRENT', int),
+                ('temperature',    'TEMP',    float)):
+            self.registerProperty(
+                name,
+                getter=lambda c=cmd, t=dtype: self.getValue(f'read{c}', t),
+                setter=None,
+                ptype=dtype)
+
+    def identify(self) -> bool:
+        '''Return True if the controller responds to DISABLE with FALSE.
+
+        Sending DISABLE on identification also places the amplifier in its
+        safe disabled state.
+        '''
         return 'FALSE' in self.handshake('DISABLE')
 
-    def save(self):
-        '''Saves current parameters to permanent storage'''
+    def save(self) -> str:
+        '''Save current parameters to permanent storage.
+
+        Returns
+        -------
+        str
+            The controller acknowledgment string.
+        '''
         return self.handshake('SAVE')
 
-    @pyqtProperty(dict)
-    def state(self):
-        '''Uses built-in feature to get all info from PDUS210
-        in one serial command'''
-        self.blockSignals(True)
+    def state(self) -> dict:
+        '''Read all controller state in one serial command.
+
+        Transmits ``getSTATE`` and reads the 80-byte binary response,
+        which encodes 7 boolean flags followed by 18 float measurements.
+
+        Returns
+        -------
+        dict
+            Mapping of state variable names to their current values.
+        '''
         self.transmit('getSTATE')
-        data = self.readn(80)
-        self.blockSignals(False)
+        data = self._interface.readn(80)
         keys = ['enabled', 'phaseTracking', 'currentTracking', 'powerTracking',
                 'errorAmp', 'errorLoad', 'errorTemperature',
                 'voltage', 'frequency', 'minFrequency', 'maxFrequency',
@@ -117,12 +170,19 @@ class QPDUS210(QSerialInstrument):
                 'maxLoadPower', 'amplifierPower', 'loadPower',
                 'temperature', 'measuredPhase', 'measuredCurrent',
                 'impedance', 'transformerTurns']
-        vals = unpack(data, '<7cx18f')
-        state = dict(zip(keys, vals))
-        return state
+        vals = unpack('<7cx18f', data)
+        return dict(zip(keys, vals))
+
+    def _toggle(self, pstr: str, enable: bool) -> None:
+        if pstr == 'ENABLE':
+            cmd = 'ENABLE' if enable else 'DISABLE'
+        else:
+            cmd = f'en{pstr}' if enable else f'dis{pstr}'
+        self.transmit(cmd)
+
+
+__all__ = ['QPDUS210']
 
 
 if __name__ == '__main__':
     QPDUS210.example()
-
-__all__ = ['QPDUS210']

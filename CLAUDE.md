@@ -172,10 +172,8 @@ Add type hints to all new and migrated instrument code. Use `str | None` union s
 
 - `instruments/Opus/` — fully migrated: `_registerProperties()`, IPGLaser-pattern fake with explicit `_store` getters, synchronous timer poll replacing broken async `dataReady` approach, `timers()` using `receive()` loop; `fake.py` added
 - `instruments/Proscan/` — fully migrated: `_registerProperties()` with explicit lambdas (no `_register()` helper — Proscan uses comma-delimited `CMD,value` protocol, not DS345-style `CMD?`/`CMDvalue`), IPGLaser-pattern fake with `_store` getters, synchronous `QTimer` poll, `_connectSignals()` for joystick/zdial/buttons; `fake.py` added; `dataReady` async pattern replaced
+- `instruments/PiezoDrive/` — fully migrated: `_registerProperties()` with explicit lambdas, three property groups (setpoints, gain, toggle/bool, measured/read-only), `state()` bulk binary read via `self._interface.readn(80)`, `_toggle()` helper for asymmetric enable/disable commands, IPGLaser-pattern fake with `_store` getters; `fake.py` added
 
-### Pending (still use `pyqtProperty` and old import patterns)
+### In Development
 
-- `instruments/PiezoDrive/`
-- `instruments/TDS1000/`
-
-Use `instruments/DS345/` as the template when migrating each of these.
+- `instruments/TDS1000/` — experimental; supports waveform data acquisition only (no property-based control, no widget, no fake). Not subject to migration requirements until the scope is defined.

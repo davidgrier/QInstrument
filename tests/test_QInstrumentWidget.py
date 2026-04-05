@@ -4,7 +4,9 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
+from qtpy import QtWidgets
 from lib.QInstrumentWidget import QInstrumentWidget
+from lib.QFakeInstrument import QFakeInstrument
 
 
 # ---------------------------------------------------------------------------
@@ -112,3 +114,148 @@ class TestFakeCls:
         mock_import.assert_called_once_with(
             '.fake', package='MyPkg.instruments.Dev')
         assert result is SomeFake
+
+
+# ---------------------------------------------------------------------------
+# Helpers for widget-binding tests
+# ---------------------------------------------------------------------------
+
+class TwoPropertyDevice(QFakeInstrument):
+    '''Fake device with float "frequency" and int "count" properties.'''
+    def _registerProperties(self):
+        self._frequency = 0.0
+        self._count = 0
+        self.registerProperty(
+            'frequency',
+            getter=lambda: self._frequency,
+            setter=lambda v: setattr(self, '_frequency', float(v)),
+            ptype=float)
+        self.registerProperty(
+            'count',
+            getter=lambda: self._count,
+            setter=lambda v: setattr(self, '_count', int(v)),
+            ptype=int)
+
+
+class ClosedDevice(TwoPropertyDevice):
+    def isOpen(self) -> bool:
+        return False
+
+
+def _make_widget(qtbot, device):
+    '''Build a QInstrumentWidget with mocked uic containing three widgets:
+    ``frequency`` (QDoubleSpinBox), ``count`` (QSpinBox), ``extra`` (QSpinBox).
+    Only ``frequency`` and ``count`` have matching device properties.
+    '''
+    freq_w = QtWidgets.QDoubleSpinBox()
+    freq_w.setRange(-1e9, 1e9)
+    count_w = QtWidgets.QSpinBox()
+    count_w.setRange(-1000000, 1000000)
+    extra_w = QtWidgets.QSpinBox()
+
+    def fake_loadUi(path, parent):
+        for name, widget in [('frequency', freq_w),
+                              ('count', count_w),
+                              ('extra', extra_w)]:
+            widget.setObjectName(name)
+            setattr(parent, name, widget)
+
+    class TestW(QInstrumentWidget):
+        UIFILE = 'TestW.ui'
+
+    with patch('qtpy.uic.loadUi', side_effect=fake_loadUi):
+        w = TestW(device=device)
+    qtbot.addWidget(w)
+    return w
+
+
+# ---------------------------------------------------------------------------
+# _identifyProperties
+# ---------------------------------------------------------------------------
+
+class TestIdentifyProperties:
+
+    def test_matched_widget_names_in_properties(self, qtbot):
+        w = _make_widget(qtbot, TwoPropertyDevice())
+        assert set(w.properties) == {'frequency', 'count'}
+
+    def test_unmatched_widget_excluded_from_properties(self, qtbot):
+        w = _make_widget(qtbot, TwoPropertyDevice())
+        assert 'extra' not in w.properties
+
+    def test_device_property_without_widget_excluded(self, qtbot):
+        freq_w = QtWidgets.QDoubleSpinBox()
+
+        def fake_loadUi(path, parent):
+            freq_w.setObjectName('frequency')
+            parent.frequency = freq_w
+
+        class TinyW(QInstrumentWidget):
+            UIFILE = 'TinyW.ui'
+
+        with patch('qtpy.uic.loadUi', side_effect=fake_loadUi):
+            w = TinyW(device=TwoPropertyDevice())
+        qtbot.addWidget(w)
+        assert 'count' not in w.properties
+        assert 'frequency' in w.properties
+
+
+# ---------------------------------------------------------------------------
+# _syncProperties
+# ---------------------------------------------------------------------------
+
+class TestSyncProperties:
+
+    def test_float_widget_initialized_from_device(self, qtbot):
+        device = TwoPropertyDevice()
+        device._frequency = 880.0
+        w = _make_widget(qtbot, device)
+        assert w.frequency.value() == pytest.approx(880.0)
+
+    def test_int_widget_initialized_from_device(self, qtbot):
+        device = TwoPropertyDevice()
+        device._count = 7
+        w = _make_widget(qtbot, device)
+        assert w.count.value() == 7
+
+    def test_widget_not_synced_when_device_closed(self, qtbot):
+        device = ClosedDevice()
+        device._frequency = 999.0
+        w = _make_widget(qtbot, device)
+        assert w.frequency.value() == pytest.approx(0.0)
+
+    def test_widget_disabled_when_device_closed(self, qtbot):
+        w = _make_widget(qtbot, ClosedDevice())
+        assert not w.isEnabled()
+
+
+# ---------------------------------------------------------------------------
+# _connectSignals / _setDeviceProperty
+# ---------------------------------------------------------------------------
+
+class TestConnectSignals:
+
+    def test_float_widget_change_updates_device(self, qtbot):
+        device = TwoPropertyDevice()
+        w = _make_widget(qtbot, device)
+        w.frequency.setValue(1000.0)
+        assert device._frequency == pytest.approx(1000.0)
+
+    def test_int_widget_change_updates_device(self, qtbot):
+        device = TwoPropertyDevice()
+        w = _make_widget(qtbot, device)
+        w.count.setValue(5)
+        assert device._count == 5
+
+    def test_propertyChanged_emitted_on_widget_change(self, qtbot):
+        device = TwoPropertyDevice()
+        w = _make_widget(qtbot, device)
+        with qtbot.waitSignal(w.propertyChanged, timeout=500) as blocker:
+            w.frequency.setValue(500.0)
+        assert blocker.args[0] == 'frequency'
+
+    def test_unmatched_widget_change_does_not_emit_propertyChanged(self, qtbot):
+        device = TwoPropertyDevice()
+        w = _make_widget(qtbot, device)
+        with qtbot.assertNotEmitted(w.propertyChanged):
+            w.extra.setValue(42)

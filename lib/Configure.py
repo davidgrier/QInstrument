@@ -1,31 +1,38 @@
-from qtpy import QtCore, QtWidgets
-from pathlib import Path
+from __future__ import annotations
+
 import json
-from datetime import datetime
 import logging
+from datetime import datetime
+from pathlib import Path
+
+from qtpy import QtCore, QtWidgets
 
 
 logger = logging.getLogger(__name__)
 
 
 class Configure(QtCore.QObject):
-    '''Save and restore configuration of objects
+    '''Save and restore instrument configuration to and from JSON files.
 
-    The configuration object also includes utility functions for
-    standard timestamps and standard file names
+    Configuration files are named after the class of the target object
+    and stored under :attr:`configdir`.  Timestamped data filenames are
+    generated under :attr:`datadir`.
 
-    Methods
-    -------
-    timestamp() : str
-        Returns a string representation of the current time.
-    filename([prefix], [suffix]) : str
-        Returns a string intended for use as a filename.
-    configname(object) : str
-        Returns the filename for a configuration file.
-    save(object) :
-        Save the configuration of a specified object.
-    restore(object) :
-        Read configuration and set properties of object.
+    Parameters
+    ----------
+    datadir : str | None
+        Directory for timestamped data files.
+        Default: ``~/data/``.
+    configdir : str | None
+        Directory for JSON configuration files.
+        Default: ``~/.QInstrument/``.
+
+    Attributes
+    ----------
+    datadir : Path
+        Resolved path to the data directory.
+    configdir : Path
+        Resolved path to the configuration directory.
     '''
 
     def __init__(self,
@@ -38,58 +45,73 @@ class Configure(QtCore.QObject):
             logger.info(f'Creating data directory: {self.datadir}')
             self.datadir.mkdir(parents=True)
         if not self.configdir.exists():
-            logger.info(
-                f'Creating configuration directory: {self.configdir}')
+            logger.info(f'Creating configuration directory: {self.configdir}')
             self.configdir.mkdir(parents=True)
 
     def timestamp(self) -> str:
-        '''Returns string representing the current date and time'''
+        '''Return a string representing the current date and time.
+
+        Returns
+        -------
+        str
+            Timestamp formatted as ``_YYYYMonDD_HHMMSS``
+            (e.g. ``_2024Jan15_143022``).
+        '''
         return datetime.now().strftime('_%Y%b%d_%H%M%S')
 
     def filename(self,
                  prefix: str = 'QInstrument',
                  suffix: str = '') -> str:
-        '''Returns a file name, including timestamp
+        '''Return a timestamped filename under :attr:`datadir`.
 
-        Arguments
-        ---------
+        Parameters
+        ----------
         prefix : str
-            String prefix for the filename.
-            Default: QInstrument
+            String prepended to the filename. Default: ``'QInstrument'``.
         suffix : str
-            String suffix to append to filename.
-            Default: ''
+            String appended after the timestamp. Default: ``''``.
+
+        Returns
+        -------
+        str
+            Absolute path string of the form
+            ``<datadir>/<prefix><timestamp><suffix>``.
         '''
-        name = prefix + self.timestamp() + suffix
-        return str(self.datadir / name)
+        return str(self.datadir / (prefix + self.timestamp() + suffix))
 
     def configname(self, obj: object) -> str:
-        '''Returns name of configuration file based on class of objects
+        '''Return the path to the JSON configuration file for *obj*.
+
+        The filename is derived from ``obj``'s class name, so all
+        instances of the same class share one configuration file.
 
         Parameters
         ----------
         obj : object
-            Configuration file is named based on class name of objects
+            Object whose class name determines the configuration filename.
 
         Returns
         -------
-        configname : str
-            File name for configuration file
+        str
+            Absolute path string of the form
+            ``<configdir>/<ClassName>.json``.
         '''
-        classname = obj.__class__.__name__
-        return str(self.configdir / (classname + '.json'))
+        return str(self.configdir / (obj.__class__.__name__ + '.json'))
 
     def save(self, obj: object) -> None:
-        '''Save configuration of object as json file
+        '''Save *obj*'s settings to its JSON configuration file.
+
+        Reads ``obj.settings`` (a dict) and serializes it to
+        :meth:`configname`.  Does nothing when ``obj.settings`` is empty.
 
         Parameters
         ----------
-        object : object
-            Object must have settings property, which provides
-            a dictionary of parameters to be saved.
+        obj : object
+            Object with a ``settings`` property returning a
+            ``dict[str, bool | int | float | str]``.
         '''
         settings = obj.settings
-        if len(settings) == 0:
+        if not settings:
             return
         filename = self.configname(obj)
         with open(filename, 'w', encoding='utf-8') as configfile:
@@ -98,16 +120,20 @@ class Configure(QtCore.QObject):
                       ensure_ascii=False)
 
     def restore(self, obj: object) -> None:
-        '''Restore object configuration from json file
+        '''Restore *obj*'s settings from its JSON configuration file.
+
+        Reads the JSON file at :meth:`configname` and assigns the result
+        to ``obj.settings``.  Logs a warning and leaves *obj* unchanged
+        if the file does not exist or cannot be parsed.
 
         Parameters
         ----------
-        object : object
-            Reads configuration for object from a configuration file
-            based on the object class name
+        obj : object
+            Object with a ``settings`` property whose setter accepts a
+            ``dict[str, bool | int | float | str]``.
         '''
+        filename = self.configname(obj)
         try:
-            filename = self.configname(obj)
             logger.info(f'Configuring {filename}')
             with open(filename, 'r', encoding='utf-8') as configfile:
                 obj.settings = json.load(configfile)
@@ -117,14 +143,24 @@ class Configure(QtCore.QObject):
                 '\n\tUsing default configuration.')
 
     def query_save(self, obj: object) -> None:
+        '''Prompt the user and save *obj*'s settings if confirmed.
+
+        Opens a modal dialog asking whether to save the current
+        configuration.  Calls :meth:`save` if the user clicks Yes.
+
+        Parameters
+        ----------
+        obj : object
+            Object to save if the user confirms.
+        '''
         mbox = QtWidgets.QMessageBox
-        msg = mbox(self.parent)
+        msg = mbox(self.parent())
         msg.setWindowTitle('Confirmation')
         msg.setText('Save current configuration?')
         msg.setStandardButtons(mbox.StandardButton.Yes |
                                mbox.StandardButton.No)
-        response = msg.exec()
-        if response == mbox.StandardButton.Yes:
+        if msg.exec() == mbox.StandardButton.Yes:
             self.save(obj)
+
 
 __all__ = ['Configure']

@@ -1,43 +1,45 @@
+from __future__ import annotations
+
+import logging
+from pathlib import Path
+from qtpy import QtCore
 from QInstrument.lib.QInstrumentWidget import QInstrumentWidget
 from QInstrument.instruments.PiezoDrive.instrument import QPDUS210
-from PyQt5.QtCore import (pyqtProperty, pyqtSlot, QTimer)
+from QInstrument.instruments.PiezoDrive.fake import QFakePDUS210
+
+logger = logging.getLogger(__name__)
 
 
 class QPDUS210Widget(QInstrumentWidget):
-    '''PiezoDrive 210 Ultrasonic Amplifier
+    '''Control widget for the PiezoDrive PDUS210 ultrasonic amplifier.
+
+    Displays measured values (current, voltage, frequency, impedance, phase,
+    load power, amplifier power, temperature) and provides controls for
+    setpoints and tracking modes.  Polls the instrument at a fixed interval.
     '''
 
-    UIFILE = 'PDUS210Widget.ui'
+    UIFILE = str(Path(__file__).parent / 'PDUS210Widget.ui')
+    FAKEDEVICE = QFakePDUS210
 
-    def __init__(self, *args, **kwargs):
-        device = QPDUS210().find()
+    def __init__(self, *args, device: QPDUS210 | None = None,
+                 interval: int | None = None, **kwargs) -> None:
+        device = device or QPDUS210().find()
         super().__init__(*args, device=device, **kwargs)
-        self.setupTimer()
-        self.interval = 0.2
+        self._timer = QtCore.QTimer(self)
+        self._timer.timeout.connect(self._poll)
+        if self.device is not None and self.device.isOpen():
+            self._timer.start(interval or 200)
 
-    def setupTimer(self):
-        self.timer = QTimer()
-        self.timer.timeout.connect(self.poll)
-        self.start = self.timer.start
-        self.stop = self.timer.stop
+    @QtCore.Slot()
+    def _poll(self) -> None:
+        '''Query and display all measured values.'''
+        for name in ('current', 'loadPower', 'amplifierPower',
+                     'frequency', 'impedance', 'phase', 'temperature'):
+            self.device.get(name)
 
-    @pyqtSlot()
-    def poll(self):
-        for p in ['current', 'voltage', 'frequency', 'impedance', 'phase',
-                  'loadPower', 'amplifierPower', 'temperature',
-                  'targetCurrent']:
-            self.set(p)
 
-    @pyqtProperty(int)
-    def interval(self):
-        return self.timer.interval()
-
-    @interval.setter
-    def interval(self, interval):
-        self.time.setInterval(interval)
+__all__ = ['QPDUS210Widget']
 
 
 if __name__ == '__main__':
     QPDUS210Widget.example()
-
-__all__ = ['QPDUS210Widget']

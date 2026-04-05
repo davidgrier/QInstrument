@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "QInstrument"
-version = "0.4.0"
+version = "1.0.0"
 description = "Qt-based framework for controlling scientific instruments over serial ports"
 readme = "README.md"
 license = { file = "LICENSE.md" }
@@ -13,7 +13,7 @@ authors = [
 ]
 keywords = ["scientific instruments", "serial port", "Qt", "laboratory automation"]
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
     "Programming Language :: Python :: 3",
@@ -30,9 +30,6 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-plot = [
-    "matplotlib>=3.5",
-]
 docs = [
     "sphinx>=7.0",
     "pydata-sphinx-theme>=0.15",

@@ -1,6 +1,6 @@
 import importlib
 
-_lazy = {'QPDUS210': 'instrument', 'QPDUS210Widget': 'widget'}
+_lazy = {'QPDUS210': 'instrument', 'QFakePDUS210': 'fake', 'QPDUS210Widget': 'widget'}
 
 def __getattr__(name):
     if name in _lazy:
