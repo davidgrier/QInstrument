@@ -1,3 +1,7 @@
+# TODO: Provide methods to search for specific instruments.
+# TODO: Provide methods to save and load rack configurations.
+# TODO: Provide methods to rearrange instruments in the rack.
+# TODO: Provide methods to connect instruments ?
 from qtpy import QtWidgets, QtCore
 from QInstrument.lib.QInstrumentWidget import QInstrumentWidget
 import importlib
