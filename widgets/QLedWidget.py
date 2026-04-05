@@ -100,10 +100,30 @@ class QLedWidget(QtWidgets.QWidget):
         self._blink = blink
         if blink:
             self._savedstate = self.state
-            self.timer.start(self.interval)
+            self.timer.start(self._interval)
         else:
             self.timer.stop()
             self.state = self._savedstate
+
+    @property
+    def interval(self) -> int:
+        return self._interval
+
+    @interval.setter
+    def interval(self, ms: int) -> None:
+        '''Set the blink interval.
+
+        If the LED is currently blinking the timer is restarted
+        immediately at the new interval.
+
+        Parameters
+        ----------
+        ms : int
+            Duration of each ON/OFF phase in milliseconds.
+        '''
+        self._interval = ms
+        if self.timer.isActive():
+            self.timer.start(ms)
 
     @QtCore.Slot()
     def flipState(self) -> None:

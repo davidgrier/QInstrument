@@ -130,6 +130,10 @@ class QJoystick(QtWidgets.QWidget):
         self._knobColor = color
         self.update()
 
+    def sizeHint(self) -> QtCore.QSize:
+        '''Return the preferred widget size.'''
+        return QtCore.QSize(120, 120)
+
     def resizeEvent(self, event: QtGui.QResizeEvent) -> None:
         '''Recompute the pad radius and knob travel limit on resize.'''
         self.radius = min(self.size().width(), self.size().height()) / 2
@@ -293,8 +297,8 @@ class QJoystick(QtWidgets.QWidget):
         '''
         if self.active:
             displacement = QtCore.QLineF(self._center(), self.position)
-            fx = min(displacement.dx() / self.limit, 1.)
-            fy = -min(displacement.dy() / self.limit, 1.)
+            fx = max(-1., min(1.,  displacement.dx() / self.limit))
+            fy = max(-1., min(1., -displacement.dy() / self.limit))
         else:
             fx, fy = 0., 0.
         return np.array([fx, fy])

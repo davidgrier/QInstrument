@@ -66,10 +66,6 @@ class QRotaryEncoderSpinBox(QWidget):
                        'stepType', 'setStepType',
                        'value', 'setValue', 'valueChanged'):
             setattr(self, method, getattr(self._spinbox, method))
-        sb = self._spinbox
-        self.setMinimum = lambda v:      (sb.setMinimum(v),      self._refreshColor())
-        self.setMaximum = lambda v:      (sb.setMaximum(v),      self._refreshColor())
-        self.setRange   = lambda lo, hi: (sb.setRange(lo, hi),   self._refreshColor())
 
     def colors(self) -> tuple[str, str] | None:
         '''Return the current color pair, or ``None`` if disabled.'''
@@ -97,6 +93,21 @@ class QRotaryEncoderSpinBox(QWidget):
             self._c2 = QtGui.QColor(colors[1])
             self.valueChanged.connect(self._setColor)
             self._refreshColor()
+
+    def setMinimum(self, value: float) -> None:
+        '''Set the spinbox minimum and refresh the background color.'''
+        self._spinbox.setMinimum(value)
+        self._refreshColor()
+
+    def setMaximum(self, value: float) -> None:
+        '''Set the spinbox maximum and refresh the background color.'''
+        self._spinbox.setMaximum(value)
+        self._refreshColor()
+
+    def setRange(self, minimum: float, maximum: float) -> None:
+        '''Set the spinbox range and refresh the background color.'''
+        self._spinbox.setRange(minimum, maximum)
+        self._refreshColor()
 
     def _refreshColor(self) -> None:
         '''Repaint the spinbox background for the current value.'''
