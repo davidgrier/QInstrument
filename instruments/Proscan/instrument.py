@@ -57,13 +57,9 @@ class QProscan(QSerialInstrument):
                 flowControl=QSerialInstrument.FlowControl.NoFlowControl,
                 eol='\r')
 
-    def __init__(self, portName: str | None = None, **kwargs) -> None:
-        super().__init__(portName, **(self.comm | kwargs))
+    def _registerProperties(self) -> None:
         self._flip: bool = False
         self._mirror: bool = False
-        self._registerProperties()
-
-    def _registerProperties(self) -> None:
         for name, cmd in (('speed',         'SMS'),
                           ('acceleration',  'SAS'),
                           ('scurve',        'SCS'),

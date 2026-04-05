@@ -180,6 +180,35 @@ class TestMethods:
 
 
 # ---------------------------------------------------------------------------
+# propertyMeta
+# ---------------------------------------------------------------------------
+
+class TestPropertyMeta:
+
+    def test_returns_ptype_and_extra_meta(self, inst):
+        inst.registerProperty('speed', getter=lambda: 0.,
+                               ptype=float, minimum=0., maximum=100.)
+        meta = inst.propertyMeta('speed')
+        assert meta['ptype'] is float
+        assert meta['minimum'] == pytest.approx(0.)
+        assert meta['maximum'] == pytest.approx(100.)
+
+    def test_excludes_getter_and_setter(self, inst):
+        inst.registerProperty('speed', getter=lambda: 0.,
+                               setter=lambda v: None)
+        meta = inst.propertyMeta('speed')
+        assert 'getter' not in meta
+        assert 'setter' not in meta
+
+    def test_returns_empty_dict_for_unknown_property(self, inst):
+        assert inst.propertyMeta('nonexistent') == {}
+
+    def test_debounce_value_round_trips(self, inst):
+        inst.registerProperty('power', getter=lambda: 0., debounce=500)
+        assert inst.propertyMeta('power')['debounce'] == 500
+
+
+# ---------------------------------------------------------------------------
 # getValue / handshake / expect helpers
 # ---------------------------------------------------------------------------
 

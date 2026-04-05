@@ -259,3 +259,72 @@ class TestConnectSignals:
         w = _make_widget(qtbot, device)
         with qtbot.assertNotEmitted(w.propertyChanged):
             w.extra.setValue(42)
+
+
+# ---------------------------------------------------------------------------
+# Debounce
+# ---------------------------------------------------------------------------
+
+class DebouncedDevice(QFakeInstrument):
+    '''Fake device with a ``power`` property that declares debounce=100.'''
+    def _registerProperties(self):
+        self._power = 0.0
+        self.registerProperty(
+            'power',
+            getter=lambda: self._power,
+            setter=lambda v: setattr(self, '_power', float(v)),
+            ptype=float,
+            debounce=100)
+
+
+def _make_debounced_widget(qtbot, device):
+    power_w = QtWidgets.QDoubleSpinBox()
+    power_w.setRange(0., 1000.)
+
+    def fake_loadUi(path, parent):
+        power_w.setObjectName('power')
+        parent.power = power_w
+
+    class DebouncedW(QInstrumentWidget):
+        UIFILE = 'DebouncedW.ui'
+
+    with patch('qtpy.uic.loadUi', side_effect=fake_loadUi):
+        w = DebouncedW(device=device)
+    qtbot.addWidget(w)
+    return w
+
+
+class TestDebounce:
+
+    def test_device_not_updated_immediately(self, qtbot):
+        device = DebouncedDevice()
+        w = _make_debounced_widget(qtbot, device)
+        w.power.setValue(50.0)
+        # device must not be updated synchronously
+        assert device._power == pytest.approx(0.0)
+
+    def test_device_updated_after_debounce_interval(self, qtbot):
+        device = DebouncedDevice()
+        w = _make_debounced_widget(qtbot, device)
+        with qtbot.waitSignal(w.propertyChanged, timeout=500):
+            w.power.setValue(75.0)
+        assert device._power == pytest.approx(75.0)
+
+    def test_rapid_changes_send_only_last_value(self, qtbot):
+        device = DebouncedDevice()
+        w = _make_debounced_widget(qtbot, device)
+        # Emit several rapid changes; only the last should reach the device.
+        for v in (10.0, 20.0, 30.0, 40.0):
+            w.power.setValue(v)
+        with qtbot.waitSignal(w.propertyChanged, timeout=500) as blocker:
+            pass
+        assert blocker.args == ['power', 40.0]
+        assert device._power == pytest.approx(40.0)
+
+    def test_propertyChanged_carries_debounced_value(self, qtbot):
+        device = DebouncedDevice()
+        w = _make_debounced_widget(qtbot, device)
+        with qtbot.waitSignal(w.propertyChanged, timeout=500) as blocker:
+            w.power.setValue(99.0)
+        assert blocker.args[0] == 'power'
+        assert blocker.args[1] == pytest.approx(99.0)

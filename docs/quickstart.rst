@@ -81,3 +81,29 @@ Access instrument properties programmatically
        print(ds345.get('frequency'))
        ds345.set('frequency', 1000.0)
        ds345.close()
+
+Rate-limit sensitive properties
+--------------------------------
+
+Some instruments cannot accept rapid-fire changes — a laser power
+control, for example, should not be updated many times per second as
+the user scrolls a spinbox.  Declare a ``debounce`` interval
+(milliseconds) when registering such a property and
+:class:`~QInstrument.lib.QInstrumentWidget.QInstrumentWidget` will
+coalesce rapid UI changes automatically, sending only the final value
+to the device once the user pauses:
+
+.. code-block:: python
+
+   self.registerProperty(
+       'power',
+       getter=self._get_power,
+       setter=self._set_power,
+       ptype=float,
+       minimum=0., maximum=100.,
+       debounce=500          # wait 500 ms after the last change
+   )
+
+No widget code is required.  Properties without ``debounce`` (or with
+``debounce=0``) continue to update the device on every signal
+emission, as before.

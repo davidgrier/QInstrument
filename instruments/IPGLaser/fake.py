@@ -18,22 +18,43 @@ class QFakeIPGLaser(QFakeInstrument, QIPGLaser):
         and ``_getPower()``, which would attempt serial communication.
         '''
         return {
-            'keyswitch': self._store.get('keyswitch', True),
-            'aiming':    self._store.get('aiming', False),
-            'emission':  self._store.get('emission', False),
-            'fault':     self._store.get('fault', False),
-            'power':     self._store.get('power', 0.),
+            'current_setpoint': self._store.get('current_setpoint', 0.),
+            'keyswitch':        self._store.get('keyswitch', True),
+            'aiming':           self._store.get('aiming', False),
+            'emission':         self._store.get('emission', False),
+            'fault':            self._store.get('fault', False),
+            'power':            self._store.get('power', 0.),
         }
 
     def _registerProperties(self) -> None:
+        self.registerProperty(
+            'current_setpoint', ptype=float,
+            getter=lambda: self._store.get('current_setpoint', 0.),
+            setter=lambda v: self._store.__setitem__(
+                'current_setpoint',
+                min(float(v),
+                    self._store.get('maximum_current', 25.))),
+            minimum=0., maximum=100.,
+            debounce=500)
+        self.registerProperty(
+            'maximum_current', ptype=float,
+            getter=lambda: self._store.get('maximum_current', 25.),
+            setter=lambda v: self._store.__setitem__(
+                'maximum_current', max(0., min(float(v), 100.))),
+            minimum=0., maximum=100.)
+        self.registerProperty(
+            'minimum_current', ptype=float, setter=None,
+            getter=lambda: self._store.get('minimum_current', 10.))
         self.registerProperty('keyswitch', ptype=bool, setter=None,
                               getter=lambda: self._store.get('keyswitch', True))
         self.registerProperty('aiming', ptype=bool,
                               getter=lambda: self._store.get('aiming', False),
-                              setter=lambda v: self._store.__setitem__('aiming', bool(v)))
+                              setter=lambda v: self._store.__setitem__(
+                                  'aiming', bool(v)))
         self.registerProperty('emission', ptype=bool,
                               getter=lambda: self._store.get('emission', False),
-                              setter=lambda v: self._store.__setitem__('emission', bool(v)))
+                              setter=lambda v: self._store.__setitem__(
+                                  'emission', bool(v)))
         self.registerProperty('power', ptype=float, setter=None,
                               getter=lambda: self._store.get('power', 0.))
         self.registerProperty('fault', ptype=bool, setter=None,

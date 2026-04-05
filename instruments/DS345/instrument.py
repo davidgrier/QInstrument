@@ -105,11 +105,6 @@ class QDS345(QSerialInstrument):
                 flowControl=QSerialInstrument.FlowControl.NoFlowControl,
                 eol='\n')
 
-    def __init__(self, portName: str | None = None, **kwargs) -> None:
-        super().__init__(portName, **(self.comm | kwargs))
-        self._registerProperties()
-        self._registerMethods()
-
     def _registerProperties(self) -> None:
         '''Register all instrument properties via ``registerProperty()``.
 

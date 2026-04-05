@@ -233,33 +233,98 @@ class QInstrumentWidget(QtWidgets.QWidget):
             self.set(prop)
 
     def _connectSignals(self) -> None:
-        '''Connect linked widget signals to the device and to propertyChanged.'''
+        '''Connect linked widget signals to the device and propertyChanged.
+
+        Properties with a ``debounce`` metadata value are connected
+        through a single-shot :class:`QTimer` so that rapid widget
+        changes (e.g. spinbox scrolling) are coalesced: only the final
+        value after the debounce interval elapses is sent to the device.
+        '''
         for prop in self.properties:
             widget = getattr(self, prop)
             signal = self._wmethod(widget, self.wsignal)
-            if signal is not None:
+            if signal is None:
+                continue
+            debounce_ms = self.device.propertyMeta(prop).get('debounce', 0)
+            if debounce_ms:
+                self._connectDebounced(prop, signal, debounce_ms)
+            else:
                 signal.connect(self._setDeviceProperty)
         for method in self.methods:
             widget = getattr(self, method)
             if isinstance(widget, QtWidgets.QPushButton):
-                widget.clicked.connect(lambda m=method: self.device.execute(m))
+                widget.clicked.connect(
+                    lambda m=method: self.device.execute(m))
+
+    def _connectDebounced(
+            self,
+            prop: str,
+            signal: QtCore.Signal,
+            debounce_ms: int
+    ) -> None:
+        '''Connect *signal* to :meth:`_applyProperty` via a debounce timer.
+
+        Each call creates a single-shot :class:`QTimer`.  Every signal
+        emission stores the latest value and restarts the timer; the
+        device is only updated when the timer fires (i.e. when the user
+        pauses for *debounce_ms* milliseconds).
+
+        Parameters
+        ----------
+        prop : str
+            Property name passed to :meth:`_applyProperty`.
+        signal : QtCore.Signal
+            The widget signal to debounce.
+        debounce_ms : int
+            Quiet period in milliseconds before the device is updated.
+        '''
+        timer = QtCore.QTimer(self)
+        timer.setSingleShot(True)
+        timer.setInterval(debounce_ms)
+        pending = [None]
+
+        def on_change(value):
+            pending[0] = value
+            timer.start()
+
+        def on_timeout():
+            self._applyProperty(prop, pending[0])
+
+        signal.connect(on_change)
+        timer.timeout.connect(on_timeout)
+
+    def _applyProperty(
+            self, name: str, value: bool | int | float | str
+    ) -> None:
+        '''Send *value* to the device for property *name*.
+
+        Called by both :meth:`_setDeviceProperty` (direct path) and the
+        debounce timer timeout (rate-limited path).
+
+        Parameters
+        ----------
+        name : str
+            Registered property name.
+        value : bool | int | float | str
+            New value to send to the device.
+        '''
+        if name in self.device.properties:
+            logger.debug(f'Setting device: {name}: {value}')
+            self.device.set(name, value)
+            self.waitForDevice()
+            self.propertyChanged.emit(name, value)
 
     @QtCore.Slot(bool)
     @QtCore.Slot(int)
     @QtCore.Slot(float)
     @QtCore.Slot(str)
     def _setDeviceProperty(self, value: bool | int | float | str) -> None:
-        '''Slot connected to all linked widget signals.
+        '''Slot connected to non-debounced widget signals.
 
-        Reads the sender's object name, calls :meth:`device.set`, then
-        emits :attr:`propertyChanged`.
+        Reads the sender's object name and delegates to
+        :meth:`_applyProperty`.
         '''
-        name = self.sender().objectName()
-        if name in self.device.properties:
-            logger.debug(f'Setting device: {name}: {value}')
-            self.device.set(name, value)
-            self.waitForDevice()
-            self.propertyChanged.emit(name, value)
+        self._applyProperty(self.sender().objectName(), value)
 
     def waitForDevice(self) -> None:
         '''Block until the device has completed the most recent change.

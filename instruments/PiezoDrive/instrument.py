@@ -80,10 +80,6 @@ class QPDUS210(QSerialInstrument):
                 timeout=1000,
                 eol='\r')
 
-    def __init__(self, portName: str | None = None, **kwargs) -> None:
-        super().__init__(portName, **(self.comm | kwargs))
-        self._registerProperties()
-
     def _registerProperties(self) -> None:
         for name, cmd, dtype in (
                 ('frequency',     'FREQ',    float),

@@ -43,10 +43,6 @@ class QOpus(QSerialInstrument):
                 flowControl=QSerialInstrument.FlowControl.NoFlowControl,
                 eol='\r')
 
-    def __init__(self, portName: str | None = None, **kwargs) -> None:
-        super().__init__(portName, **(self.comm | kwargs))
-        self._registerProperties()
-
     def _registerProperties(self) -> None:
         '''Register all instrument properties via ``registerProperty()``.
 

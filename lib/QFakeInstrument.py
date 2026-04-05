@@ -46,10 +46,8 @@ class QFakeInstrument(QAbstractInstrument):
         QAbstractInstrument.__init__(self, *args, **kwargs)
         self._store: dict = {}
         self.identification = f'Fake {type(self).__name__}'
-        if hasattr(self, '_registerProperties'):
-            self._registerProperties()
-        if hasattr(self, '_registerMethods'):
-            self._registerMethods()
+        self._registerProperties()
+        self._registerMethods()
 
     def _register(self, name: str, cmd: str, dtype: type = float) -> None:
         '''Register a property backed by :attr:`_store`.

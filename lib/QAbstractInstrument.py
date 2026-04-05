@@ -40,6 +40,24 @@ class QAbstractInstrument(QtCore.QObject):
         self._properties = {}
         self._methods = {}
 
+    def _registerProperties(self) -> None:
+        '''Register instrument properties.
+
+        No-op base implementation.  Concrete instruments override this
+        to call :meth:`registerProperty` for each of their properties.
+        Subclasses that extend the property set should call
+        ``super()._registerProperties()`` first.
+        '''
+
+    def _registerMethods(self) -> None:
+        '''Register instrument methods.
+
+        No-op base implementation.  Concrete instruments override this
+        to call :meth:`registerMethod` for each of their methods.
+        Subclasses that extend the method set should call
+        ``super()._registerMethods()`` first.
+        '''
+
     def __repr__(self) -> str:
         return f'{self.__class__.__name__}()'
 
@@ -206,6 +224,31 @@ class QAbstractInstrument(QtCore.QObject):
         logger.debug(f'Setting {key}: {value}')
         setter(value)
         self.propertyValue.emit(key, value)
+
+    def propertyMeta(self, name: str) -> dict:
+        '''Return a copy of the metadata for a registered property.
+
+        Returns an empty dict if *name* is not registered.
+        Excludes the internal getter and setter callables.
+
+        Parameters
+        ----------
+        name : str
+            Registered property name.
+
+        Returns
+        -------
+        dict
+            Metadata dict (e.g. ``ptype``, ``minimum``, ``maximum``,
+            ``step``, ``debounce``).
+        '''
+        with QtCore.QMutexLocker(self.mutex):
+            if name not in self._properties:
+                return {}
+            info = self._properties[name].copy()
+        info.pop('getter', None)
+        info.pop('setter', None)
+        return info
 
     @QtCore.Slot(str)
     def get(self, key: str) -> PropertyValue | None:

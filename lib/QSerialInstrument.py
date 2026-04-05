@@ -53,6 +53,8 @@ class QSerialInstrument(QAbstractInstrument):
         self._interface = QSerialInterface(**(self.comm | kwargs))
         if portName:
             self.open(portName)
+        self._registerProperties()
+        self._registerMethods()
 
     def identify(self) -> bool:
         '''Return True if the connected device is the expected instrument.
