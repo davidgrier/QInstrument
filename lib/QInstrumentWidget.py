@@ -3,6 +3,8 @@ from pathlib import Path
 import inspect
 import logging
 
+from .Configure import Configure
+
 
 logger = logging.getLogger(__name__)
 
@@ -84,6 +86,7 @@ class QInstrumentWidget(QtWidgets.QWidget):
     def __init__(self, *args, device=None, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self._device = None
+        self._configure = Configure()
         uic.loadUi(self._uiPath(), self)
         self.device = device
 
@@ -105,6 +108,7 @@ class QInstrumentWidget(QtWidgets.QWidget):
         self._device = device
         self._identifyProperties()
         if self._device.isOpen():
+            self._configure.restore(self._device)
             self._syncProperties()
             self._connectSignals()
         else:
@@ -265,6 +269,17 @@ class QInstrumentWidget(QtWidgets.QWidget):
         this if the instrument requires a settling delay or a busy-poll.
         '''
         pass
+
+    def closeEvent(self, event) -> None:
+        '''Save device settings when the widget is closed.
+
+        Calls :meth:`Configure.save` to persist the current device state
+        to ``~/.QInstrument/<ClassName>.json`` before passing the event
+        to the parent class.
+        '''
+        if self._device is not None:
+            self._configure.save(self._device)
+        super().closeEvent(event)
 
     @classmethod
     def example(cls) -> None:

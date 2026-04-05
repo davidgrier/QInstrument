@@ -108,8 +108,7 @@ class QSerialInterface(QSerialPort):
                  **kwargs) -> None:
         super().__init__(**kwargs)
         if baudRate is not None:
-            # self.setBaudRate(baudRate.value)
-            self.setBaudRate(int(baudRate))
+            self.setBaudRate(baudRate.value if hasattr(baudRate, 'value') else int(baudRate))
         if dataBits is not None:
             self.setDataBits(dataBits)
         if stopBits is not None:
