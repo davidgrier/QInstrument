@@ -156,7 +156,7 @@ class QSR830(QSerialInstrument):
         self.registerMethod('auto_offset_y',  self.auto_offset_y)
         self.registerMethod('auto_offset_r',  self.auto_offset_r)
 
-    def _register(self, name: str, cmd: str, dtype: type = float) -> None:
+    def _register(self, name: str, cmd: str, ptype: type = float) -> None:
         '''Register a standard instrument property.
 
         Builds getter and setter from the SR830 command convention:
@@ -176,9 +176,10 @@ class QSR830(QSerialInstrument):
             def getter(): return bool(self.getValue(f'{cmd}?', int))
             def setter(v): self.transmit(f'{cmd}{int(bool(v))}')
         else:
-            def getter(): return self.getValue(f'{cmd}?', dtype)
-            def setter(v): self.transmit(f'{cmd}{dtype(v)}')
-        self.registerProperty(name, getter=getter, setter=setter, ptype=dtype)
+            def getter(): return self.getValue(f'{cmd}?', ptype)
+            def setter(v): self.transmit(f'{cmd}{ptype(v)}')
+        self.registerProperty(name, getter=getter, setter=setter,
+                              ptype=ptype)
 
     def identify(self) -> bool:
         '''Return True if the connected device identifies as an SR830.
@@ -189,7 +190,7 @@ class QSR830(QSerialInstrument):
         return 'SR830' in self.handshake('*IDN?')
 
     def report(self) -> list[float]:
-        '''Return the current frequency, magnitude, and phase simultaneously.
+        '''Return the current frequency, magnitude, and phase.
 
         Uses the SNAP command for simultaneous capture, avoiding the
         timing errors that would result from three sequential queries.
@@ -242,7 +243,8 @@ class QSR830(QSerialInstrument):
             1: X, 2: Y, 3: R
         '''
         if channel not in (1, 2, 3):
-            logger.warning(f'auto_offset: channel must be 1, 2, or 3 (got {channel})')
+            logger.warning(
+                f'auto_offset: channel must be 1, 2, or 3 (got {channel})')
             return
         self.transmit(f'AOFF{channel}')
 
