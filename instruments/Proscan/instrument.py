@@ -1,67 +1,54 @@
-from PyQt5.QtCore import (pyqtProperty, pyqtSignal, pyqtSlot)
-from QInstrument.lib import QSerialInstrument
+from __future__ import annotations
+
 import logging
+from qtpy import QtCore
+from QInstrument.lib.QSerialInstrument import QSerialInstrument
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
 
 
 class QProscan(QSerialInstrument):
-    '''Prior Proscan Microscope Stage Controller
+    '''Prior Scientific Proscan II/III Microscope Stage Controller.
 
-    .....
+    Controls the XY stage and Z focus drive of a Prior Scientific
+    motorized microscope stage over RS-232.
 
-    Inherits
-    --------
-    SerialInstrument
+    Signals
+    -------
+    positionChanged(list[int])
+        Emitted by :meth:`position` with the current ``[x, y, z]``
+        coordinates in micrometers.
 
     Properties
     ==========
-    Setting properties on an instantiated object
-    changes corresponding settings on the connected
-    instrument.
-
-    stepsize: float
-        size of single stage step [um]
-    speed: int
-        maximum stage speed in range [1, 100]
-    acceleration: int
-        maximum stage acceleration in range [1, 100]
-    scurve: int
-        time derivative of stage acceleration in range [1, 100]
-
-    zstepsize: float
-        size of single focus step [um]
-    zspeed: int
-        maximum focus speed in range [1, 100]
-    zacceleration: int
-        maximum focus acceleration in range [1, 100]
-    zscurve: int
-        time derivative of focus acceleration in range [1, 100]
-
+    speed : int
+        Maximum XY stage speed. Range [1, 100].
+    acceleration : int
+        XY stage acceleration. Range [1, 100].
+    scurve : int
+        Time derivative of XY stage acceleration. Range [1, 100].
+    stepsize : float
+        XY single-step size [um].
+    zspeed : int
+        Maximum focus drive speed. Range [1, 100].
+    zacceleration : int
+        Focus drive acceleration. Range [1, 100].
+    zscurve : int
+        Time derivative of focus acceleration. Range [1, 100].
+    zstepsize : float
+        Focus drive single-step size [um].
+    resolution : float
+        Stage encoder resolution [um/step].
+    flip : bool
+        True: invert Y axis direction.
+    mirror : bool
+        True: invert X axis direction.
+    moving : bool
+        True if the stage or focus drive is currently in motion.
+        Read-only.
     '''
 
-    positionChanged = pyqtSignal(object)
-
-    def Property(cmd, dtype=int, res='0'):
-        def getter(self):
-            logger.debug('Getting')
-            return self.get_value(cmd, dtype)
-
-        def setter(self, value):
-            value = dtype(value)
-            logger.debug(f'Setting {value}')
-            self.expect(f'{cmd},{value}', res)
-
-        return pyqtProperty(dtype, getter, setter)
-
-    speed = Property('SMS')
-    acceleration = Property('SAS')
-    scurve = Property('SCS')
-    zstepsize = Property('C', dtype=float)
-    zspeed = Property('SMZ')
-    zacceleration = Property('SAZ')
-    zscurve = Property('SCZ')
+    positionChanged = QtCore.Signal(object)
 
     comm = dict(baudRate=QSerialInstrument.BaudRate.Baud9600,
                 dataBits=QSerialInstrument.DataBits.Data8,
@@ -70,196 +57,252 @@ class QProscan(QSerialInstrument):
                 flowControl=QSerialInstrument.FlowControl.NoFlowControl,
                 eol='\r')
 
-    def __init__(self, portName=None, **kwargs):
+    def __init__(self, portName: str | None = None, **kwargs) -> None:
         super().__init__(portName, **(self.comm | kwargs))
-        self._mirror = False
-        self._flip = False
+        self._flip: bool = False
+        self._mirror: bool = False
+        self._registerProperties()
 
-    def identify(self):
+    def _registerProperties(self) -> None:
+        for name, cmd in (('speed',         'SMS'),
+                          ('acceleration',  'SAS'),
+                          ('scurve',        'SCS'),
+                          ('zspeed',        'SMZ'),
+                          ('zacceleration', 'SAZ'),
+                          ('zscurve',       'SCZ')):
+            self.registerProperty(
+                name,
+                getter=lambda c=cmd: self.getValue(c, int),
+                setter=lambda v, c=cmd: self.expect(f'{c},{int(v)}', '0'),
+                ptype=int)
+        self.registerProperty(
+            'stepsize',
+            getter=lambda: float(self.handshake('X').split(',')[0]),
+            setter=lambda v: self.expect(f'X,{float(v)},{float(v)}', '0'),
+            ptype=float)
+        self.registerProperty(
+            'zstepsize',
+            getter=lambda: self.getValue('C', float),
+            setter=lambda v: self.expect(f'C,{float(v)}', '0'),
+            ptype=float)
+        self.registerProperty(
+            'resolution',
+            getter=lambda: self.getValue('RES,s', float),
+            setter=lambda v: self.transmit(f'RES,s,{float(v)}'),
+            ptype=float)
+        self.registerProperty(
+            'flip',
+            getter=lambda: self._flip,
+            setter=self._set_flip,
+            ptype=bool)
+        self.registerProperty(
+            'mirror',
+            getter=lambda: self._mirror,
+            setter=self._set_mirror,
+            ptype=bool)
+        self.registerProperty(
+            'moving',
+            getter=lambda: bool(self.status() & 0xF),
+            setter=None,
+            ptype=bool)
+
+    def identify(self) -> bool:
+        '''Return True if the VERSION response is a 3-character string.
+
+        A valid Proscan controller returns a 3-character firmware
+        version string (e.g. ``'1.2'``).
+        '''
         return len(self.version()) == 3
 
-    def version(self):
-        '''Return 3-digit firmware version'''
+    def version(self) -> str:
+        '''Return the 3-character firmware version string.'''
         return self.handshake('VERSION')
 
-    @pyqtSlot()
-    def position(self):
-        '''Report the (x, y, z) coordinates of the stage
+    def position(self) -> list[int]:
+        '''Return the current stage position and emit :attr:`positionChanged`.
 
         Returns
         -------
-        position: list of int
-           x, y, z coordinates of current stage position
+        list[int]
+            ``[x, y, z]`` coordinates of the current stage position
+            in micrometers.
         '''
-        position = list(map(int, self.handshake('P').split(',')))
-        self.positionChanged.emit(position)
-        return position
+        pos = list(map(int, self.handshake('P').split(',')))
+        self.positionChanged.emit(pos)
+        return pos
 
-    def set_position(self, position):
-        '''Define coordinates of present position
+    def set_position(self, position: list[int]) -> bool:
+        '''Define the coordinates of the current physical position.
 
-        Arguments
-        ---------
-        position: (x, y, [z])
-            coordinates of present position in micrometers
+        Parameters
+        ----------
+        position : list[int]
+            ``[x, y]`` or ``[x, y, z]`` coordinates to assign to the
+            current stage position, in micrometers.
 
         Returns
         -------
-        success: bool
-            True: position set successfully
+        bool
+            True if the controller acknowledged the command.
         '''
-        position = ','.join(map(str, position))
-        return self.expect(f'P,{position}', '0')
+        coords = ','.join(map(str, position))
+        return self.expect(f'P,{coords}', '0')
 
-    @pyqtSlot()
-    def set_origin(self):
-        '''Set the origin of the coordinate system
+    @QtCore.Slot()
+    def set_origin(self) -> bool:
+        '''Set the coordinate system origin to the current position.
 
         Returns
         -------
-        success: bool
-             True: origin set to current position
-             False: communication error
+        bool
+            True if the controller acknowledged the command.
         '''
         return self.expect('Z', '0')
 
-    @pyqtProperty(float)
-    def stepsize(self):
-        return list(map(float, self.handshake('X').split(',')))[0]
+    def move_to(self, position: list[int],
+                relative: bool = False) -> bool:
+        '''Move the stage to a target position.
 
-    @stepsize.setter
-    def stepsize(self, value):
-        self.expect(f'X,{value},{value}', '0')
+        Parameters
+        ----------
+        position : list[int]
+            ``[x, y]`` target coordinates in micrometers.
+        relative : bool
+            True: move by ``position`` relative to current location.
+            False: move to the absolute coordinates. Default: False.
 
-    def move_to(self, position, relative=False):
-        '''Move stage to specified position
-
-        Arguments
-        ---------
-        position: (x, y)
-            Initiates stage motion to specified position
-            using the current scurve, acceleration and speed
-            settings. Coordinates are specified in micrometers.
-        relative: bool [optional]
-            True: Move by (x, y) relative to current position.
-            False: Move to absolute position [Default]
+        Returns
+        -------
+        bool
+            True once the controller acknowledges the motion command.
         '''
         cmd = 'GR' if relative else 'G'
-        coordinates = ','.join(map(str, position))
-        return self.expect(f'{cmd},{coordinates}', 'R')
+        coords = ','.join(map(str, position))
+        return self.expect(f'{cmd},{coords}', 'R')
 
-    def move_to_origin(self):
-        '''Move stage to origin'''
+    def move_to_origin(self) -> bool:
+        '''Move the stage to the coordinate origin.
+
+        Returns
+        -------
+        bool
+            True once the controller acknowledges the motion command.
+        '''
         return self.expect('M', 'R')
 
-    @pyqtSlot(object)
-    def set_velocity(self, velocity):
-        '''Initiate stage motion with specified velocity
+    @QtCore.Slot(object)
+    def set_velocity(self, velocity: list[float]) -> None:
+        '''Start continuous stage motion at the specified velocity.
 
-        Arguments
-        ---------
-        velocity: (vx, vy)
-            Start stage motion with velocity vx along the x axis
-            and vy along the y axis. Velocity components are
-            specified in micrometers per second.
+        Passing ``[0, 0]`` stops motion. Velocity is maintained until
+        a new :meth:`set_velocity` or :meth:`stop` call.
 
-        Note: set_velocity([0, 0]) stops the motion
+        Parameters
+        ----------
+        velocity : list[float]
+            ``[vx, vy]`` velocity components in micrometers per second.
         '''
-        velocity = ','.join(map(str, velocity))
-        self.expect(f'VS,{velocity}', 'R')
+        v = ','.join(map(str, velocity))
+        self.expect(f'VS,{v}', 'R')
 
-    @pyqtSlot()
-    def stop(self):
-        '''Stop stage motion'''
-        logger.debug('STOP')
+    @QtCore.Slot()
+    def stop(self) -> bool:
+        '''Stop all stage and focus motion immediately.
+
+        Returns
+        -------
+        bool
+            True once the controller acknowledges the stop command.
+        '''
         return self.expect('I', 'R')
 
-    def status(self):
-        return self.get_value('$', dtype=int)
+    def status(self) -> int:
+        '''Return the raw controller status word.
 
-    @pyqtProperty(bool)
-    def moving(self):
-        '''True if stage or focus are in motion'''
-        return bool(self.status() & 0xF)
+        Returns
+        -------
+        int
+            Bitmask; bits 0–3 indicate motion in progress.
+        '''
+        return self.getValue('$', int)
 
-    @pyqtProperty(bool)
-    def flip(self):
-        return self._flip
-
-    @flip.setter
-    def flip(self, value):
-        self._flip = value
-        c = -1 if value else 1
-        self.expect(f'YD,{c}', '0')
-
-    @pyqtProperty(bool)
-    def mirror(self):
-        return self._mirror
-
-    @mirror.setter
-    def mirror(self, value):
-        self._mirror = value
-        c = -1 if value else 1
-        self.expect(f'XD,{c}', '0')
-
-    @pyqtProperty(float)
-    def resolution(self):
-        return self.get_value('RES,s')
-
-    @resolution.setter
-    def resolution(self, value):
-        '''Get and set the resolution for the stage in micrometers'''
-        self.transmit(f'RES,s,{value}')
-
-    def stepLeft(self):
-        '''Step stage left'''
+    def stepLeft(self) -> bool:
+        '''Step the stage one increment in the −X direction.'''
         return self.expect('L', 'R')
 
-    def stepRight(self):
-        '''Step stage right'''
+    def stepRight(self) -> bool:
+        '''Step the stage one increment in the +X direction.'''
         return self.expect('R', 'R')
 
-    def stepForward(self):
-        '''Step stage forward'''
+    def stepForward(self) -> bool:
+        '''Step the stage one increment in the +Y direction.'''
         return self.expect('F', 'R')
 
-    def stepBackward(self):
-        '''Step stage backward'''
+    def stepBackward(self) -> bool:
+        '''Step the stage one increment in the −Y direction.'''
         return self.expect('B', 'R')
 
-    def stepUp(self):
-        '''Step focus up'''
+    def stepUp(self) -> bool:
+        '''Step the focus drive one increment upward.'''
         return self.expect('U', 'R')
 
-    def stepDown(self):
-        '''Step focus down'''
+    def stepDown(self) -> bool:
+        '''Step the focus drive one increment downward.'''
         return self.expect('D', 'R')
 
-    def description(self):
-        '''Description of Proscan hardware'''
+    def description(self) -> list[str]:
+        '''Return lines of hardware description from the controller.'''
         return self._read_lines('?')
 
-    def stage(self):
-        '''Description of stage'''
+    def stage(self) -> list[str]:
+        '''Return lines of stage description from the controller.'''
         return self._read_lines('STAGE')
 
-    def focus(self):
-        '''Description of focus system'''
+    def focus(self) -> list[str]:
+        '''Return lines of focus system description from the controller.'''
         return self._read_lines('FOCUS')
 
-    @QSerialInstrument.blocking
-    def _read_lines(self, query):
+    def _read_lines(self, query: str) -> list[str]:
+        '''Transmit ``query`` and collect response lines until ``END``.
+
+        Parameters
+        ----------
+        query : str
+            Command string to send to the controller.
+
+        Returns
+        -------
+        list[str]
+            Response lines, including the terminating ``END`` line.
+        '''
         self.transmit(query)
-        response = []
+        lines = []
         while True:
-            this = self.read_until()
-            response.append(this)
-            if 'END' in this:
+            line = self.receive()
+            lines.append(line)
+            if 'END' in line:
                 break
-        return response
+        return lines
+
+    def _set_flip(self, value: bool) -> None:
+        self._flip = bool(value)
+        self.expect(f'YD,{-1 if value else 1}', '0')
+
+    def _set_mirror(self, value: bool) -> None:
+        self._mirror = bool(value)
+        self.expect(f'XD,{-1 if value else 1}', '0')
+
+
+def example() -> None:
+    proscan = QProscan().find()
+    if proscan is not None:
+        print(f'version: {proscan.version()}')
+        print(f'position: {proscan.position()}')
+        proscan.close()
+
+
+__all__ = ['QProscan']
 
 
 if __name__ == '__main__':
-    QProscan.example()
-
-__all__ = ['QProscan']
+    example()

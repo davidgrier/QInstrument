@@ -171,11 +171,11 @@ Add type hints to all new and migrated instrument code. Use `str | None` union s
 - All `comm` dicts across all instruments — updated to long-form enum access
 
 - `instruments/Opus/` — fully migrated: `_registerProperties()`, IPGLaser-pattern fake with explicit `_store` getters, synchronous timer poll replacing broken async `dataReady` approach, `timers()` using `receive()` loop; `fake.py` added
+- `instruments/Proscan/` — fully migrated: `_registerProperties()` with explicit lambdas (no `_register()` helper — Proscan uses comma-delimited `CMD,value` protocol, not DS345-style `CMD?`/`CMDvalue`), IPGLaser-pattern fake with `_store` getters, synchronous `QTimer` poll, `_connectSignals()` for joystick/zdial/buttons; `fake.py` added; `dataReady` async pattern replaced
 
 ### Pending (still use `pyqtProperty` and old import patterns)
 
 - `instruments/PiezoDrive/`
-- `instruments/Proscan/`
 - `instruments/TDS1000/`
 
 Use `instruments/DS345/` as the template when migrating each of these.

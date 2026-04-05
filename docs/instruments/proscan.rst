@@ -1,9 +1,14 @@
 Prior Proscan Stage Controller
 ==============================
 
+.. autoclass:: QInstrument.instruments.Proscan.instrument.QProscan
+   :members:
+   :show-inheritance:
 
-.. note::
+.. autoclass:: QInstrument.instruments.Proscan.fake.QFakeProscan
+   :members:
+   :show-inheritance:
 
-   API documentation for this instrument is pending migration to the current
-   registerProperty() design.  See instruments/DS345/ for the
-   reference implementation.
+.. autoclass:: QInstrument.instruments.Proscan.widget.QProscanWidget
+   :members:
+   :show-inheritance:

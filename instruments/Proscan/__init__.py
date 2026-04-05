@@ -1,6 +1,6 @@
 import importlib
 
-_lazy = {'QProscan': 'instrument', 'QProscanWidget': 'widget'}
+_lazy = {'QProscan': 'instrument', 'QFakeProscan': 'fake', 'QProscanWidget': 'widget'}
 
 def __getattr__(name):
     if name in _lazy:
