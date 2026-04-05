@@ -39,6 +39,9 @@ class QJoystick(QtWidgets.QWidget):
                  fullscale: float | None = None,
                  **kwargs) -> None:
         super().__init__(*args, **kwargs)
+        self._setupUi(fullscale)
+
+    def _setupUi(self, fullscale: float | None) -> None:
         self.sizePolicy().setHeightForWidth(True)
         self.padding = 0.1
         self.knobSize = 0.3
@@ -89,21 +92,87 @@ class QJoystick(QtWidgets.QWidget):
         self.limit = (1. - self.knobSize) * self.radius
 
     def paintEvent(self, event: QtGui.QPaintEvent) -> None:
-        if self.isEnabled():
-            pen = QtCore.Qt.GlobalColor.black
-            bg = QtGui.QColor('#F8EEFF')
-            knob = QtCore.Qt.GlobalColor.gray
-        else:
-            pen = QtCore.Qt.GlobalColor.darkGray
-            bg = QtGui.QColor('#F8F8F8')
-            knob = QtCore.Qt.GlobalColor.lightGray
         painter = QtGui.QPainter(self)
         painter.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing, True)
+        enabled = self.isEnabled()
+        self._drawPad(painter, enabled)
+        self._drawCrosshair(painter, enabled)
+        self._drawRimHighlight(painter, enabled)
+        self._drawKnobShadow(painter)
+        self._drawKnob(painter, enabled)
+
+    def _drawPad(self, painter: QtGui.QPainter, enabled: bool) -> None:
+        '''Fill the pad with a radial gradient and draw its border.'''
+        rect = self._limitRect()
+        c = rect.center()
+        r = rect.width() / 2.
+        grad = QtGui.QRadialGradient(c.x(), c.y(), r)
+        if enabled:
+            grad.setColorAt(0., QtGui.QColor('#ede5f8'))
+            grad.setColorAt(1., QtGui.QColor('#9878b8'))
+        else:
+            grad.setColorAt(0., QtGui.QColor('#f4f4f4'))
+            grad.setColorAt(1., QtGui.QColor('#c0c0c0'))
+        border = QtGui.QColor('#7060a0' if enabled else '#909090')
+        painter.setPen(QtGui.QPen(border, 1.5))
+        painter.setBrush(QtGui.QBrush(grad))
+        painter.drawEllipse(rect)
+
+    def _drawCrosshair(self, painter: QtGui.QPainter, enabled: bool) -> None:
+        '''Draw faint axis lines through the pad center.'''
+        c = self._center()
+        r = self.radius
+        color = QtGui.QColor('#503c64' if enabled else '#a0a0a0')
+        color.setAlpha(80)
+        pen = QtGui.QPen(color, 1.0, QtCore.Qt.PenStyle.DashLine)
         painter.setPen(pen)
-        painter.setBrush(bg)
-        painter.drawEllipse(self._limitRect())
-        painter.setBrush(knob)
-        painter.drawEllipse(self._knobRect())
+        painter.drawLine(QtCore.QPointF(c.x() - r, c.y()),
+                         QtCore.QPointF(c.x() + r, c.y()))
+        painter.drawLine(QtCore.QPointF(c.x(), c.y() - r),
+                         QtCore.QPointF(c.x(), c.y() + r))
+
+    def _drawRimHighlight(self, painter: QtGui.QPainter, enabled: bool) -> None:
+        '''Draw a bright arc across the upper-left rim to suggest a bevel.'''
+        rect = self._limitRect()
+        color = QtGui.QColor('#d8c8f0' if enabled else '#d8d8d8')
+        painter.setPen(QtGui.QPen(color, 2.0))
+        painter.setBrush(QtCore.Qt.BrushStyle.NoBrush)
+        painter.drawArc(rect, 45 * 16, 135 * 16)
+
+    def _drawKnobShadow(self, painter: QtGui.QPainter) -> None:
+        '''Draw a soft drop shadow behind the knob.'''
+        rect = self._knobRect()
+        offset = rect.width() * 0.12
+        shadow = rect.translated(offset, offset)
+        shadow.adjust(-offset * 0.2, -offset * 0.2,
+                       offset * 0.2,  offset * 0.2)
+        painter.setPen(QtCore.Qt.PenStyle.NoPen)
+        painter.setBrush(QtGui.QColor(0, 0, 0, 55))
+        painter.drawEllipse(shadow)
+
+    def _drawKnob(self, painter: QtGui.QPainter, enabled: bool) -> None:
+        '''Draw the knob as a sphere with a radial gradient and specular dot.'''
+        rect = self._knobRect()
+        c = rect.center()
+        r = rect.width() / 2.
+        # Focal point offset toward top-left for the lighting illusion
+        fx, fy = c.x() - 0.3 * r, c.y() - 0.3 * r
+        grad = QtGui.QRadialGradient(c.x(), c.y(), r, fx, fy)
+        if enabled:
+            grad.setColorAt(0., QtGui.QColor('#dce4ff'))
+            grad.setColorAt(1., QtGui.QColor('#2838a8'))
+        else:
+            grad.setColorAt(0., QtGui.QColor('#e0e0e8'))
+            grad.setColorAt(1., QtGui.QColor('#707080'))
+        painter.setPen(QtCore.Qt.PenStyle.NoPen)
+        painter.setBrush(QtGui.QBrush(grad))
+        painter.drawEllipse(rect)
+        # Specular highlight
+        sr = r * 0.22
+        spec = QtCore.QRectF(fx - 0.7 * sr - sr, fy - 0.5 * sr - sr,
+                              sr * 2, sr * 2)
+        painter.setBrush(QtGui.QColor(255, 255, 255, 190))
+        painter.drawEllipse(spec)
 
     def _limitRect(self) -> QtCore.QRectF:
         '''Return the bounding rectangle of the outer pad circle.'''
