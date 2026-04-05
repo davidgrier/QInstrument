@@ -3,6 +3,7 @@
 [![PyPI version](https://img.shields.io/pypi/v/QInstrument.svg)](https://pypi.org/project/QInstrument/)
 [![Tests](https://github.com/davidgrier/QInstrument/actions/workflows/tests.yml/badge.svg)](https://github.com/davidgrier/QInstrument/actions/workflows/tests.yml)
 [![Documentation](https://readthedocs.org/projects/qinstrument/badge/?version=latest)](https://qinstrument.readthedocs.io/en/latest/)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.19424797.svg)](https://doi.org/10.5281/zenodo.19424797)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
 A Qt-based framework for controlling scientific instruments over serial ports.
