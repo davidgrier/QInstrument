@@ -89,10 +89,10 @@ class QSerialInterface(QSerialPort):
 
     dataReady = QtCore.Signal(str)
 
-    BaudRate    = QSerialPort.BaudRate
-    DataBits    = QSerialPort.DataBits
-    StopBits    = QSerialPort.StopBits
-    Parity      = QSerialPort.Parity
+    BaudRate = QSerialPort.BaudRate
+    DataBits = QSerialPort.DataBits
+    StopBits = QSerialPort.StopBits
+    Parity = QSerialPort.Parity
     FlowControl = QSerialPort.FlowControl
 
     def __init__(self,
@@ -108,7 +108,8 @@ class QSerialInterface(QSerialPort):
                  **kwargs) -> None:
         super().__init__(**kwargs)
         if baudRate is not None:
-            self.setBaudRate(baudRate.value)
+            # self.setBaudRate(baudRate.value)
+            self.setBaudRate(int(baudRate))
         if dataBits is not None:
             self.setDataBits(dataBits)
         if stopBits is not None:
@@ -290,5 +291,6 @@ class QSerialInterface(QSerialPort):
             self.dataReady.emit(data.decode('utf-8', 'backslashreplace'))
         else:
             logger.debug(f'buffered {bytes(self._buffer)}')
+
 
 __all__ = ['QSerialInterface']
