@@ -8,8 +8,6 @@ logger = logging.getLogger(__name__)
 class QIPGLaser(QSerialInstrument):
     '''IPG Photonics YLR Ytterbium Fiber Laser
 
-    Based on the IPG Photonics User Manual
-    Dated February 26, 2010.
 
     The IPG command interface does not follow the ``CMD?`` / ``CMDvalue``
     convention used by SRS instruments.  Each command is a short mnemonic
@@ -69,6 +67,9 @@ class QIPGLaser(QSerialInstrument):
 
     Reference
     =========
+    IPG Photonics Fiber Laser User Manual
+    Dated February 26, 2010.
+
     Interface Commands
     |---------+--------------------------+--------------------------|
     | Command | Description              | Response                 |

@@ -1,0 +1,293 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>IPGLaser</class>
+ <widget class="QWidget" name="IPGLaser">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>501</width>
+    <height>155</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>IPGLaser</string>
+  </property>
+  <layout class="QHBoxLayout" name="horizontalLayout">
+   <item>
+    <widget class="QWidget" name="feedbackWidget" native="true">
+     <layout class="QVBoxLayout" name="verticalLayout">
+      <property name="leftMargin">
+       <number>0</number>
+      </property>
+      <property name="topMargin">
+       <number>0</number>
+      </property>
+      <property name="rightMargin">
+       <number>0</number>
+      </property>
+      <property name="bottomMargin">
+       <number>0</number>
+      </property>
+      <item>
+       <widget class="QLabel" name="name">
+        <property name="text">
+         <string>IPG Fiber Laser</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QFrame" name="frame">
+        <property name="frameShape">
+         <enum>QFrame::StyledPanel</enum>
+        </property>
+        <property name="frameShadow">
+         <enum>QFrame::Raised</enum>
+        </property>
+        <layout class="QGridLayout" name="gridLayout" columnstretch="1,1,1,1,1" columnminimumwidth="0,0,0,0,0">
+         <property name="sizeConstraint">
+          <enum>QLayout::SetDefaultConstraint</enum>
+         </property>
+         <item row="0" column="0">
+          <widget class="QGroupBox" name="powerGroup">
+           <property name="title">
+            <string>Power</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+           <layout class="QGridLayout" name="gridLayout_6">
+            <item row="0" column="0">
+             <widget class="QLedWidget" name="powerLED" native="true">
+              <property name="minimumSize">
+               <size>
+                <width>16</width>
+                <height>16</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>32</width>
+                <height>32</height>
+               </size>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QGroupBox" name="keyGroup">
+           <property name="title">
+            <string>Key</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+           <layout class="QGridLayout" name="gridLayout_5">
+            <item row="0" column="0">
+             <widget class="QLedWidget" name="keyLED" native="true">
+              <property name="minimumSize">
+               <size>
+                <width>16</width>
+                <height>16</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>32</width>
+                <height>32</height>
+               </size>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item row="0" column="2">
+          <widget class="QGroupBox" name="aimingGroup">
+           <property name="title">
+            <string>Aiming</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+           <layout class="QGridLayout" name="gridLayout_2">
+            <item row="0" column="0">
+             <widget class="QLedWidget" name="aimingLED" native="true">
+              <property name="minimumSize">
+               <size>
+                <width>16</width>
+                <height>16</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>32</width>
+                <height>32</height>
+               </size>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item row="0" column="3">
+          <widget class="QGroupBox" name="emissionGroup">
+           <property name="title">
+            <string>Emission</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+           <layout class="QGridLayout" name="gridLayout_3">
+            <item row="0" column="0">
+             <widget class="QLedWidget" name="emissionLED" native="true">
+              <property name="minimumSize">
+               <size>
+                <width>16</width>
+                <height>16</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>32</width>
+                <height>32</height>
+               </size>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item row="0" column="4">
+          <widget class="QGroupBox" name="faultGroup">
+           <property name="title">
+            <string>Fault</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+           <layout class="QGridLayout" name="gridLayout_4">
+            <item row="0" column="0">
+             <widget class="QLedWidget" name="faultLED" native="true">
+              <property name="minimumSize">
+               <size>
+                <width>16</width>
+                <height>16</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>32</width>
+                <height>32</height>
+               </size>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item row="1" column="2">
+          <widget class="QPushButton" name="aimingButton">
+           <property name="text">
+            <string>Aim</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="3">
+          <widget class="QPushButton" name="emissionButton">
+           <property name="text">
+            <string>Emit</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QFrame" name="powerFrame">
+     <property name="frameShape">
+      <enum>QFrame::StyledPanel</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Raised</enum>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout_6">
+      <item>
+       <widget class="QDoubleSpinBox" name="power">
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+        <property name="readOnly">
+         <bool>true</bool>
+        </property>
+        <property name="buttonSymbols">
+         <enum>QAbstractSpinBox::NoButtons</enum>
+        </property>
+        <property name="suffix">
+         <string> W</string>
+        </property>
+        <property name="decimals">
+         <number>1</number>
+        </property>
+        <property name="maximum">
+         <double>10.000000000000000</double>
+        </property>
+        <property name="singleStep">
+         <double>0.100000000000000</double>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QRotaryEncoderSpinBox" name="current" native="true">
+        <property name="suffix" stdset="0">
+         <string>%</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>QLedWidget</class>
+   <extends>QWidget</extends>
+   <header>QInstrument.widgets.QLedWidget</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>QRotaryEncoderSpinBox</class>
+   <extends>QWidget</extends>
+   <header>QInstrument.widgets.QRotaryEncoderSpinBox</header>
+   <container>1</container>
+   <slots>
+    <signal>styleSheetUpdated(str)</signal>
+   </slots>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>current</sender>
+   <signal>styleSheetUpdated(QString)</signal>
+   <receiver>power</receiver>
+   <slot>setStyleSheet(QString)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>452</x>
+     <y>93</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>452</x>
+     <y>32</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>

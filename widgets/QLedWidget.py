@@ -68,12 +68,7 @@ class QLedWidget(QtWidgets.QWidget):
                  interval: int | None = None,
                  **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self.setMinimumSize(48, 48)
-        self.sizePolicy().setWidthForHeight(True)
-        self.renderer = QtSvg.QSvgRenderer()
-        self.timer = QtCore.QTimer()
-        self.timer.timeout.connect(self.flipState)
-        self.template = self._load_template()
+        self._setupUi()
         self.color = color or self.RED
         self.state = state or self.ON
         self._savedstate = self.state
@@ -85,11 +80,18 @@ class QLedWidget(QtWidgets.QWidget):
         if name in ('color', 'state'):
             self.update()
 
-    def _load_template(self) -> str:
-        '''Read and return the SVG template as a string.'''
+    def _setupUi(self) -> None:
         svgfile = Path(__file__).parent / 'QLedWidget.svg'
         with open(svgfile, 'r') as f:
-            return f.read()
+            self.template = f.read()
+        self.setMinimumSize(16, 16)
+        self.sizePolicy().setWidthForHeight(True)
+        self.renderer = QtSvg.QSvgRenderer()
+        self.timer = QtCore.QTimer()
+        self.timer.timeout.connect(self.flipState)
+
+    def sizeHint(self) -> QtCore.QSize:
+        return self.minimumSize()
 
     @property
     def blink(self) -> bool:
@@ -110,7 +112,7 @@ class QLedWidget(QtWidgets.QWidget):
         return self._interval
 
     @interval.setter
-    def interval(self, ms: int) -> None:
+    def interval(self, value: int) -> None:
         '''Set the blink interval.
 
         If the LED is currently blinking the timer is restarted
@@ -118,12 +120,12 @@ class QLedWidget(QtWidgets.QWidget):
 
         Parameters
         ----------
-        ms : int
-            Duration of each ON/OFF phase in milliseconds.
+        value : int
+            Duration of each ON/OFF phase [ms].
         '''
-        self._interval = ms
+        self._interval = value
         if self.timer.isActive():
-            self.timer.start(ms)
+            self.timer.start(value)
 
     @QtCore.Slot()
     def flipState(self) -> None:

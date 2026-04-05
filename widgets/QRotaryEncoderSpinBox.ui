@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>100</width>
-    <height>121</height>
+    <height>122</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -96,7 +96,7 @@
       </palette>
      </property>
      <property name="alignment">
-      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+      <set>Qt::AlignCenter</set>
      </property>
      <property name="buttonSymbols">
       <enum>QAbstractSpinBox::NoButtons</enum>
