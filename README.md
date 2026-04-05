@@ -13,7 +13,7 @@ Any Qt binding (PyQt5, PyQt6, PySide2, PySide6) is supported via `qtpy`.
 ## Instruments
 
 ### IPG Photonics
-- **YLR Series**: Ytterbium fibre laser
+- **YLR Series**: Ytterbium fiber laser
 
 ### Laser Quantum
 - **Opus**: Continuous-wave laser
@@ -22,10 +22,10 @@ Any Qt binding (PyQt5, PyQt6, PySide2, PySide6) is supported via `qtpy`.
 - **PDUS210**: Piezo transducer driver
 
 ### Prior Scientific
-- **Proscan II/III**: Motorised microscope stage controller
+- **Proscan II/III**: Motorized microscope stage controller
 
 ### Stanford Research Systems
-- **DS345**: 30 MHz Synthesised Function Generator
+- **DS345**: 30 MHz Synthesized Function Generator
 - **SR830**: 100 kHz Digital Lock-in Amplifier
 - **SR844**: 200 MHz RF Lock-in Amplifier
 

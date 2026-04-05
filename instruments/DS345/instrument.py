@@ -269,7 +269,7 @@ class QDS345(QSerialInstrument):
         Parameters
         ----------
         waveform : ArrayLike
-            Up to 10000 samples normalised to [-1, 1], where -1 is
+            Up to 10000 samples normalized to [-1, 1], where -1 is
             full off and +1 is full on.
         '''
         data = np.asarray(waveform)

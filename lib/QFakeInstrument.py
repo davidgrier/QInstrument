@@ -36,10 +36,10 @@ class QFakeInstrument(QAbstractInstrument):
     '''
 
     def __init__(self, *args, **kwargs) -> None:
-        '''Initialise the in-memory store and register all properties.
+        '''Initialize the in-memory store and register all properties.
 
         Calls ``QAbstractInstrument.__init__`` explicitly to bypass
-        ``QSerialInstrument`` (no serial port is created), initialises
+        ``QSerialInstrument`` (no serial port is created), initializes
         :attr:`_store`, then calls ``_registerProperties()`` and
         ``_registerMethods()`` if the concrete class provides them.
         '''

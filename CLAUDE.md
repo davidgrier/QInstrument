@@ -139,7 +139,7 @@ from QInstrument.lib.QFakeInstrument import QFakeInstrument
 
 ### Instance variable initialisation
 
-Don't initialise instance variables that are always written before they are read. Use a bare annotation instead:
+Don't initialize instance variables that are always written before they are read. Use a bare annotation instead:
 ```python
 self._saved_amplitude: float   # set on mute, restored on unmute
 ```
