@@ -87,6 +87,7 @@ class QInstrumentWidget(QtWidgets.QWidget):
         super().__init__(*args, **kwargs)
         self._device = None
         self._configure = Configure()
+        self._restored = False
         uic.loadUi(self._uiPath(), self)
         self.device = device
 
@@ -108,7 +109,6 @@ class QInstrumentWidget(QtWidgets.QWidget):
         self._device = device
         self._identifyProperties()
         if self._device.isOpen():
-            self._configure.restore(self._device)
             self._syncProperties()
             self._connectSignals()
         else:
@@ -270,14 +270,30 @@ class QInstrumentWidget(QtWidgets.QWidget):
         '''
         pass
 
+    def showEvent(self, event) -> None:
+        '''Restore device settings on first show.
+
+        On the first time the widget is shown, calls
+        :meth:`Configure.restore` to push the previously saved state to
+        the device, then re-syncs the UI to reflect the restored values.
+        Subsequent show events are passed through without restoring.
+        '''
+        if not self._restored and self._device is not None and self._device.isOpen():
+            self._configure.restore(self._device)
+            self._syncProperties()
+            self._restored = True
+        super().showEvent(event)
+
     def closeEvent(self, event) -> None:
         '''Save device settings when the widget is closed.
 
         Calls :meth:`Configure.save` to persist the current device state
         to ``~/.QInstrument/<ClassName>.json`` before passing the event
-        to the parent class.
+        to the parent class.  Only saves if the widget was previously
+        shown, so that test widgets closed during teardown do not
+        overwrite saved configuration.
         '''
-        if self._device is not None:
+        if self._restored and self._device is not None:
             self._configure.save(self._device)
         super().closeEvent(event)
 
