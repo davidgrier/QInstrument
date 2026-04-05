@@ -28,6 +28,13 @@ class QJoystick(QtWidgets.QWidget):
     fullscale : float
         Symmetric output limit: equivalent to ``setRange(-v, v)``.
         Default: 1.0.
+    padColor : QtGui.QColor
+        Base color of the pad. Gradient stops and border are derived
+        from it via ``lighter()`` / ``darker()``.
+        Default: ``QColor('#a888c8')`` (medium lavender).
+    knobColor : QtGui.QColor
+        Base color of the knob. Gradient stops are derived from it.
+        Default: ``QColor('#3848b8')`` (medium blue).
     tolerance : float
         Fractional dead-band; position changes smaller than this
         fraction of the full pad radius are suppressed. Default: 0.05.
@@ -47,6 +54,8 @@ class QJoystick(QtWidgets.QWidget):
         self.knobSize = 0.3
         self.setRange(-(fullscale or 1.), fullscale or 1.)
         self.tolerance = 0.05
+        self._padColor = QtGui.QColor('#a888c8')
+        self._knobColor = QtGui.QColor('#3848b8')
         self.position = QtCore.QPointF(0, 0)
         self._values = np.zeros(2)
         self.active = False
@@ -85,6 +94,42 @@ class QJoystick(QtWidgets.QWidget):
     def fullscale(self, value: float) -> None:
         self.setRange(-value, value)
 
+    def padColor(self) -> QtGui.QColor:
+        '''Return the base pad color.'''
+        return self._padColor
+
+    def setPadColor(self, color: QtGui.QColor) -> None:
+        '''Set the base pad color and repaint.
+
+        Gradient stops and border are derived automatically via
+        ``lighter()`` / ``darker()``.
+
+        Parameters
+        ----------
+        color : QtGui.QColor
+            Base color for the pad.
+        '''
+        self._padColor = color
+        self.update()
+
+    def knobColor(self) -> QtGui.QColor:
+        '''Return the base knob color.'''
+        return self._knobColor
+
+    def setKnobColor(self, color: QtGui.QColor) -> None:
+        '''Set the base knob color and repaint.
+
+        Gradient stops are derived automatically via
+        ``lighter()`` / ``darker()``.
+
+        Parameters
+        ----------
+        color : QtGui.QColor
+            Base color for the knob.
+        '''
+        self._knobColor = color
+        self.update()
+
     def resizeEvent(self, event: QtGui.QResizeEvent) -> None:
         '''Recompute the pad radius and knob travel limit on resize.'''
         self.radius = min(self.size().width(), self.size().height()) / 2
@@ -108,12 +153,13 @@ class QJoystick(QtWidgets.QWidget):
         r = rect.width() / 2.
         grad = QtGui.QRadialGradient(c.x(), c.y(), r)
         if enabled:
-            grad.setColorAt(0., QtGui.QColor('#ede5f8'))
-            grad.setColorAt(1., QtGui.QColor('#9878b8'))
+            grad.setColorAt(0., self._padColor.lighter(155))
+            grad.setColorAt(1., self._padColor.darker(108))
+            border = self._padColor.darker(130)
         else:
-            grad.setColorAt(0., QtGui.QColor('#f4f4f4'))
-            grad.setColorAt(1., QtGui.QColor('#c0c0c0'))
-        border = QtGui.QColor('#7060a0' if enabled else '#909090')
+            grad.setColorAt(0., QtGui.QColor(244, 244, 244))
+            grad.setColorAt(1., QtGui.QColor(192, 192, 192))
+            border = QtGui.QColor(144, 144, 144)
         painter.setPen(QtGui.QPen(border, 1.5))
         painter.setBrush(QtGui.QBrush(grad))
         painter.drawEllipse(rect)
@@ -122,10 +168,12 @@ class QJoystick(QtWidgets.QWidget):
         '''Draw faint axis lines through the pad center.'''
         c = self._center()
         r = self.radius
-        color = QtGui.QColor('#503c64' if enabled else '#a0a0a0')
-        color.setAlpha(80)
-        pen = QtGui.QPen(color, 1.0, QtCore.Qt.PenStyle.DashLine)
-        painter.setPen(pen)
+        if enabled:
+            color = self._padColor.darker(160)
+            color.setAlpha(80)
+        else:
+            color = QtGui.QColor(160, 160, 160, 80)
+        painter.setPen(QtGui.QPen(color, 1.0, QtCore.Qt.PenStyle.DashLine))
         painter.drawLine(QtCore.QPointF(c.x() - r, c.y()),
                          QtCore.QPointF(c.x() + r, c.y()))
         painter.drawLine(QtCore.QPointF(c.x(), c.y() - r),
@@ -134,7 +182,11 @@ class QJoystick(QtWidgets.QWidget):
     def _drawRimHighlight(self, painter: QtGui.QPainter, enabled: bool) -> None:
         '''Draw a bright arc across the upper-left rim to suggest a bevel.'''
         rect = self._limitRect()
-        color = QtGui.QColor('#d8c8f0' if enabled else '#d8d8d8')
+        if enabled:
+            color = self._padColor.lighter(165)
+            color.setAlpha(180)
+        else:
+            color = QtGui.QColor(216, 216, 216, 180)
         painter.setPen(QtGui.QPen(color, 2.0))
         painter.setBrush(QtCore.Qt.BrushStyle.NoBrush)
         painter.drawArc(rect, 45 * 16, 135 * 16)
@@ -155,15 +207,14 @@ class QJoystick(QtWidgets.QWidget):
         rect = self._knobRect()
         c = rect.center()
         r = rect.width() / 2.
-        # Focal point offset toward top-left for the lighting illusion
         fx, fy = c.x() - 0.3 * r, c.y() - 0.3 * r
         grad = QtGui.QRadialGradient(c.x(), c.y(), r, fx, fy)
         if enabled:
-            grad.setColorAt(0., QtGui.QColor('#dce4ff'))
-            grad.setColorAt(1., QtGui.QColor('#2838a8'))
+            grad.setColorAt(0., self._knobColor.lighter(230))
+            grad.setColorAt(1., self._knobColor.darker(155))
         else:
-            grad.setColorAt(0., QtGui.QColor('#e0e0e8'))
-            grad.setColorAt(1., QtGui.QColor('#707080'))
+            grad.setColorAt(0., QtGui.QColor(224, 224, 232))
+            grad.setColorAt(1., QtGui.QColor(112, 112, 128))
         painter.setPen(QtCore.Qt.PenStyle.NoPen)
         painter.setBrush(QtGui.QBrush(grad))
         painter.drawEllipse(rect)
