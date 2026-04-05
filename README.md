@@ -1,5 +1,7 @@
 # QInstrument
 
+[![PyPI version](https://img.shields.io/pypi/v/QInstrument.svg)](https://pypi.org/project/QInstrument/)
+[![Documentation](https://readthedocs.org/projects/qinstrument/badge/?version=latest)](https://qinstrument.readthedocs.io/en/latest/)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
 A Qt-based framework for controlling scientific instruments over serial ports.
