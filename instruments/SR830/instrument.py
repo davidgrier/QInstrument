@@ -164,10 +164,10 @@ class QSR830(QSerialInstrument):
             Property name passed to ``registerProperty``.
         cmd : str
             SR830 command mnemonic (e.g. ``'FREQ'``).
-        dtype : type, optional
+        ptype : type, optional
             Value type: ``float`` (default), ``int``, or ``bool``.
         '''
-        if dtype is bool:
+        if ptype is bool:
             def getter(): return bool(self.getValue(f'{cmd}?', int))
             def setter(v): self.transmit(f'{cmd}{int(bool(v))}')
         else:
