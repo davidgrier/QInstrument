@@ -11,6 +11,7 @@ class QSR844Widget(QInstrumentWidget):
     def __init__(self, *args, device=None, **kwargs):
         device = device or QSR844().find()
         super().__init__(*args, device=device, **kwargs)
+        self.adjustSize()
 
 
 if __name__ == '__main__':

@@ -20,6 +20,8 @@ class QOpus(QSerialInstrument):
 
     Control
     -------
+    enable: bool
+        True: enable laser head and PSU. False: disable both.
     current : float [%]
         Diode current as a percentage of maximum.
     emission : bool
@@ -49,27 +51,28 @@ class QOpus(QSerialInstrument):
         Called once from ``__init__``. Subclasses that extend the property
         set should call ``super()._registerProperties()`` first.
         '''
-        self.registerProperty('power', ptype=float,
-                              getter=self._getPower,
-                              setter=lambda v: self.transmit(f'POWER={float(v)}'))
-        self.registerProperty('current', ptype=float,
-                              getter=self._getCurrent,
-                              setter=lambda v: self.transmit(f'CURRENT={float(v)}'))
-        self.registerProperty('emission', ptype=bool,
-                              getter=lambda: self._getPower() > 0,
-                              setter=self._setEmission)
-        self.registerProperty('laser_temperature', ptype=float, setter=None,
-                              getter=lambda: self._parseTemp('LASTEMP?'))
-        self.registerProperty('psu_temperature', ptype=float, setter=None,
-                              getter=lambda: self._parseTemp('PSUTEMP?'))
+        register = self.registerProperty
+        register('power', ptype=float,
+                 getter=self._getPower,
+                 setter=lambda v: self.transmit(f'POWER={float(v)}'))
+        register('current', ptype=float,
+                 getter=self._getCurrent,
+                 setter=lambda v: self.transmit(f'CURRENT={float(v)}'))
+        register('emission', ptype=bool,
+                 getter=lambda: self._getPower() > 0,
+                 setter=self._setEmission)
+        register('laser_temperature', ptype=float, setter=None,
+                 getter=lambda: self._parseTemp('LASTEMP?'))
+        register('psu_temperature', ptype=float, setter=None,
+                 getter=lambda: self._parseTemp('PSUTEMP?'))
 
     def identify(self) -> bool:
         '''Return True if the connected device identifies as an Opus laser.
 
-        Queries the firmware version (``VERSION?``) and checks for the
+        Queries the firmware version and checks for the
         ``'MPC-D'`` controller model token in the response.
         '''
-        return 'MPC-D' in self.handshake('VERSION?')
+        return 'MPC-D' in self.version()
 
     def _getPower(self) -> float:
         '''Query and return the actual output power [mW].
