@@ -127,6 +127,26 @@ class QLedWidget(QtWidgets.QWidget):
         if self.timer.isActive():
             self.timer.start(value)
 
+    def value(self) -> bool:
+        '''Return the LED state as a boolean.
+
+        Returns
+        -------
+        bool
+            ``True`` when the LED is :attr:`ON`, ``False`` when :attr:`OFF`.
+        '''
+        return self.state == self.ON
+
+    def setValue(self, value: bool) -> None:
+        '''Set the LED state from a boolean value.
+
+        Parameters
+        ----------
+        value : bool
+            ``True`` to turn the LED :attr:`ON`; ``False`` for :attr:`OFF`.
+        '''
+        self.state = self.ON if value else self.OFF
+
     @QtCore.Slot()
     def flipState(self) -> None:
         '''Toggle the LED between ON and OFF states.'''

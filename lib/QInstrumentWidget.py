@@ -154,6 +154,8 @@ class QInstrumentWidget(QtWidgets.QWidget):
         widget = self.__dict__.get(key)
         if isinstance(widget, QtWidgets.QWidget):
             getter = self._wmethod(widget, self.wgetter)
+            if getter is None:
+                return None
             return getter()
         logger.error(f'Unknown property {key}')
         return None
@@ -180,6 +182,9 @@ class QInstrumentWidget(QtWidgets.QWidget):
             logger.error(f'Unknown property {key}')
             return
         setter = self._wmethod(widget, self.wsetter)
+        if setter is None:
+            logger.debug(f'No setter for widget type of {key!r}; skipping')
+            return
         syncing = value is None
         if syncing:
             value = self.device.get(key)
@@ -191,8 +196,13 @@ class QInstrumentWidget(QtWidgets.QWidget):
         if syncing:
             widget.blockSignals(False)
 
-    def _wmethod(self, widget: QtWidgets.QWidget, method: dict) -> callable:
+    def _wmethod(self,
+                 widget: QtWidgets.QWidget,
+                 method: dict) -> 'callable | None':
         '''Return the bound method named by *method* for *widget*'s type.
+
+        Returns ``None`` if the widget's class is not in *method*, so
+        callers can skip unknown widget types without raising.
 
         Parameters
         ----------
@@ -203,7 +213,10 @@ class QInstrumentWidget(QtWidgets.QWidget):
             mapping widget class name to method name.
         '''
         typeName = widget.metaObject().className()
-        return getattr(widget, method[typeName])
+        name = method.get(typeName)
+        if name is None:
+            return None
+        return getattr(widget, name)
 
     @classmethod
     def _uiPath(cls) -> Path:

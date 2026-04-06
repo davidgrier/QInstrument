@@ -6,8 +6,7 @@ logger = logging.getLogger(__name__)
 
 
 class QIPGLaser(QSerialInstrument):
-    '''IPG Photonics YLR Ytterbium Fiber Laser
-
+    '''IPG Photonics YLR Ytterbium Fiber Laser.
 
     The IPG command interface does not follow the ``CMD?`` / ``CMDvalue``
     convention used by SRS instruments.  Each command is a short mnemonic
@@ -22,53 +21,43 @@ class QIPGLaser(QSerialInstrument):
 
     Control
     -------
-    current_setpoint : float [%]
-        Diode current as a percentage of maximum.
-        Range: 0–100.  Values below ``minimum_current`` produce no
-        laser output.  Values above ``maximum_current`` are clamped
-        and a warning is logged.  Commands ``SDC``; read back via
-        ``RCS``.
+    current : float [%]
+        Diode current setpoint as a percentage of maximum.
+        Range: ``minimum_current``--``maximum_current``.  Commands
+        ``SDC``; read back via ``RCS``.
     maximum_current : float [%]
-        Software upper bound on the diode current setpoint.
-        Range: 0–100.  Default: 25.
-        Any attempt to set ``current_setpoint`` above this value is
-        silently clamped and a warning is logged.  Raise this limit
-        deliberately and only after verifying that the higher power
-        level is safe for the application.
-    minimum_current : float [%]
-        Minimum effective diode current as a percentage of maximum.
-        The laser does not lase below this value.  Read-only (``RNC``).
+        Software upper bound on the current setpoint.
+        Range: 0--100.  Default: 100.  Values above this limit are
+        clamped and a warning is logged.
     aiming : bool
-        True: aiming beam on. False: aiming beam off.
+        True: aiming beam on (``ABN``). False: aiming beam off (``ABF``).
     emission : bool
-        True: laser emission enabled. False: emission off.
-
-    Safety
-    ======
-    ``maximum_current`` defaults to 25 % to limit output power during
-    commissioning and alignment.  The ``current_setpoint`` setter
-    enforces this bound in software: values that exceed
-    ``maximum_current`` are clamped and a ``WARNING``-level log
-    message is emitted, making unintended over-power attempts visible
-    in the application log.  This is a software safeguard only and
-    does not replace hardware interlocks or other safety measures
-    required by your laser safety program.
+        True: laser emission enabled (``EMON``).
+        False: emission off (``EMOFF``).
 
     Status (read-only)
     ------------------
+    power : float [W]
+        Current output power (``ROP``).
+    power_supply : bool
+        True: power supply is on.
+    keyswitch : bool
+        True: keyswitch in REM (remote) position.
     fault : bool
         True: one or more fault conditions are active.
         Fault conditions: over-temperature, excessive backreflection,
         power supply off, unexpected emission detected.
-    keyswitch : bool
-        True: keyswitch in REM (remote) position.
-    power : float [W]
-        Current output power.
+    minimum_current : float [%]
+        Minimum effective diode current percentage.  Read once at
+        startup via ``RNC`` and cached for the session.
+    firmware : str
+        Firmware version string (``RFV``).
+    temperature : float [deg C]
+        Laser diode temperature (``RCT``).
 
     Reference
     =========
-    IPG Photonics Fiber Laser User Manual
-    Dated February 26, 2010.
+    IPG Photonics Fiber Laser User Manual, dated February 26, 2010.
 
     Interface Commands
     |---------+--------------------------+--------------------------|
@@ -111,7 +100,6 @@ class QIPGLaser(QSerialInstrument):
     |         | multiple of 0.2 s        |                          |
     | RFWS    | Read Filter Window Size  | RFWS: v                  |
     |---------+--------------------------+--------------------------|
-
     '''
 
     flag = {'TMP': 0x2,        # over-temperature condition
@@ -139,23 +127,22 @@ class QIPGLaser(QSerialInstrument):
     def _registerProperties(self) -> None:
         '''Register all instrument properties via ``registerProperty()``.
 
-        Called once from ``__init__``. Subclasses that extend the property
-        set should call ``super()._registerProperties()`` first.
+        Called once from ``__init__``.  ``minimum_current`` defaults to
+        ``0.`` until ``identify()`` reads the hardware value at open time.
+        Subclasses that extend the property set should call
+        ``super()._registerProperties()`` first.
         '''
-        self._maximum_current = 25.
-        self.registerProperty('current_setpoint', ptype=float,
+        self._minimum_current = getattr(self, '_minimum_current', 0.)
+        self._maximum_current = getattr(self, '_maximum_current', 100.)
+        self.registerProperty('current', ptype=float,
                               getter=lambda: float(self._command('RCS')),
-                              setter=self._setCurrentSetpoint,
+                              setter=self._setCurrent,
                               minimum=0., maximum=100.,
                               debounce=500)
         self.registerProperty('maximum_current', ptype=float,
                               getter=lambda: self._maximum_current,
                               setter=self._setMaximumCurrent,
                               minimum=0., maximum=100.)
-        self.registerProperty('minimum_current', ptype=float, setter=None,
-                              getter=lambda: float(self._command('RNC')))
-        self.registerProperty('keyswitch', ptype=bool, setter=None,
-                              getter=lambda: self._flagSet('KEY'))
         self.registerProperty('aiming', ptype=bool,
                               getter=lambda: self._flagSet('AIM'),
                               setter=self._setAiming)
@@ -164,16 +151,31 @@ class QIPGLaser(QSerialInstrument):
                               setter=self._setEmission)
         self.registerProperty('power', ptype=float, setter=None,
                               getter=self._getPower)
+        self.registerProperty('power_supply', ptype=bool, setter=None,
+                              getter=lambda: not self._flagSet('PWR'))
+        self.registerProperty('keyswitch', ptype=bool, setter=None,
+                              getter=lambda: self._flagSet('KEY'))
         self.registerProperty('fault', ptype=bool, setter=None,
                               getter=lambda: self._flagSet('ERR'))
+        self.registerProperty('minimum_current', ptype=float, setter=None,
+                              getter=lambda: self._minimum_current)
+        self.registerProperty('firmware', ptype=str, setter=None,
+                              getter=lambda: self._command('RFV'))
+        self.registerProperty('temperature', ptype=float, setter=None,
+                              getter=lambda: float(self._command('RCT')))
 
     def identify(self) -> bool:
         '''Return True if the connected device responds as an IPG laser.
 
         Queries the firmware version string (``RFV``) and checks that the
-        response contains more than 3 characters.
+        response contains more than 3 characters.  On success, reads and
+        caches ``minimum_current`` via ``RNC``.
         '''
-        return len(self._command('RFV')) > 3
+        firmware = self._command('RFV')
+        if len(firmware) <= 3:
+            return False
+        self._minimum_current = float(self._command('RNC'))
+        return True
 
     def _command(self, cmd: str) -> str:
         '''Send a command and return the value portion of the echoed response.
@@ -235,12 +237,8 @@ class QIPGLaser(QSerialInstrument):
             return 0.1
         return float(value)
 
-    def _setCurrentSetpoint(self, v: float) -> None:
+    def _setCurrent(self, v: float) -> None:
         '''Set the diode current setpoint, clamped to ``maximum_current``.
-
-        Values above :attr:`maximum_current` are clamped and a warning
-        is logged.  The clamped value is sent to the instrument via
-        ``SDC``.
 
         Parameters
         ----------
@@ -251,9 +249,8 @@ class QIPGLaser(QSerialInstrument):
         clamped = min(float(v), limit)
         if clamped < float(v):
             logger.warning(
-                f'current_setpoint {v:.1f}% exceeds '
-                f'maximum_current {limit:.1f}%; '
-                f'clamped to {clamped:.1f}%')
+                f'current {v:.1f}% exceeds maximum_current '
+                f'{limit:.1f}%; clamped to {clamped:.1f}%')
         self._command(f'SDC {clamped:.1f}')
 
     def _setMaximumCurrent(self, v: float) -> None:
@@ -269,8 +266,7 @@ class QIPGLaser(QSerialInstrument):
         v = float(v)
         if not 0. <= v <= 100.:
             logger.warning(
-                f'maximum_current {v:.1f}% is out of '
-                f'range [0, 100]; ignored')
+                f'maximum_current {v:.1f}% out of range [0, 100]; ignored')
             return
         self._maximum_current = v
 
@@ -295,28 +291,27 @@ class QIPGLaser(QSerialInstrument):
         self._command('EMON' if bool(state) else 'EMOFF')
 
     def status(self) -> dict[str, bool | float]:
-        '''Return a snapshot of all status properties.
+        '''Return a snapshot of all polled status properties.
 
         Reads the status word (``STA``) and output power (``ROP``) once
-        each, avoiding the redundant ``STA`` queries that result from
-        reading flag-derived properties individually.  Intended for use
-        by the widget poll loop.
+        each, avoiding redundant ``STA`` queries.  Intended for use by
+        the widget poll loop.
 
         Returns
         -------
         dict[str, bool | float]
             Mapping of property name to current value for
-            ``current_setpoint``, ``keyswitch``, ``aiming``,
-            ``emission``, ``fault``, and ``power``.
+            ``power_supply``, ``keyswitch``, ``aiming``, ``emission``,
+            ``fault``, and ``power``.
         '''
         flags = self._flags()
         return {
-            'current_setpoint': float(self._command('RCS')),
-            'keyswitch':        bool(flags & self.flag['KEY']),
-            'aiming':           bool(flags & self.flag['AIM']),
-            'emission':         bool(flags & self.flag['EMX']),
-            'fault':            bool(flags & self.flag['ERR']),
-            'power':            self._getPower(),
+            'power_supply': not bool(flags & self.flag['PWR']),
+            'keyswitch':    bool(flags & self.flag['KEY']),
+            'aiming':       bool(flags & self.flag['AIM']),
+            'emission':     bool(flags & self.flag['EMX']),
+            'fault':        bool(flags & self.flag['ERR']),
+            'power':        self._getPower(),
         }
 
     def fault_detail(self) -> list[str]:
@@ -339,29 +334,6 @@ class QIPGLaser(QSerialInstrument):
             ('UNX', 'unexpected emission'),
         ]
         return [label for key, label in conditions if flags & self.flag[key]]
-
-    def version(self) -> str:
-        '''Return the firmware version string.'''
-        return self._command('RFV')
-
-    def current(self) -> tuple[float, float, float]:
-        '''Return diode current diagnostic readings.
-
-        Returns
-        -------
-        tuple[float, float, float]
-            ``(actual [A], minimum [%], setpoint [%])`` — actual diode
-            current in Amps (``RDC``); minimum effective current and
-            setpoint as percentages of maximum (``RNC``, ``RCS``).
-        '''
-        cur = float(self._command('RDC'))
-        minimum = float(self._command('RNC'))
-        setpoint = float(self._command('RCS'))
-        return cur, minimum, setpoint
-
-    def temperature(self) -> float:
-        '''Return the laser diode temperature [°C].'''
-        return float(self._command('RCT'))
 
 
 if __name__ == '__main__':

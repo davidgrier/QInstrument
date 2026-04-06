@@ -76,6 +76,20 @@ class QRotaryEncoderSpinBox(QWidget):
             setattr(self, method,
                     getattr(self._spinbox, method))
 
+    def title(self) -> str:
+        '''Return the title label text.'''
+        return self.label.text()
+
+    def setTitle(self, text: str) -> None:
+        '''Set the title label text displayed above the spinbox.
+
+        Parameters
+        ----------
+        text : str
+            Label text.  Pass an empty string to hide the label.
+        '''
+        self.label.setText(text)
+
     def colors(self) -> tuple[str, str] | None:
         '''Return the current color pair, or ``None``.'''
         return self._colors
