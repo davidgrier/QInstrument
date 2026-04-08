@@ -12,3 +12,7 @@ Laser Quantum Opus
 .. autoclass:: QInstrument.instruments.Opus.widget.QOpusWidget
    :members:
    :show-inheritance:
+
+.. autoclass:: QInstrument.instruments.Opus.tree.QOpusTree
+   :members:
+   :show-inheritance:

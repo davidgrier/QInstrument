@@ -54,6 +54,7 @@ autodoc_mock_imports = [
     'PySide6',
     'qtpy',
     'numpy',
+    'pyqtgraph',
 ]
 
 # intersphinx: link to external package docs

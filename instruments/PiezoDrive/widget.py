@@ -5,7 +5,6 @@ from pathlib import Path
 from qtpy import QtCore
 from QInstrument.lib.QInstrumentWidget import QInstrumentWidget
 from QInstrument.instruments.PiezoDrive.instrument import QPDUS210
-from QInstrument.instruments.PiezoDrive.fake import QFakePDUS210
 
 logger = logging.getLogger(__name__)
 
@@ -19,12 +18,10 @@ class QPDUS210Widget(QInstrumentWidget):
     '''
 
     UIFILE = str(Path(__file__).parent / 'PDUS210Widget.ui')
-    FAKEDEVICE = QFakePDUS210
+    INSTRUMENT = QPDUS210
 
-    def __init__(self, *args, device: QPDUS210 | None = None,
-                 interval: int | None = None, **kwargs) -> None:
-        device = device or QPDUS210().find()
-        super().__init__(*args, device=device, **kwargs)
+    def __init__(self, *args, interval: int | None = None, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
         self._timer = QtCore.QTimer(self)
         self._timer.timeout.connect(self._poll)
         if self.device is not None and self.device.isOpen():

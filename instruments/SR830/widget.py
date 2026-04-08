@@ -7,10 +7,7 @@ class QSR830Widget(QInstrumentWidget):
     '''
 
     UIFILE = 'SR830Widget.ui'
-
-    def __init__(self, *args, device=None, **kwargs):
-        device = device or QSR830().find()
-        super().__init__(*args, device=device, **kwargs)
+    INSTRUMENT = QSR830
 
 
 if __name__ == '__main__':

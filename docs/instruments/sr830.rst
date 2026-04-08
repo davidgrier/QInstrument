@@ -12,3 +12,7 @@ SR830 Lock-in Amplifier
 .. autoclass:: QInstrument.instruments.SR830.widget.QSR830Widget
    :members:
    :show-inheritance:
+
+.. autoclass:: QInstrument.instruments.SR830.tree.QSR830Tree
+   :members:
+   :show-inheritance:

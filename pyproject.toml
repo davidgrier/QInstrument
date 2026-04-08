@@ -30,6 +30,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+tree = [
+    "pyqtgraph>=0.13",
+]
 docs = [
     "sphinx>=7.0",
     "pydata-sphinx-theme>=0.15",

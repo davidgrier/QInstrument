@@ -5,7 +5,6 @@ from pathlib import Path
 from qtpy import QtCore
 from QInstrument.lib.QInstrumentWidget import QInstrumentWidget
 from QInstrument.instruments.Proscan.instrument import QProscan
-from QInstrument.instruments.Proscan.fake import QFakeProscan
 
 logger = logging.getLogger(__name__)
 
@@ -19,12 +18,10 @@ class QProscanWidget(QInstrumentWidget):
     '''
 
     UIFILE = str(Path(__file__).parent / 'ProscanWidget.ui')
-    FAKEDEVICE = QFakeProscan
+    INSTRUMENT = QProscan
 
-    def __init__(self, *args, device: QProscan | None = None,
-                 interval: int | None = None, **kwargs) -> None:
-        device = device or QProscan().find()
-        super().__init__(*args, device=device, **kwargs)
+    def __init__(self, *args, interval: int | None = None, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
         self.joystick.setRange(-200., 200.)
         self._timer = QtCore.QTimer(self)
         self._timer.timeout.connect(self._poll)

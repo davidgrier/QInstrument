@@ -82,6 +82,40 @@ Access instrument properties programmatically
        ds345.set('frequency', 1000.0)
        ds345.close()
 
+Use a parameter tree
+--------------------
+
+Each instrument also ships a :class:`~QInstrument.lib.QInstrumentTree.QInstrumentTree`
+that presents all registered properties and methods in a
+:class:`pyqtgraph.parametertree.ParameterTree` — no ``.ui`` file
+required.  Install the optional dependency first:
+
+.. code-block:: bash
+
+   pip install 'QInstrument[tree]'
+
+Then use the tree the same way as the widget:
+
+.. code-block:: python
+
+   from qtpy.QtWidgets import QApplication
+   from QInstrument.instruments.DS345 import QDS345Tree
+
+   app = QApplication([])
+   tree = QDS345Tree()
+   tree.show()
+   app.exec()
+
+Run a single tree from the command line:
+
+.. code-block:: bash
+
+   python -m QInstrument.instruments.DS345.tree
+
+The tree reflects live device changes (e.g. from a polling timer) and
+forwards user edits to the device.  Read-only properties are displayed
+but cannot be edited; registered methods appear as buttons.
+
 Rate-limit sensitive properties
 --------------------------------
 

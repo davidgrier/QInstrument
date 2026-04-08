@@ -247,7 +247,7 @@ class QAbstractInstrument(QtCore.QObject):
                 return {}
             info = self._properties[name].copy()
         info.pop('getter', None)
-        info.pop('setter', None)
+        info['readonly'] = info.pop('setter', None) is None
         return info
 
     @QtCore.Slot(str)

@@ -7,10 +7,10 @@ class QDS345Widget(QInstrumentWidget):
     '''
 
     UIFILE = 'DS345Widget.ui'
+    INSTRUMENT = QDS345
 
-    def __init__(self, *args, device=None, **kwargs):
-        device = device or QDS345().find()
-        super().__init__(*args, device=device, **kwargs)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.adjustSize()
 
 

@@ -12,3 +12,7 @@ SR844 RF Lock-in Amplifier
 .. autoclass:: QInstrument.instruments.SR844.widget.QSR844Widget
    :members:
    :show-inheritance:
+
+.. autoclass:: QInstrument.instruments.SR844.tree.QSR844Tree
+   :members:
+   :show-inheritance:

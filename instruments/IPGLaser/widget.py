@@ -19,6 +19,7 @@ class QIPGLaserWidget(QInstrumentWidget):
     '''
 
     UIFILE = 'IPGLaserWidget.ui'
+    INSTRUMENT = QIPGLaser
     poll_interval = 500  # ms
 
     wsetter = QInstrumentWidget.wsetter | {
@@ -33,9 +34,8 @@ class QIPGLaserWidget(QInstrumentWidget):
         'QRotaryEncoderSpinBox': 'valueChanged',
     }
 
-    def __init__(self, *args, device=None, **kwargs) -> None:
-        device = device or QIPGLaser().find()
-        super().__init__(*args, device=device, **kwargs)
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
         self._timer = QtCore.QTimer(self)
         self._timer.setInterval(self.poll_interval)
         self._timer.timeout.connect(self._poll)

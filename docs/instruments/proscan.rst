@@ -12,3 +12,7 @@ Prior Proscan Stage Controller
 .. autoclass:: QInstrument.instruments.Proscan.widget.QProscanWidget
    :members:
    :show-inheritance:
+
+.. autoclass:: QInstrument.instruments.Proscan.tree.QProscanTree
+   :members:
+   :show-inheritance:

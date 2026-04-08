@@ -36,6 +36,11 @@ class QInstrumentWidget(QtWidgets.QWidget):
     UIFILE : str | None
         Filename of the Qt Designer ``.ui`` file.  Must be set by each
         subclass.
+    INSTRUMENT : type | None
+        Concrete instrument class to instantiate and search for when no
+        ``device`` is supplied to ``__init__``.  When set, the base class
+        calls ``INSTRUMENT().find()`` automatically so subclasses need not
+        override ``__init__`` solely to locate the device.
     wsetter : dict[str, str]
         Maps widget class name to its value-setter method name.
     wgetter : dict[str, str]
@@ -80,6 +85,7 @@ class QInstrumentWidget(QtWidgets.QWidget):
                'QSpinBox':       'valueChanged'}
 
     UIFILE: str | None = None
+    INSTRUMENT: type | None = None
 
     propertyChanged = QtCore.Signal(str, object)
 
@@ -89,6 +95,8 @@ class QInstrumentWidget(QtWidgets.QWidget):
         self._configure = Configure()
         self._restored = False
         uic.loadUi(self._uiPath(), self)
+        if device is None and self.INSTRUMENT is not None:
+            device = self.INSTRUMENT().find()
         self.device = device
 
     @QtCore.Property(object)
