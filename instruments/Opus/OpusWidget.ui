@@ -1,380 +1,258 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>Form</class>
- <widget class="QWidget" name="Form">
-  <property name="geometry">
-   <rect>
-    <x>0</x>
-    <y>0</y>
-    <width>450</width>
-    <height>280</height>
-   </rect>
-  </property>
-  <property name="minimumSize">
-   <size>
-    <width>450</width>
-    <height>280</height>
-   </size>
-  </property>
-  <property name="maximumSize">
-   <size>
-    <width>450</width>
-    <height>280</height>
-   </size>
-  </property>
-  <property name="font">
-   <font>
-    <weight>50</weight>
-    <bold>false</bold>
-   </font>
-  </property>
+ <class>OpusWidget</class>
+ <widget class="QWidget" name="OpusWidget">
   <property name="windowTitle">
-   <string>Form</string>
+   <string>Opus DPSS Laser</string>
   </property>
-  <widget class="QRadioButton" name="EnableSwitch">
-   <property name="enabled">
-    <bool>false</bool>
+  <layout class="QHBoxLayout" name="outerLayout">
+   <property name="spacing">
+    <number>6</number>
    </property>
-   <property name="geometry">
-    <rect>
-     <x>30</x>
-     <y>20</y>
-     <width>121</width>
-     <height>31</height>
-    </rect>
+   <property name="leftMargin">
+    <number>6</number>
    </property>
-   <property name="minimumSize">
-    <size>
-     <width>0</width>
-     <height>31</height>
-    </size>
+   <property name="topMargin">
+    <number>6</number>
    </property>
-   <property name="font">
-    <font>
-     <pointsize>16</pointsize>
-    </font>
+   <property name="rightMargin">
+    <number>6</number>
    </property>
-   <property name="text">
-    <string>Enabled</string>
+   <property name="bottomMargin">
+    <number>6</number>
    </property>
-   <property name="iconSize">
-    <size>
-     <width>16</width>
-     <height>16</height>
-    </size>
-   </property>
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="checked">
-    <bool>false</bool>
-   </property>
-   <property name="autoExclusive">
-    <bool>false</bool>
-   </property>
-  </widget>
-  <widget class="QDoubleSpinBox" name="CurrentBox">
-   <property name="geometry">
-    <rect>
-     <x>260</x>
-     <y>200</y>
-     <width>141</width>
-     <height>24</height>
-    </rect>
-   </property>
-   <property name="readOnly">
-    <bool>true</bool>
-   </property>
-   <property name="buttonSymbols">
-    <enum>QAbstractSpinBox::NoButtons</enum>
-   </property>
-   <property name="prefix">
-    <string>Current  </string>
-   </property>
-   <property name="suffix">
-    <string>%</string>
-   </property>
-   <property name="maximum">
-    <double>100.000000000000000</double>
-   </property>
-  </widget>
-  <widget class="QDoubleSpinBox" name="Power">
-   <property name="geometry">
-    <rect>
-     <x>260</x>
-     <y>20</y>
-     <width>141</width>
-     <height>24</height>
-    </rect>
-   </property>
-   <property name="palette">
-    <palette>
-     <active>
-      <colorrole role="Highlight">
-       <brush brushstyle="SolidPattern">
-        <color alpha="255">
-         <red>255</red>
-         <green>255</green>
-         <blue>255</blue>
-        </color>
-       </brush>
-      </colorrole>
-      <colorrole role="HighlightedText">
-       <brush brushstyle="SolidPattern">
-        <color alpha="255">
-         <red>0</red>
-         <green>0</green>
-         <blue>0</blue>
-        </color>
-       </brush>
-      </colorrole>
-     </active>
-     <inactive>
-      <colorrole role="Highlight">
-       <brush brushstyle="SolidPattern">
-        <color alpha="255">
-         <red>255</red>
-         <green>255</green>
-         <blue>255</blue>
-        </color>
-       </brush>
-      </colorrole>
-      <colorrole role="HighlightedText">
-       <brush brushstyle="SolidPattern">
-        <color alpha="255">
-         <red>0</red>
-         <green>0</green>
-         <blue>0</blue>
-        </color>
-       </brush>
-      </colorrole>
-     </inactive>
-     <disabled>
-      <colorrole role="Highlight">
-       <brush brushstyle="SolidPattern">
-        <color alpha="255">
-         <red>145</red>
-         <green>145</green>
-         <blue>145</blue>
-        </color>
-       </brush>
-      </colorrole>
-      <colorrole role="HighlightedText">
-       <brush brushstyle="SolidPattern">
-        <color alpha="255">
-         <red>0</red>
-         <green>0</green>
-         <blue>0</blue>
-        </color>
-       </brush>
-      </colorrole>
-     </disabled>
-    </palette>
-   </property>
-   <property name="font">
-    <font>
-     <weight>50</weight>
-     <bold>false</bold>
-     <strikeout>false</strikeout>
-    </font>
-   </property>
-   <property name="alignment">
-    <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-   </property>
-   <property name="buttonSymbols">
-    <enum>QAbstractSpinBox::NoButtons</enum>
-   </property>
-   <property name="suffix">
-    <string> mW</string>
-   </property>
-   <property name="maximum">
-    <double>5000.000000000000000</double>
-   </property>
-  </widget>
-  <widget class="QRotaryEncoder" name="PowerDial">
-   <property name="geometry">
-    <rect>
-     <x>260</x>
-     <y>40</y>
-     <width>141</width>
-     <height>171</height>
-    </rect>
-   </property>
-   <property name="minimumSize">
-    <size>
-     <width>100</width>
-     <height>95</height>
-    </size>
-   </property>
-   <property name="font">
-    <font>
-     <weight>50</weight>
-     <bold>false</bold>
-    </font>
-   </property>
-   <property name="maximum">
-    <number>300</number>
-   </property>
-   <property name="wrapping">
-    <bool>false</bool>
-   </property>
-   <property name="notchTarget">
-    <double>30.000000000000000</double>
-   </property>
-   <property name="notchesVisible">
-    <bool>true</bool>
-   </property>
-  </widget>
-  <widget class="QDoubleSpinBox" name="ActualPower">
-   <property name="geometry">
-    <rect>
-     <x>260</x>
-     <y>230</y>
-     <width>141</width>
-     <height>24</height>
-    </rect>
-   </property>
-   <property name="palette">
-    <palette>
-     <active>
-      <colorrole role="Highlight">
-       <brush brushstyle="SolidPattern">
-        <color alpha="255">
-         <red>255</red>
-         <green>255</green>
-         <blue>255</blue>
-        </color>
-       </brush>
-      </colorrole>
-      <colorrole role="HighlightedText">
-       <brush brushstyle="SolidPattern">
-        <color alpha="255">
-         <red>0</red>
-         <green>0</green>
-         <blue>0</blue>
-        </color>
-       </brush>
-      </colorrole>
-     </active>
-     <inactive>
-      <colorrole role="Highlight">
-       <brush brushstyle="SolidPattern">
-        <color alpha="255">
-         <red>255</red>
-         <green>255</green>
-         <blue>255</blue>
-        </color>
-       </brush>
-      </colorrole>
-      <colorrole role="HighlightedText">
-       <brush brushstyle="SolidPattern">
-        <color alpha="255">
-         <red>0</red>
-         <green>0</green>
-         <blue>0</blue>
-        </color>
-       </brush>
-      </colorrole>
-     </inactive>
-     <disabled>
-      <colorrole role="Highlight">
-       <brush brushstyle="SolidPattern">
-        <color alpha="255">
-         <red>145</red>
-         <green>145</green>
-         <blue>145</blue>
-        </color>
-       </brush>
-      </colorrole>
-      <colorrole role="HighlightedText">
-       <brush brushstyle="SolidPattern">
-        <color alpha="255">
-         <red>0</red>
-         <green>0</green>
-         <blue>0</blue>
-        </color>
-       </brush>
-      </colorrole>
-     </disabled>
-    </palette>
-   </property>
-   <property name="alignment">
-    <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-   </property>
-   <property name="readOnly">
-    <bool>true</bool>
-   </property>
-   <property name="buttonSymbols">
-    <enum>QAbstractSpinBox::NoButtons</enum>
-   </property>
-   <property name="prefix">
-    <string>Power  </string>
-   </property>
-   <property name="suffix">
-    <string> mW</string>
-   </property>
-   <property name="maximum">
-    <double>5000.000000000000000</double>
-   </property>
-  </widget>
-  <widget class="QPushButton" name="SendPower">
-   <property name="geometry">
-    <rect>
-     <x>170</x>
-     <y>20</y>
-     <width>71</width>
-     <height>31</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>SEND</string>
-   </property>
-  </widget>
-  <widget class="QCheckBox" name="sentCheck">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="geometry">
-    <rect>
-     <x>180</x>
-     <y>50</y>
-     <width>87</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Sent</string>
-   </property>
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="tristate">
-    <bool>false</bool>
-   </property>
-  </widget>
-  <widget class="QPushButton" name="Disable">
-   <property name="geometry">
-    <rect>
-     <x>30</x>
-     <y>60</y>
-     <width>91</width>
-     <height>31</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>DISABLE</string>
-   </property>
-  </widget>
+   <!-- Left column: title, read-only displays, emission control -->
+   <item>
+    <layout class="QVBoxLayout" name="leftLayout">
+     <property name="spacing">
+      <number>4</number>
+     </property>
+     <!-- Title -->
+     <item>
+      <widget class="QLabel" name="titleLabel">
+       <property name="text">
+        <string>Opus Diode Laser</string>
+       </property>
+       <property name="font">
+        <font>
+         <bold>true</bold>
+        </font>
+       </property>
+      </widget>
+     </item>
+     <!-- Read-only display row: actual power and diode current -->
+     <item>
+      <layout class="QHBoxLayout" name="displayLayout">
+       <property name="spacing">
+        <number>4</number>
+       </property>
+       <item>
+        <widget class="QGroupBox" name="powerGroup">
+         <property name="title">
+          <string>Power [W]</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>80</width>
+           <height>52</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>120</width>
+           <height>64</height>
+          </size>
+         </property>
+         <layout class="QVBoxLayout" name="powerSpinLayout">
+          <property name="leftMargin">
+           <number>4</number>
+          </property>
+          <property name="topMargin">
+           <number>2</number>
+          </property>
+          <property name="rightMargin">
+           <number>4</number>
+          </property>
+          <property name="bottomMargin">
+           <number>4</number>
+          </property>
+          <item>
+           <widget class="QDoubleSpinBox" name="power_display">
+            <property name="readOnly">
+             <bool>true</bool>
+            </property>
+            <property name="buttonSymbols">
+             <enum>QAbstractSpinBox::NoButtons</enum>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+            <property name="decimals">
+             <number>3</number>
+            </property>
+            <property name="maximum">
+             <double>9.999</double>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="currentGroup">
+         <property name="title">
+          <string>Current [%]</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>80</width>
+           <height>52</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>120</width>
+           <height>64</height>
+          </size>
+         </property>
+         <layout class="QVBoxLayout" name="currentSpinLayout">
+          <property name="leftMargin">
+           <number>4</number>
+          </property>
+          <property name="topMargin">
+           <number>2</number>
+          </property>
+          <property name="rightMargin">
+           <number>4</number>
+          </property>
+          <property name="bottomMargin">
+           <number>4</number>
+          </property>
+          <item>
+           <widget class="QDoubleSpinBox" name="current_display">
+            <property name="readOnly">
+             <bool>true</bool>
+            </property>
+            <property name="buttonSymbols">
+             <enum>QAbstractSpinBox::NoButtons</enum>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+            <property name="decimals">
+             <number>1</number>
+            </property>
+            <property name="maximum">
+             <double>100.0</double>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <!-- Emission: status LED + toggle button -->
+     <item>
+      <layout class="QHBoxLayout" name="controlLayout">
+       <property name="spacing">
+        <number>4</number>
+       </property>
+       <item>
+        <widget class="QLedWidget" name="emission">
+         <property name="minimumSize">
+          <size>
+           <width>20</width>
+           <height>20</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>24</width>
+           <height>24</height>
+          </size>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="emission_button">
+         <property name="text">
+          <string>Emission</string>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>60</width>
+           <height>0</height>
+          </size>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="controlSpacer">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>0</width>
+           <height>0</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </item>
+     <!-- Vertical spacer to fill remaining height beside the rotary encoder -->
+     <item>
+      <spacer name="verticalSpacer">
+       <property name="orientation">
+        <enum>Qt::Vertical</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>0</width>
+         <height>0</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+    </layout>
+   </item>
+   <!-- Right column: rotary encoder spinbox for power setpoint -->
+   <item>
+    <widget class="QRotaryEncoderSpinBox" name="power_setpoint">
+     <property name="minimumSize">
+      <size>
+       <width>100</width>
+       <height>0</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>120</width>
+       <height>16777215</height>
+      </size>
+     </property>
+    </widget>
+   </item>
+  </layout>
  </widget>
  <customwidgets>
   <customwidget>
-   <class>QRotaryEncoder</class>
-   <extends>QDial</extends>
-   <header>QInstrument.widgets.QRotaryEncoder</header>
-   <slots>
-    <signal>stepUp()</signal>
-    <signal>stepDown()</signal>
-   </slots>
+   <class>QLedWidget</class>
+   <extends>QWidget</extends>
+   <header>QInstrument.widgets.QLedWidget</header>
+  </customwidget>
+  <customwidget>
+   <class>QRotaryEncoderSpinBox</class>
+   <extends>QWidget</extends>
+   <header>QInstrument.widgets.QRotaryEncoderSpinBox</header>
   </customwidget>
  </customwidgets>
  <resources/>

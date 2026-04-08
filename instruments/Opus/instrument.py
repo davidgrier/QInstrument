@@ -20,15 +20,21 @@ class QOpus(QSerialInstrument):
 
     Control
     -------
-    enable: bool
-        True: enable laser head and PSU. False: disable both.
+    power : float [mW]
+        Getter returns the actual output power.
+        Setter transmits a new power setpoint, clamped to ``maximum_power``.
+    maximum_power : float [mW]
+        Software upper bound on the power setpoint.  Default: 1000.
+        Not discoverable from the hardware; set at startup and persisted
+        via the saved configuration.
+    wavelength : float [nm]
+        Emission wavelength of the specific laser unit.  Default: 532.
+        Not discoverable from the hardware; set at startup and persisted
+        via the saved configuration.
     current : float [%]
         Diode current as a percentage of maximum.
     emission : bool
         True: laser emission enabled. False: emission disabled.
-    power : float [mW]
-        Getter returns the actual output power.
-        Setter transmits a new power setpoint.
 
     Status (read-only)
     ------------------
@@ -50,17 +56,31 @@ class QOpus(QSerialInstrument):
 
         Called once from ``__init__``. Subclasses that extend the property
         set should call ``super()._registerProperties()`` first.
+
+        ``maximum_power`` and ``wavelength`` are not discoverable from the
+        hardware at runtime.  They are initialised to defaults here and
+        restored from the saved configuration on the first widget show.
         '''
+        self._maximum_power = 1000.
+        self._wavelength = 532.
         register = self.registerProperty
         register('power', ptype=float,
                  getter=self._getPower,
-                 setter=lambda v: self.transmit(f'POWER={float(v)}'))
+                 setter=self._setPower)
+        register('maximum_power', ptype=float,
+                 getter=lambda: self._maximum_power,
+                 setter=self._setMaximumPower,
+                 minimum=0.)
+        register('wavelength', ptype=float,
+                 getter=lambda: self._wavelength,
+                 setter=lambda v: setattr(self, '_wavelength', float(v)))
         register('current', ptype=float,
                  getter=self._getCurrent,
                  setter=lambda v: self.transmit(f'CURRENT={float(v)}'))
         register('emission', ptype=bool,
                  getter=lambda: self._getPower() > 0,
                  setter=self._setEmission)
+        register('version', ptype=str, setter=None, getter=self.version)
         register('laser_temperature', ptype=float, setter=None,
                  getter=lambda: self._parseTemp('LASTEMP?'))
         register('psu_temperature', ptype=float, setter=None,
@@ -101,6 +121,39 @@ class QOpus(QSerialInstrument):
             Temperature query mnemonic (``'LASTEMP?'`` or ``'PSUTEMP?'``).
         '''
         return float(self.handshake(cmd).rstrip(' C°'))
+
+    def _setPower(self, v: float) -> None:
+        '''Transmit a new power setpoint, clamped to ``maximum_power``.
+
+        Parameters
+        ----------
+        v : float
+            Requested output power [mW].
+        '''
+        limit = self._maximum_power
+        clamped = min(float(v), limit)
+        if clamped < float(v):
+            logger.warning(
+                f'power {v:.1f} mW exceeds maximum_power '
+                f'{limit:.1f} mW; clamped to {clamped:.1f} mW')
+        self.transmit(f'POWER={clamped}')
+
+    def _setMaximumPower(self, v: float) -> None:
+        '''Set the software upper bound on the power setpoint.
+
+        Values at or below zero are rejected and a warning is logged.
+
+        Parameters
+        ----------
+        v : float
+            New maximum output power [mW].
+        '''
+        v = float(v)
+        if v <= 0.:
+            logger.warning(
+                f'maximum_power {v:.1f} mW must be positive; ignored')
+            return
+        self._maximum_power = v
 
     def _setEmission(self, state: bool) -> None:
         '''Enable or disable laser emission.

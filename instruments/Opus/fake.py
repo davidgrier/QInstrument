@@ -12,19 +12,35 @@ class QFakeOpus(QFakeInstrument, QOpus):
     '''
 
     def _registerProperties(self) -> None:
-        self.registerProperty('power', ptype=float,
-                              getter=lambda: self._store.get('power', 0.),
-                              setter=lambda v: self._store.__setitem__('power', float(v)))
-        self.registerProperty('current', ptype=float,
-                              getter=lambda: self._store.get('current', 0.),
-                              setter=lambda v: self._store.__setitem__('current', float(v)))
-        self.registerProperty('emission', ptype=bool,
-                              getter=lambda: self._store.get('emission', False),
-                              setter=lambda v: self._store.__setitem__('emission', bool(v)))
-        self.registerProperty('laser_temperature', ptype=float, setter=None,
-                              getter=lambda: self._store.get('laser_temperature', 25.))
-        self.registerProperty('psu_temperature', ptype=float, setter=None,
-                              getter=lambda: self._store.get('psu_temperature', 25.))
+        self.registerProperty(
+            'power', ptype=float,
+            getter=lambda: self._store.get('power', 0.),
+            setter=lambda v: self._store.__setitem__(
+                'power',
+                min(float(v), self._store.get('maximum_power', 1000.))))
+        self.registerProperty(
+            'maximum_power', ptype=float,
+            getter=lambda: self._store.get('maximum_power', 1000.),
+            setter=lambda v: self._store.__setitem__('maximum_power', float(v)),
+            minimum=0.)
+        self.registerProperty(
+            'wavelength', ptype=float,
+            getter=lambda: self._store.get('wavelength', 532.),
+            setter=lambda v: self._store.__setitem__('wavelength', float(v)))
+        self.registerProperty(
+            'current', ptype=float,
+            getter=lambda: self._store.get('current', 0.),
+            setter=lambda v: self._store.__setitem__('current', float(v)))
+        self.registerProperty(
+            'emission', ptype=bool,
+            getter=lambda: self._store.get('emission', False),
+            setter=lambda v: self._store.__setitem__('emission', bool(v)))
+        self.registerProperty(
+            'laser_temperature', ptype=float, setter=None,
+            getter=lambda: self._store.get('laser_temperature', 25.))
+        self.registerProperty(
+            'psu_temperature', ptype=float, setter=None,
+            getter=lambda: self._store.get('psu_temperature', 25.))
         self.identification = 'Fake Laser Quantum Opus Laser'
 
 
