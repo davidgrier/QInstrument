@@ -172,10 +172,10 @@ class QInstrumentRack(QtWidgets.QWidget):
     def addInstrumentByName(self, name: str) -> None:
         '''Add an instrument widget by its bare instrument name.
 
-        Looks for
-        ``QInstrument.instruments.<name>.widget.Q<name>Widget``
-        and instantiates it.  Logs a warning and does nothing
-        if the module or class cannot be found.
+        Searches manufacturer subdirectories under ``instruments/``
+        for a package named ``name`` that contains a ``widget.py``,
+        then instantiates ``Q<name>Widget``.  Logs a warning and does
+        nothing if the instrument or widget class cannot be found.
 
         Parameters
         ----------
@@ -183,7 +183,10 @@ class QInstrumentRack(QtWidgets.QWidget):
             Bare instrument name without the ``Q`` prefix or
             ``Widget`` suffix (e.g. ``'DS345'``).
         '''
-        modulename = f'QInstrument.instruments.{name}.widget'
+        modulename = self._findInstrumentModule(name)
+        if modulename is None:
+            logger.warning(f"Instrument '{name}' not found.")
+            return
         widgetname = f'Q{name}Widget'
         try:
             mod = importlib.import_module(modulename)
@@ -220,8 +223,10 @@ class QInstrumentRack(QtWidgets.QWidget):
     def availableInstruments(cls) -> list[str]:
         '''Return names of all instruments that have a widget module.
 
-        Scans the ``instruments/`` directory for subpackages that
-        contain a ``widget.py`` file.
+        Scans the ``instruments/`` directory two levels deep for
+        subpackages that contain a ``widget.py`` file.  Instruments
+        are organised under manufacturer subdirectories; only the bare
+        instrument name is returned.
 
         Returns
         -------
@@ -229,10 +234,41 @@ class QInstrumentRack(QtWidgets.QWidget):
             Sorted list of bare instrument names.
         '''
         instruments_dir = Path(__file__).parent / 'instruments'
-        return sorted(
-            p.name for p in instruments_dir.iterdir()
-            if p.is_dir() and (p / 'widget.py').exists()
-        )
+        names = []
+        for mfr in instruments_dir.iterdir():
+            if not mfr.is_dir() or mfr.name.startswith('_'):
+                continue
+            for inst in mfr.iterdir():
+                if inst.is_dir() and (inst / 'widget.py').exists():
+                    names.append(inst.name)
+        return sorted(names)
+
+    @classmethod
+    def _findInstrumentModule(cls, name: str) -> str | None:
+        '''Resolve a bare instrument name to its full module path.
+
+        Searches manufacturer subdirectories under ``instruments/``
+        for a directory matching ``name`` that contains a ``widget.py``.
+
+        Parameters
+        ----------
+        name : str
+            Bare instrument name (e.g. ``'DS345'``).
+
+        Returns
+        -------
+        str | None
+            Dotted module path for the widget module, or ``None`` if
+            not found.
+        '''
+        instruments_dir = Path(__file__).parent / 'instruments'
+        for mfr in instruments_dir.iterdir():
+            if not mfr.is_dir() or mfr.name.startswith('_'):
+                continue
+            inst = mfr / name
+            if inst.is_dir() and (inst / 'widget.py').exists():
+                return f'QInstrument.instruments.{mfr.name}.{name}.widget'
+        return None
 
     def _removeInstrument(self, name: str) -> None:
         for i in range(self._slots.count()):

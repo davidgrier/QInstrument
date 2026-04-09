@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 QInstrument is a framework for controlling scientific instruments over serial ports. It provides a property registration system, automatic UI binding, and JSON-based configuration persistence. It targets any installed Qt binding (PyQt5, PyQt6, PySide2, PySide6) via `qtpy`.
 
-Active development happens on the `devel` branch. The `lib/` foundations are fully migrated to the current design. Instrument classes are being migrated one by one; `instruments/DS345/` is the archetype for that work.
+All `lib/` foundations and all instrument classes are fully migrated. Instruments are organised under `instruments/<Manufacturer>/<Name>/`; `instruments/StanfordResearch/DS345/` is the reference implementation.
 
 ## Development Commands
 
@@ -23,7 +23,7 @@ python -m QInstrument DS345 SR830
 
 Run a specific instrument widget interactively:
 ```bash
-python -m QInstrument.instruments.DS345.widget
+python -m QInstrument.instruments.StanfordResearch.DS345.widget
 ```
 
 Tests cover `QSerialInterface` and `QInstrumentWidget`; run with `pytest tests/`. No build step or linter configuration.
@@ -60,20 +60,36 @@ Instruments *possess* an interface rather than *being* one. `QSerialInstrument` 
 
 **`lib/Configure.py`** — Saves/restores `object.settings` as JSON to `~/.QInstrument/<ClassName>.json`. Also provides timestamped data filenames under `~/data/`. Used directly by `QInstrumentWidget` and `QInstrumentRack`; any object with a `settings` dict property can use it.
 
-**`QInstrumentRack.py`** — Top-level widget that holds multiple `QInstrumentWidget` instances in a vertical layout. Provides an "Add instrument…" toolbar button (opens a picker dialog built from `availableInstruments()`, which scans `instruments/` for subpackages with `widget.py`) and a right-click context menu on each slot for removal. Persists the instrument list via `Configure` using the same `_shown`-gated save/restore pattern as `QInstrumentWidget`. `python -m QInstrument [NAME ...]` and the installed `qinstrument` CLI both use this as the entry point; bare invocation restores the last session.
+**`QInstrumentRack.py`** — Top-level widget that holds multiple `QInstrumentWidget` instances in a vertical layout. Provides an "Add instrument…" toolbar button (opens a picker dialog built from `availableInstruments()`, which scans `instruments/` two levels deep for `<Manufacturer>/<Name>/` subpackages that contain a `widget.py`) and a right-click context menu on each slot for removal. `addInstrumentByName()` resolves a bare instrument name (e.g. `'DS345'`) to its full module path by searching manufacturer subdirectories. Persists the instrument list via `Configure` using the same `_shown`-gated save/restore pattern as `QInstrumentWidget`. `python -m QInstrument [NAME ...]` and the installed `qinstrument` CLI both use this as the entry point; bare invocation restores the last session.
 
 **`lib/QFakeInstrument.py`** — Mock instrument base for UI development without hardware.
 
 ### Adding a New Instrument
 
-Each instrument lives in `instruments/<Name>/` and follows this pattern:
+Instruments are organised under `instruments/<Manufacturer>/<Name>/`.
+If the manufacturer directory does not yet exist, create it with an
+empty `__init__.py` and add it to the `packages` list in
+`pyproject.toml`.
+
+Each instrument package follows this pattern:
 
 1. **`instrument.py`** — Inherits `QSerialInstrument`. Define a `comm` class attribute with serial parameters. In `__init__`, call `super().__init__(portName, **kwargs)` then `_registerProperties()` and `_registerMethods()`. Implement `identify()` to verify the connected device.
 2. **`fake.py`** — Inherits `QFakeInstrument`. Mirrors the same properties for UI testing without hardware.
 3. **`widget.py`** — Inherits `QInstrumentWidget`. Points to a `.ui` file; widget names must match registered property names for auto-binding to work. Set `FAKEDEVICE` to the fake class so `example()` can fall back to it.
-4. **`__init__.py`** — Exports the main classes by name: `from .instrument import QName`, etc.
+4. **`tree.py`** — Inherits `QInstrumentTree`. Declares `INSTRUMENT = QName`. No other code required.
+5. **`__init__.py`** — Lazy-loads the main classes: `QName`, `QFakeName`, `QNameWidget`.
+6. **`pyproject.toml`** — Add `"QInstrument.instruments.<Manufacturer>.<Name>"` to the `packages` list.
 
-See `instruments/DS345/` for the reference implementation.
+See `instruments/StanfordResearch/DS345/` for the reference implementation.
+
+When an instrument family shares a communication protocol but differs
+only in hardware constants (power limits, wavelength, etc.), define a
+base class in `instruments/<Manufacturer>/<Family>/instrument.py` and
+place model-specific constants as class attributes on thin subclasses
+in `instruments/<Manufacturer>/<Model>/instrument.py`.  The base
+package should omit `widget.py` if only the model packages should
+appear in the rack picker.  See `instruments/Novanta/Opus*` for an
+example of this pattern.
 
 ### Qt Imports
 
@@ -169,39 +185,19 @@ Add type hints to all new and migrated instrument code. Use `str | None` union s
 
 ## Migration Status
 
-### Completed
+All instruments are fully migrated. The `instruments/` directory is
+organised by manufacturer.
 
-- `lib/` — fully migrated: `qtpy` throughout, `registerProperty()` API, `QInstrumentWidget` uses `device.get()`/`device.set()`
-- `instruments/DS345/` — reference implementation: `_register()` helper, type hints, full docstrings
-- `instruments/SR830/` — fully migrated: MRO fake, `auto_offset_x/y/r` wrappers, full docstrings
-- `instruments/SR844/` — fully migrated: MRO fake, `auto_offset_x/y/r` wrappers, full docstrings; legacy `Q*.py` files removed
-- `instruments/IPGLaser/` — fully migrated: `_registerProperties()`, MRO fake with explicit `_store` getters (no `_register()` helper — properties derive from a hardware status bitfield), `status()` batch method, efficient `_poll`, `fault_detail()`; legacy `Ipglaser.py` removed
-- All `comm` dicts across all instruments — updated to long-form enum access
+- `lib/` — fully migrated: `qtpy` throughout, `registerProperty()` API, `QInstrumentWidget` uses `device.get()`/`device.set()`; `QInstrumentTree` implemented (`pyqtgraph` optional dependency)
+- `instruments/StanfordResearch/DS345/` — reference implementation: `_register()` helper, type hints, full docstrings
+- `instruments/StanfordResearch/SR830/` — MRO fake, `auto_offset_x/y/r` wrappers, full docstrings
+- `instruments/StanfordResearch/SR844/` — MRO fake, `auto_offset_x/y/r` wrappers, full docstrings
+- `instruments/IPGPhotonics/IPGLaser/` — `_registerProperties()`, MRO fake with `_store` getters, `status()` batch method, `_poll`, `fault_detail()`
+- `instruments/Novanta/Opus/` — base class with `WAVELENGTH`/`MINIMUM_POWER`/`MAXIMUM_POWER` class attributes; model subclasses `Opus532`, `Opus660`, `Opus1064` in sibling directories
+- `instruments/PriorScientific/Proscan/` — `_registerProperties()` with explicit lambdas (comma-delimited `CMD,value` protocol), MRO fake, `QTimer` poll, `_connectSignals()` for joystick/zdial/buttons
+- `instruments/PiezoDrive/PDUS210/` — `_registerProperties()`, three property groups, `state()` bulk binary read, `_toggle()` helper, MRO fake
+- All `comm` dicts — long-form enum access throughout
 
-- `instruments/Opus/` — fully migrated: `_registerProperties()`, IPGLaser-pattern fake with explicit `_store` getters, synchronous timer poll replacing broken async `dataReady` approach, `timers()` using `receive()` loop; `fake.py` added
-- `instruments/Proscan/` — fully migrated: `_registerProperties()` with explicit lambdas (no `_register()` helper — Proscan uses comma-delimited `CMD,value` protocol, not DS345-style `CMD?`/`CMDvalue`), IPGLaser-pattern fake with `_store` getters, synchronous `QTimer` poll, `_connectSignals()` for joystick/zdial/buttons; `fake.py` added; `dataReady` async pattern replaced
-- `instruments/PiezoDrive/` — fully migrated: `_registerProperties()` with explicit lambdas, three property groups (setpoints, gain, toggle/bool, measured/read-only), `state()` bulk binary read via `self._interface.readn(80)`, `_toggle()` helper for asymmetric enable/disable commands, IPGLaser-pattern fake with `_store` getters; `fake.py` added
+### Not subject to migration
 
-### In Development
-
-- `instruments/TDS1000/` — experimental; supports waveform data acquisition only (no property-based control, no widget, no fake). Not subject to migration requirements until the scope is defined.
-
-## TODO
-
-### QInstrumentTree
-
-Implement `QInstrumentTree` that presents an instrument's registered properties
-and methods in a `pyqtgraph.ParameterTree`.
-
-- Lives in `lib/QInstrumentTree.py`, analogous to `lib/QInstrumentWidget.py`
-- Each instrument package gets a `tree.py` alongside the existing `widget.py`,
-  exporting `QXxxTree`
-- The tree is built from `device.properties` and `device.methods` at runtime —
-  no `.ui` file required
-- Property metadata (`ptype`, `minimum`, `maximum`, `step`) registered via
-  `registerProperty(**meta)` maps directly to `pyqtgraph` parameter types and
-  limits
-- Read-only properties (`setter=None`) appear as non-editable display items
-- Methods registered via `registerMethod()` appear as action buttons
-- `pyqtgraph` is an optional dependency; add it to `[project.optional-dependencies]`
-  in `pyproject.toml` under a new `[tree]` extra
+- `instruments/Tektronix/TDS1000/` — experimental; waveform acquisition only (no property-based control, no widget, no fake). Scope undefined.

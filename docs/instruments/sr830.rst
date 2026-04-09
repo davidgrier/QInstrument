@@ -1,18 +1,18 @@
 SR830 Lock-in Amplifier
 =======================
 
-.. autoclass:: QInstrument.instruments.SR830.instrument.QSR830
+.. autoclass:: QInstrument.instruments.StanfordResearch.SR830.instrument.QSR830
    :members:
    :show-inheritance:
 
-.. autoclass:: QInstrument.instruments.SR830.fake.QFakeSR830
+.. autoclass:: QInstrument.instruments.StanfordResearch.SR830.fake.QFakeSR830
    :members:
    :show-inheritance:
 
-.. autoclass:: QInstrument.instruments.SR830.widget.QSR830Widget
+.. autoclass:: QInstrument.instruments.StanfordResearch.SR830.widget.QSR830Widget
    :members:
    :show-inheritance:
 
-.. autoclass:: QInstrument.instruments.SR830.tree.QSR830Tree
+.. autoclass:: QInstrument.instruments.StanfordResearch.SR830.tree.QSR830Tree
    :members:
    :show-inheritance:

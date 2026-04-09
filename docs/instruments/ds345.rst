@@ -1,18 +1,18 @@
 DS345 Function Generator
 ========================
 
-.. autoclass:: QInstrument.instruments.DS345.instrument.QDS345
+.. autoclass:: QInstrument.instruments.StanfordResearch.DS345.instrument.QDS345
    :members:
    :show-inheritance:
 
-.. autoclass:: QInstrument.instruments.DS345.fake.QFakeDS345
+.. autoclass:: QInstrument.instruments.StanfordResearch.DS345.fake.QFakeDS345
    :members:
    :show-inheritance:
 
-.. autoclass:: QInstrument.instruments.DS345.widget.QDS345Widget
+.. autoclass:: QInstrument.instruments.StanfordResearch.DS345.widget.QDS345Widget
    :members:
    :show-inheritance:
 
-.. autoclass:: QInstrument.instruments.DS345.tree.QDS345Tree
+.. autoclass:: QInstrument.instruments.StanfordResearch.DS345.tree.QDS345Tree
    :members:
    :show-inheritance:

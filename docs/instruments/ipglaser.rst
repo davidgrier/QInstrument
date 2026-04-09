@@ -1,18 +1,18 @@
 IPG Photonics YLR Laser
 =======================
 
-.. autoclass:: QInstrument.instruments.IPGLaser.instrument.QIPGLaser
+.. autoclass:: QInstrument.instruments.IPGPhotonics.IPGLaser.instrument.QIPGLaser
    :members:
    :show-inheritance:
 
-.. autoclass:: QInstrument.instruments.IPGLaser.fake.QFakeIPGLaser
+.. autoclass:: QInstrument.instruments.IPGPhotonics.IPGLaser.fake.QFakeIPGLaser
    :members:
    :show-inheritance:
 
-.. autoclass:: QInstrument.instruments.IPGLaser.widget.QIPGLaserWidget
+.. autoclass:: QInstrument.instruments.IPGPhotonics.IPGLaser.widget.QIPGLaserWidget
    :members:
    :show-inheritance:
 
-.. autoclass:: QInstrument.instruments.IPGLaser.tree.QIPGLaserTree
+.. autoclass:: QInstrument.instruments.IPGPhotonics.IPGLaser.tree.QIPGLaserTree
    :members:
    :show-inheritance:

@@ -1,5 +1,6 @@
 import logging
 from qtpy import QtCore
+from QInstrument.lib.QAbstractInstrument import QAbstractInstrument
 
 try:
     from pyqtgraph.parametertree import Parameter, ParameterTree
@@ -37,6 +38,22 @@ class QInstrumentTree(ParameterTree):
         class QDS345Tree(QInstrumentTree):
             INSTRUMENT = QDS345
 
+    To restrict the tree to a subset of properties and methods, declare
+    :attr:`FIELDS` on the subclass or pass ``fields`` to ``__init__``:
+
+    .. code-block:: python
+
+        class QDS345Tree(QInstrumentTree):
+            INSTRUMENT = QDS345
+            FIELDS = ['frequency', 'amplitude', 'function']
+
+        # or at instantiation time:
+        tree = QDS345Tree(fields=['frequency', 'amplitude'])
+
+    The order of names in :attr:`FIELDS` controls display order.  If any
+    name does not match a registered property or method a warning is
+    issued and all properties and methods are shown instead.
+
     When ``device`` is not supplied to ``__init__``, the base class
     calls ``INSTRUMENT().find()`` automatically.  Pass an explicit
     ``device`` to override (e.g. to inject a fake for testing).
@@ -48,27 +65,41 @@ class QInstrumentTree(ParameterTree):
         no ``device`` is supplied.  Must be a :class:`QSerialInstrument`
         subclass (or any class whose no-arg constructor returns an object
         with a ``find()`` method).  ``None`` means no auto-instantiation.
+    FIELDS : list[str] | None
+        Names of properties and/or methods to display, in display order.
+        ``None`` (the default) shows all registered properties and methods.
 
     Parameters
     ----------
     device : QAbstractInstrument, optional
         Instrument to display.  When omitted and :attr:`INSTRUMENT` is
         set, the instrument is located via ``INSTRUMENT().find()``.
+    fields : list[str] | None, optional
+        Overrides :attr:`FIELDS` for this instance.  ``None`` defers to
+        the class attribute.
     '''
 
     INSTRUMENT: type | None = None
+    FIELDS: list[str] | None = None
 
-    def __init__(self, *args, device=None, **kwargs) -> None:
+    def __init__(self, *args,
+                 device: QAbstractInstrument | None = None,
+                 fields: list[str] | None = None,
+                 **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self._device = None
+        self._device: QAbstractInstrument | None = None
         self._params: dict[str, Parameter] = {}
         self._updating: bool = False
+        self._fields: list[str] | None = (
+            fields if fields is not None else self.FIELDS)
+        self._visibleProps: list[str] = []
+        self._visibleMethods: list[str] = []
         if device is None and self.INSTRUMENT is not None:
             device = self.INSTRUMENT().find()
         self.device = device
 
     @property
-    def device(self):
+    def device(self) -> QAbstractInstrument | None:
         '''QAbstractInstrument: instrument bound to this tree.
 
         Setting this property builds the parameter tree from the
@@ -80,7 +111,7 @@ class QInstrumentTree(ParameterTree):
         return self._device
 
     @device.setter
-    def device(self, device) -> None:
+    def device(self, device: QAbstractInstrument | None) -> None:
         if device is None:
             return
         self._device = device
@@ -91,20 +122,62 @@ class QInstrumentTree(ParameterTree):
         else:
             self.setEnabled(False)
 
-    def _buildTree(self) -> None:
-        '''Build the parameter tree from the device's registered properties and methods.
+    def _resolveFields(self) -> None:
+        '''Resolve :attr:`_fields` against the device registry.
 
-        Each registered property becomes a typed parameter (``float``,
-        ``int``, ``bool``, or ``str``).  Metadata ``minimum``/``maximum``
-        are mapped to parameter limits; ``step`` is forwarded directly.
-        Read-only properties are rendered non-editable.  Each registered
-        method becomes an ``action`` parameter (button).  The root group
-        is labelled with the instrument class name.
+        Populates :attr:`_visibleProps` and :attr:`_visibleMethods` with
+        the ordered lists of property and method names to display.
+
+        If :attr:`_fields` is ``None``, all registered properties and
+        methods are used.  Otherwise each name is validated against the
+        device registry.  If any name is unrecognised a warning is issued
+        and the full set is used as a fallback so the instrument remains
+        usable.
         '''
+        all_props = self._device.properties
+        all_methods = self._device.methods
+
+        if self._fields is None:
+            self._visibleProps = list(all_props)
+            self._visibleMethods = list(all_methods)
+            return
+
+        known = set(all_props + all_methods)
+        unknown = [n for n in self._fields if n not in known]
+        if unknown:
+            logger.warning(
+                '%s: unrecognised field(s) %r in FIELDS/fields; '
+                'displaying all properties and methods. '
+                'Known names: %r',
+                type(self._device).__name__,
+                unknown,
+                sorted(known),
+            )
+            self._visibleProps = list(all_props)
+            self._visibleMethods = list(all_methods)
+            return
+
+        prop_set = set(all_props)
+        meth_set = set(all_methods)
+        self._visibleProps = [n for n in self._fields if n in prop_set]
+        self._visibleMethods = [n for n in self._fields if n in meth_set]
+
+    def _buildTree(self) -> None:
+        '''Build the parameter tree from the device's registered
+        properties and methods.
+
+        Calls :meth:`_resolveFields` to determine which properties and
+        methods to display, then creates typed parameters for each.
+        Metadata ``minimum``/``maximum`` are mapped to parameter limits;
+        ``step`` is forwarded directly.  Read-only properties are rendered
+        non-editable.  Methods become ``action`` parameters (buttons).
+        The root group is labelled with the instrument class name.
+        '''
+        self._resolveFields()
         self._params = {}
         children = []
 
-        for name in self._device.properties:
+        for name in self._visibleProps:
             meta = self._device.propertyMeta(name)
             ptype = meta.get('ptype', float)
             pg_type = _PTYPE_MAP.get(ptype, 'str')
@@ -120,7 +193,7 @@ class QInstrumentTree(ParameterTree):
                     kw['step'] = meta['step']
             children.append(kw)
 
-        for name in self._device.methods:
+        for name in self._visibleMethods:
             children.append(dict(name=name, type='action'))
 
         root = Parameter.create(
@@ -130,7 +203,7 @@ class QInstrumentTree(ParameterTree):
         )
         self._params = {
             name: root.child(name)
-            for name in self._device.properties + self._device.methods
+            for name in self._visibleProps + self._visibleMethods
         }
         self.setParameters(root, showTop=True)
 
@@ -142,7 +215,7 @@ class QInstrumentTree(ParameterTree):
         '''
         self._updating = True
         try:
-            for name in self._device.properties:
+            for name in self._visibleProps:
                 value = self._device.get(name)
                 if value is not None and name in self._params:
                     try:
@@ -161,13 +234,13 @@ class QInstrumentTree(ParameterTree):
         is wired to :meth:`_onDevicePropertyValue` so that external
         device changes (e.g. polling) are reflected in the tree.
         '''
-        for name in self._device.properties:
+        for name in self._visibleProps:
             meta = self._device.propertyMeta(name)
             if not meta.get('readonly', False):
                 self._params[name].sigValueChanged.connect(
                     lambda p, v, n=name: self._onParamChanged(n, v))
 
-        for name in self._device.methods:
+        for name in self._visibleMethods:
             self._params[name].sigActivated.connect(
                 lambda p, n=name: self._device.execute(n))
 
@@ -241,9 +314,11 @@ class QInstrumentTree(ParameterTree):
         if tree.device is None or not tree.device.isOpen():
             fake_cls = cls._fakeCls()
             if fake_cls is None:
-                print(f'{cls.__name__}: instrument not found or not connected.')
+                print(f'{cls.__name__}: instrument not found'
+                      ' or not connected.')
                 return
-            print(f'{cls.__name__}: instrument not found, using {fake_cls.__name__}.')
+            print(f'{cls.__name__}: instrument not found, using {
+                  fake_cls.__name__}.')
             tree = cls(device=fake_cls())
         tree.show()
         sys.exit(app.exec())

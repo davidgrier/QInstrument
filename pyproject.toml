@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "QInstrument"
-version = "1.3.0"
+version = "2.0.0"
 description = "Qt-based framework for controlling scientific instruments over serial ports"
 readme = "README.md"
 license = { file = "LICENSE.md" }
@@ -59,14 +59,23 @@ packages = [
     "QInstrument.lib",
     "QInstrument.widgets",
     "QInstrument.instruments",
-    "QInstrument.instruments.DS345",
-    "QInstrument.instruments.IPGLaser",
-    "QInstrument.instruments.Opus",
+    "QInstrument.instruments.StanfordResearch",
+    "QInstrument.instruments.StanfordResearch.DS345",
+    "QInstrument.instruments.StanfordResearch.SR830",
+    "QInstrument.instruments.StanfordResearch.SR844",
+    "QInstrument.instruments.IPGPhotonics",
+    "QInstrument.instruments.IPGPhotonics.IPGLaser",
+    "QInstrument.instruments.Novanta",
+    "QInstrument.instruments.Novanta.Opus",
+    "QInstrument.instruments.Novanta.Opus532",
+    "QInstrument.instruments.Novanta.Opus660",
+    "QInstrument.instruments.Novanta.Opus1064",
     "QInstrument.instruments.PiezoDrive",
-    "QInstrument.instruments.Proscan",
-    "QInstrument.instruments.SR830",
-    "QInstrument.instruments.SR844",
-    "QInstrument.instruments.TDS1000",
+    "QInstrument.instruments.PiezoDrive.PDUS210",
+    "QInstrument.instruments.PriorScientific",
+    "QInstrument.instruments.PriorScientific.Proscan",
+    "QInstrument.instruments.Tektronix",
+    "QInstrument.instruments.Tektronix.TDS1000",
 ]
 
 [tool.setuptools.package-data]

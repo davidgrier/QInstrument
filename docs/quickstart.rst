@@ -28,22 +28,23 @@ it on next launch.
 Run a single instrument widget from the command line
 -----------------------------------------------------
 
-Each instrument widget has a built-in entry point.  This finds a
-connected DS345 function generator and opens its control panel.  If
-no instrument is detected it falls back to a simulated device
-automatically:
+Instrument packages are organised under manufacturer subdirectories
+(e.g. ``instruments/StanfordResearch/DS345/``).  Use the full dotted
+path to run a widget directly:
 
 .. code-block:: bash
 
-   python -m QInstrument.instruments.DS345.widget
+   python -m QInstrument.instruments.StanfordResearch.DS345.widget
 
 Use a widget in your application
 ---------------------------------
 
+Import classes using the full manufacturer path:
+
 .. code-block:: python
 
    from qtpy.QtWidgets import QApplication
-   from QInstrument.instruments.DS345 import QDS345Widget
+   from QInstrument.instruments.StanfordResearch.DS345 import QDS345Widget
 
    app = QApplication([])
    widget = QDS345Widget()
@@ -62,7 +63,7 @@ When hardware is not available, pass a fake device directly:
 .. code-block:: python
 
    from qtpy.QtWidgets import QApplication
-   from QInstrument.instruments.DS345 import QDS345Widget, QFakeDS345
+   from QInstrument.instruments.StanfordResearch.DS345 import QDS345Widget, QFakeDS345
 
    app = QApplication([])
    widget = QDS345Widget(device=QFakeDS345())
@@ -74,7 +75,7 @@ Access instrument properties programmatically
 
 .. code-block:: python
 
-   from QInstrument.instruments.DS345 import QDS345
+   from QInstrument.instruments.StanfordResearch.DS345 import QDS345
 
    ds345 = QDS345().find()
    if ds345.isOpen():
@@ -99,7 +100,7 @@ Then use the tree the same way as the widget:
 .. code-block:: python
 
    from qtpy.QtWidgets import QApplication
-   from QInstrument.instruments.DS345 import QDS345Tree
+   from QInstrument.instruments.StanfordResearch.DS345 import QDS345Tree
 
    app = QApplication([])
    tree = QDS345Tree()
@@ -110,11 +111,36 @@ Run a single tree from the command line:
 
 .. code-block:: bash
 
-   python -m QInstrument.instruments.DS345.tree
+   python -m QInstrument.instruments.StanfordResearch.DS345.tree
 
 The tree reflects live device changes (e.g. from a polling timer) and
 forwards user edits to the device.  Read-only properties are displayed
 but cannot be edited; registered methods appear as buttons.
+
+Show a subset of properties and methods
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+By default the tree displays every registered property and method.
+To restrict the display, pass a ``fields`` list at instantiation time:
+
+.. code-block:: python
+
+   tree = QDS345Tree(fields=['frequency', 'amplitude', 'function'])
+
+The names must match those used in :meth:`registerProperty` /
+:meth:`registerMethod`.  The display order follows the list.
+
+For a permanent per-class subset, declare :attr:`FIELDS` on the subclass:
+
+.. code-block:: python
+
+   class QDS345Tree(QInstrumentTree):
+       INSTRUMENT = QDS345
+       FIELDS = ['frequency', 'amplitude', 'function']
+
+If any name in ``fields`` or :attr:`FIELDS` does not match a registered
+property or method, a warning is logged and the full set of properties
+and methods is shown instead so the instrument remains usable.
 
 Rate-limit sensitive properties
 --------------------------------
