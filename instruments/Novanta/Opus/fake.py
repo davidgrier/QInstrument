@@ -1,5 +1,5 @@
 from QInstrument.lib.QFakeInstrument import QFakeInstrument
-from QInstrument.instruments.Opus.instrument import QOpus
+from QInstrument.instruments.Novanta.Opus.instrument import QOpus
 
 
 class QFakeOpus(QFakeInstrument, QOpus):

@@ -49,7 +49,8 @@ class QOpus(QSerialInstrument):
                 stopBits=QSerialInstrument.StopBits.OneStop,
                 parity=QSerialInstrument.Parity.NoParity,
                 flowControl=QSerialInstrument.FlowControl.NoFlowControl,
-                eol='\r')
+                eol='\r\n',
+                timeout=500)
 
     def _registerProperties(self) -> None:
         '''Register all instrument properties via ``registerProperty()``.
@@ -63,6 +64,7 @@ class QOpus(QSerialInstrument):
         '''
         self._maximum_power = 1000.
         self._wavelength = 532.
+        self._power: float = 0.
         register = self.registerProperty
         register('power', ptype=float,
                  getter=self._getPower,
@@ -78,7 +80,7 @@ class QOpus(QSerialInstrument):
                  getter=self._getCurrent,
                  setter=lambda v: self.transmit(f'CURRENT={float(v)}'))
         register('emission', ptype=bool,
-                 getter=lambda: self._getPower() > 0,
+                 getter=lambda: self._power > 0,
                  setter=self._setEmission)
         register('version', ptype=str, setter=None, getter=self.version)
         register('laser_temperature', ptype=float, setter=None,
@@ -98,9 +100,13 @@ class QOpus(QSerialInstrument):
         '''Query and return the actual output power [mW].
 
         The instrument responds with a value and ``mW`` suffix
-        (e.g. ``'0123.4mW'``).
+        (e.g. ``'0123.4mW'``).  Caches the result in ``_power`` so
+        the ``emission`` getter can read it without a second query.
         '''
-        return float(self.handshake('POWER?').rstrip('mW'))
+        response = self.handshake('POWER?')
+        if response:
+            self._power = float(response.rstrip('mW'))
+        return self._power
 
     def _getCurrent(self) -> float:
         '''Query and return the diode current [%].
@@ -108,19 +114,21 @@ class QOpus(QSerialInstrument):
         The instrument responds with a value and ``%`` suffix
         (e.g. ``'050.0%'``).
         '''
-        return float(self.handshake('CURRENT?').rstrip('%'))
+        response = self.handshake('CURRENT?')
+        return float(response.rstrip('%')) if response else 0.
 
     def _parseTemp(self, cmd: str) -> float:
         '''Query a temperature command and return the value [°C].
 
-        Strips trailing unit characters (``C``, ``°``) before conversion.
+        Strips trailing unit characters (``C``) before conversion.
 
         Parameters
         ----------
         cmd : str
             Temperature query mnemonic (``'LASTEMP?'`` or ``'PSUTEMP?'``).
         '''
-        return float(self.handshake(cmd).rstrip(' C°'))
+        response = self.handshake(cmd)
+        return float(response.rstrip(' C')) if response else 0.
 
     def _setPower(self, v: float) -> None:
         '''Transmit a new power setpoint, clamped to ``maximum_power``.

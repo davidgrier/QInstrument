@@ -1,6 +1,6 @@
 from qtpy import QtCore
 from QInstrument.lib.QInstrumentWidget import QInstrumentWidget
-from QInstrument.instruments.IPGLaser.instrument import QIPGLaser
+from QInstrument.instruments.IPGPhotonics.IPGLaser.instrument import QIPGLaser
 from QInstrument.widgets.QLedWidget import QLedWidget
 from QInstrument.widgets.QRotaryEncoderSpinBox import QRotaryEncoderSpinBox
 

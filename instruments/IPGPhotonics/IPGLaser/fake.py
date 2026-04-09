@@ -1,5 +1,5 @@
 from QInstrument.lib.QFakeInstrument import QFakeInstrument
-from QInstrument.instruments.IPGLaser.instrument import QIPGLaser
+from QInstrument.instruments.IPGPhotonics.IPGLaser.instrument import QIPGLaser
 
 
 class QFakeIPGLaser(QFakeInstrument, QIPGLaser):

@@ -1,5 +1,5 @@
 from QInstrument.lib.QInstrumentTree import QInstrumentTree
-from QInstrument.instruments.Opus.instrument import QOpus
+from QInstrument.instruments.Novanta.Opus.instrument import QOpus
 
 
 class QOpusTree(QInstrumentTree):

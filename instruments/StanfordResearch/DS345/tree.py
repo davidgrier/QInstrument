@@ -1,5 +1,5 @@
 from QInstrument.lib.QInstrumentTree import QInstrumentTree
-from QInstrument.instruments.DS345.instrument import QDS345
+from QInstrument.instruments.StanfordResearch.DS345.instrument import QDS345
 
 
 class QDS345Tree(QInstrumentTree):

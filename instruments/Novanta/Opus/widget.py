@@ -1,6 +1,6 @@
 from qtpy import QtCore
 from QInstrument.lib.QInstrumentWidget import QInstrumentWidget
-from QInstrument.instruments.Opus.instrument import QOpus
+from QInstrument.instruments.Novanta.Opus.instrument import QOpus
 from QInstrument.widgets.QLedWidget import QLedWidget
 from QInstrument.widgets.QRotaryEncoderSpinBox import QRotaryEncoderSpinBox
 
@@ -19,7 +19,7 @@ class QOpusWidget(QInstrumentWidget):
     '''
 
     UIFILE = 'OpusWidget.ui'
-    poll_interval: int = 500  # ms
+    poll_interval: int = 2000  # ms
 
     wsetter = QInstrumentWidget.wsetter | {
         'QLedWidget':            'setValue',
@@ -71,9 +71,11 @@ class QOpusWidget(QInstrumentWidget):
 
     def showEvent(self, event) -> None:
         '''Re-apply power range after the first-show config restore.'''
+        self._timer.stop()
         super().showEvent(event)
         if self.device is not None and self.device.isOpen():
             self._updatePowerRange()
+        self._timer.start()
 
     def _connectSignals(self) -> None:
         '''Connect the emission toggle button and power setpoint encoder.

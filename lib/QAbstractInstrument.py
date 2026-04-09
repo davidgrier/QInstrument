@@ -80,7 +80,7 @@ class QAbstractInstrument(QtCore.QObject):
             Response string from the instrument.
         '''
         self.transmit(data)
-        return self.receive(**kwargs)
+        return self.receive(**kwargs).strip()
 
     def getValue(self, query: str, dtype: type = float) -> PropertyValue | None:
         '''Query the instrument and return a typed value.

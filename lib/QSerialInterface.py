@@ -220,7 +220,7 @@ class QSerialInterface(QSerialPort):
         while True:
             if (not self.bytesAvailable() and
                     not self.waitForReadyRead(self.timeout)):
-                logger.warning('Timeout waiting for response')
+                logger.debug('Timeout waiting for response')
                 break
             buffer += bytes(self.readAll())
             if eol and eol in buffer:

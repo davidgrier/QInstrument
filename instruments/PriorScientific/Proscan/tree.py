@@ -1,5 +1,5 @@
 from QInstrument.lib.QInstrumentTree import QInstrumentTree
-from QInstrument.instruments.Proscan.instrument import QProscan
+from QInstrument.instruments.PriorScientific.Proscan.instrument import QProscan
 
 
 class QProscanTree(QInstrumentTree):

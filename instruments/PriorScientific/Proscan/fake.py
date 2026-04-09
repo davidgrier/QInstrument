@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from qtpy import QtCore
 from QInstrument.lib.QFakeInstrument import QFakeInstrument
-from QInstrument.instruments.Proscan.instrument import QProscan
+from QInstrument.instruments.PriorScientific.Proscan.instrument import QProscan
 
 
 class QFakeProscan(QFakeInstrument, QProscan):

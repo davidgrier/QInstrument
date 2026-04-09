@@ -1,5 +1,5 @@
 from QInstrument.lib.QFakeInstrument import QFakeInstrument
-from QInstrument.instruments.DS345.instrument import QDS345
+from QInstrument.instruments.StanfordResearch.DS345.instrument import QDS345
 
 
 class QFakeDS345(QFakeInstrument, QDS345):

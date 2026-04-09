@@ -230,10 +230,14 @@ class QInstrumentWidget(QtWidgets.QWidget):
     def _uiPath(cls) -> Path:
         '''Return the absolute path to this class's UI file.
 
-        Resolves :attr:`UIFILE` relative to the directory containing
-        the subclass's source file.
+        Resolves :attr:`UIFILE` relative to the directory of the class
+        in the MRO that defines it, so subclasses that inherit
+        :attr:`UIFILE` without overriding it resolve correctly.
         '''
-        return Path(inspect.getfile(cls)).parent / cls.UIFILE
+        for klass in cls.__mro__:
+            if 'UIFILE' in klass.__dict__:
+                return Path(inspect.getfile(klass)).parent / klass.UIFILE
+        raise AttributeError(f'{cls.__name__} has no UIFILE defined')
 
     def _identifyProperties(self) -> None:
         '''Populate :attr:`_properties` and :attr:`_methods`.

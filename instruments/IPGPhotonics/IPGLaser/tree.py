@@ -1,5 +1,5 @@
 from QInstrument.lib.QInstrumentTree import QInstrumentTree
-from QInstrument.instruments.IPGLaser.instrument import QIPGLaser
+from QInstrument.instruments.IPGPhotonics.IPGLaser.instrument import QIPGLaser
 
 
 class QIPGLaserTree(QInstrumentTree):

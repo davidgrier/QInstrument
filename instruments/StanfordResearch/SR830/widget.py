@@ -1,5 +1,5 @@
 from QInstrument.lib.QInstrumentWidget import QInstrumentWidget
-from QInstrument.instruments.SR830.instrument import QSR830
+from QInstrument.instruments.StanfordResearch.SR830.instrument import QSR830
 
 
 class QSR830Widget(QInstrumentWidget):

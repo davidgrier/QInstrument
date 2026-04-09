@@ -1,5 +1,5 @@
 from QInstrument.lib.QInstrumentWidget import QInstrumentWidget
-from QInstrument.instruments.SR844.instrument import QSR844
+from QInstrument.instruments.StanfordResearch.SR844.instrument import QSR844
 
 
 class QSR844Widget(QInstrumentWidget):

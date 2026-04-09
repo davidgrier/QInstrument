@@ -1,6 +1,6 @@
 import numpy as np
 from QInstrument.lib.QFakeInstrument import QFakeInstrument
-from QInstrument.instruments.SR844.instrument import QSR844
+from QInstrument.instruments.StanfordResearch.SR844.instrument import QSR844
 
 
 class QFakeSR844(QFakeInstrument, QSR844):

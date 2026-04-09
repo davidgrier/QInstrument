@@ -4,7 +4,7 @@ import logging
 from pathlib import Path
 from qtpy import QtCore
 from QInstrument.lib.QInstrumentWidget import QInstrumentWidget
-from QInstrument.instruments.Proscan.instrument import QProscan
+from QInstrument.instruments.PriorScientific.Proscan.instrument import QProscan
 
 logger = logging.getLogger(__name__)
 

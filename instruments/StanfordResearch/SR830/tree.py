@@ -1,5 +1,5 @@
 from QInstrument.lib.QInstrumentTree import QInstrumentTree
-from QInstrument.instruments.SR830.instrument import QSR830
+from QInstrument.instruments.StanfordResearch.SR830.instrument import QSR830
 
 
 class QSR830Tree(QInstrumentTree):
