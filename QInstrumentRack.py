@@ -13,9 +13,26 @@ logger = logging.getLogger(__name__)
 
 
 class _DragHandle(QtWidgets.QLabel):
-    '''Grip widget that initiates instrument slot reordering.'''
+    '''Grip widget that initiates instrument slot reordering.
+
+    Displays a vertical ellipsis (⋮) and changes the cursor to a
+    closed-hand shape while the left button is held.  Emits
+    :attr:`dragging` on every mouse-move during a drag so the rack
+    can highlight the current drop target, and emits :attr:`dropped`
+    on release so the rack can commit the move.
+
+    Signals
+    -------
+    dragging(QtCore.QPoint)
+        Emitted continuously during a left-button drag with the
+        current global cursor position.
+    dropped(QtCore.QPoint)
+        Emitted on left-button release with the global cursor position
+        at the moment of release.
+    '''
 
     dropped = QtCore.Signal(QtCore.QPoint)
+    dragging = QtCore.Signal(QtCore.QPoint)
 
     def __init__(self, parent: QtWidgets.QWidget | None = None) -> None:
         super().__init__('\u22ee', parent)
@@ -28,6 +45,11 @@ class _DragHandle(QtWidgets.QLabel):
             self.setCursor(QtCore.Qt.CursorShape.ClosedHandCursor)
         super().mousePressEvent(event)
 
+    def mouseMoveEvent(self, event: QtCore.QEvent) -> None:
+        if event.buttons() & QtCore.Qt.MouseButton.LeftButton:
+            self.dragging.emit(QtGui.QCursor.pos())
+        super().mouseMoveEvent(event)
+
     def mouseReleaseEvent(self, event: QtCore.QEvent) -> None:
         self.setCursor(QtCore.Qt.CursorShape.OpenHandCursor)
         if event.button() == QtCore.Qt.MouseButton.LeftButton:
@@ -36,10 +58,32 @@ class _DragHandle(QtWidgets.QLabel):
 
 
 class _InstrumentSlot(QtWidgets.QWidget):
-    '''Wraps one instrument widget with a drag handle and close button.'''
+    '''Wraps one instrument widget with a drag handle and close button.
+
+    Layout (left to right): ⋮ drag handle | instrument widget.
+    The × close button and a drop-target indicator are overlaid
+    absolutely so they do not affect the horizontal layout.
+
+    The close button and drag handle are shown only when the slot is
+    editable (see :meth:`setEditable`).  The drop-target indicator —
+    a 3 px coloured bar across the top of the slot — is shown only
+    while another slot is being dragged over this one.
+
+    Signals
+    -------
+    removeRequested(str)
+        Emitted when the × button is clicked, carrying the slot name.
+    dropRequested(object, QtCore.QPoint)
+        Emitted on drag release, carrying this slot and the global
+        drop position.
+    hoverRequested(object, QtCore.QPoint)
+        Emitted continuously during a drag, carrying this slot and the
+        current global cursor position.
+    '''
 
     removeRequested = QtCore.Signal(str)
     dropRequested = QtCore.Signal(object, QtCore.QPoint)
+    hoverRequested = QtCore.Signal(object, QtCore.QPoint)
 
     def __init__(self,
                  name: str,
@@ -60,22 +104,52 @@ class _InstrumentSlot(QtWidgets.QWidget):
         self._closeButton = QtWidgets.QPushButton('\u00d7', self)
         self._closeButton.setFixedSize(18, 18)
         self._closeButton.setFlat(True)
+        self._dropIndicator = QtWidgets.QFrame(self)
+        self._dropIndicator.setFixedHeight(3)
+        self._dropIndicator.setStyleSheet('background: palette(highlight);')
+        self._dropIndicator.setVisible(False)
 
     def _connectSignals(self) -> None:
         self._closeButton.clicked.connect(
             lambda: self.removeRequested.emit(self._name))
         self._handle.dropped.connect(
             lambda pos: self.dropRequested.emit(self, pos))
+        self._handle.dragging.connect(
+            lambda pos: self.hoverRequested.emit(self, pos))
 
     def setEditable(self, editable: bool) -> None:
+        '''Show or hide the drag handle and close button.
+
+        Parameters
+        ----------
+        editable : bool
+            ``True`` to show edit controls; ``False`` to hide them.
+        '''
         self._handle.setVisible(editable)
         self._closeButton.setVisible(editable)
+
+    def setHighlighted(self, highlighted: bool) -> None:
+        '''Show or hide the drop-target indicator.
+
+        The indicator is a 3 px bar in the system highlight colour
+        across the top of the slot.  It is shown while another slot's
+        drag handle is held over this slot and cleared on release.
+
+        Parameters
+        ----------
+        highlighted : bool
+            ``True`` to show the indicator; ``False`` to hide it.
+        '''
+        self._dropIndicator.setVisible(highlighted)
 
     def resizeEvent(self, event) -> None:
         super().resizeEvent(event)
         btn = self._closeButton
         btn.move(self.width() - btn.width() - 2, 2)
         btn.raise_()
+        self._dropIndicator.resize(self.width(), 3)
+        self._dropIndicator.move(0, 0)
+        self._dropIndicator.raise_()
 
 
 class _InstrumentPicker(QtWidgets.QDialog):
@@ -111,17 +185,25 @@ class _InstrumentPicker(QtWidgets.QDialog):
 
 
 class QInstrumentRack(QtWidgets.QWidget):
-    '''A widget that holds multiple instrument widgets in a
-    vertical layout.
+    '''A widget that holds multiple instrument widgets in a vertical layout.
 
     The instrument list is persisted to
     ``~/.QInstrument/QInstrumentRack.json`` via :class:`Configure`.
     On first show, if no instruments were supplied at construction,
     the saved list is restored.  On close, the current list is saved.
 
-    Instruments can be added at runtime via the "Add instrument…"
-    button, removed via the "×" button on each slot, and reordered
-    by dragging the "⋮" handle when :attr:`editable` is ``True``.
+    When :attr:`editable` is ``True`` (the default), the rack provides:
+
+    - An "Add instrument…" toolbar button that opens a picker dialog
+      listing all instruments found under ``instruments/``.
+    - A × close button overlaid on each slot to remove that instrument.
+    - A ⋮ drag handle on each slot.  Dragging highlights the target
+      slot with a coloured bar and moves the dragged slot to that
+      position on release.
+
+    Set :attr:`editable` to ``False`` to hide all of the above, for
+    example when embedding the rack in an application where the
+    instrument set should be fixed.
 
     Parameters
     ----------
@@ -232,6 +314,7 @@ class QInstrumentRack(QtWidgets.QWidget):
         slot = _InstrumentSlot(name, instrument, self)
         slot.removeRequested.connect(self._removeInstrument)
         slot.dropRequested.connect(self._moveSlot)
+        slot.hoverRequested.connect(self._hoverSlot)
         slot.setEditable(self._editable)
         self._slots.addWidget(slot)
         self.adjustSize()
@@ -351,9 +434,52 @@ class QInstrumentRack(QtWidgets.QWidget):
                 self.adjustSize()
                 break
 
+    def _hoverSlot(self,
+                   slot: '_InstrumentSlot',
+                   hover_pos: QtCore.QPoint) -> None:
+        '''Highlight the slot under the cursor during a drag.
+
+        Connected to each slot's :attr:`hoverRequested` signal.
+        Hit-tests all slot geometries against *hover_pos* and calls
+        :meth:`_InstrumentSlot.setHighlighted` accordingly, skipping
+        the slot being dragged.
+
+        Parameters
+        ----------
+        slot : _InstrumentSlot
+            The slot whose drag handle is being held.
+        hover_pos : QtCore.QPoint
+            Current global cursor position.
+        '''
+        local_pos = self.mapFromGlobal(hover_pos)
+        target = next(
+            (w for w in self._iterSlots() if w.geometry().contains(local_pos)),
+            None)
+        for s in self._iterSlots():
+            s.setHighlighted(s is target and s is not slot)
+
     def _moveSlot(self,
                   slot: '_InstrumentSlot',
                   drop_pos: QtCore.QPoint) -> None:
+        '''Move *slot* to the position of the slot under the drop point.
+
+        Connected to each slot's :attr:`dropRequested` signal.
+        Clears all highlights, then hit-tests slot geometries against
+        *drop_pos*.  If a different slot is found at that position,
+        removes *slot* from the layout and inserts it at the target's
+        index using :meth:`QVBoxLayout.removeWidget` /
+        :meth:`QVBoxLayout.insertWidget` — no ownership transfer or
+        reparenting occurs.
+
+        Parameters
+        ----------
+        slot : _InstrumentSlot
+            The slot to move.
+        drop_pos : QtCore.QPoint
+            Global cursor position at the moment of release.
+        '''
+        for s in self._iterSlots():
+            s.setHighlighted(False)
         local_pos = self.mapFromGlobal(drop_pos)
         target = next(
             (w for w in self._iterSlots() if w.geometry().contains(local_pos)),
