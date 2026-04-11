@@ -88,6 +88,7 @@ class QInstrumentWidget(QtWidgets.QWidget):
     INSTRUMENT: type | None = None
 
     propertyChanged = QtCore.Signal(str, object)
+    closeRequested = QtCore.Signal()
 
     def __init__(self, *args, device=None, **kwargs) -> None:
         super().__init__(*args, **kwargs)

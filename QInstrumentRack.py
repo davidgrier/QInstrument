@@ -1,9 +1,8 @@
 # TODO: Provide methods to search for instruments by type or
 #       identification string.
-# TODO: Provide methods to rearrange instruments in the rack.
 from pathlib import Path
 
-from qtpy import QtWidgets, QtCore
+from qtpy import QtWidgets, QtCore, QtGui
 from QInstrument.lib.QInstrumentWidget import QInstrumentWidget
 from QInstrument.lib.Configure import Configure
 import importlib
@@ -13,26 +12,70 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+class _DragHandle(QtWidgets.QLabel):
+    '''Grip widget that initiates instrument slot reordering.'''
+
+    dropped = QtCore.Signal(QtCore.QPoint)
+
+    def __init__(self, parent: QtWidgets.QWidget | None = None) -> None:
+        super().__init__('\u22ee', parent)
+        self.setFixedWidth(14)
+        self.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
+        self.setCursor(QtCore.Qt.CursorShape.OpenHandCursor)
+
+    def mousePressEvent(self, event: QtCore.QEvent) -> None:
+        if event.button() == QtCore.Qt.MouseButton.LeftButton:
+            self.setCursor(QtCore.Qt.CursorShape.ClosedHandCursor)
+        super().mousePressEvent(event)
+
+    def mouseReleaseEvent(self, event: QtCore.QEvent) -> None:
+        self.setCursor(QtCore.Qt.CursorShape.OpenHandCursor)
+        if event.button() == QtCore.Qt.MouseButton.LeftButton:
+            self.dropped.emit(QtGui.QCursor.pos())
+        super().mouseReleaseEvent(event)
+
+
 class _InstrumentSlot(QtWidgets.QWidget):
-    '''Wraps one instrument widget with a right-click remove action.'''
+    '''Wraps one instrument widget with a drag handle and close button.'''
 
     removeRequested = QtCore.Signal(str)
+    dropRequested = QtCore.Signal(object, QtCore.QPoint)
 
     def __init__(self,
                  name: str,
                  widget: QInstrumentWidget,
-                 parent=None) -> None:
+                 parent: QtWidgets.QWidget | None = None) -> None:
         super().__init__(parent)
         self._name = name
-        layout = QtWidgets.QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(widget)
+        self._setupUi(widget)
+        self._connectSignals()
 
-    def contextMenuEvent(self, event) -> None:
-        menu = QtWidgets.QMenu(self)
-        action = menu.addAction(f'Remove {self._name}')
-        if menu.exec(event.globalPos()) == action:
-            self.removeRequested.emit(self._name)
+    def _setupUi(self, widget: QInstrumentWidget) -> None:
+        layout = QtWidgets.QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+        self._handle = _DragHandle(self)
+        layout.addWidget(self._handle)
+        layout.addWidget(widget)
+        self._closeButton = QtWidgets.QPushButton('\u00d7', self)
+        self._closeButton.setFixedSize(18, 18)
+        self._closeButton.setFlat(True)
+
+    def _connectSignals(self) -> None:
+        self._closeButton.clicked.connect(
+            lambda: self.removeRequested.emit(self._name))
+        self._handle.dropped.connect(
+            lambda pos: self.dropRequested.emit(self, pos))
+
+    def setEditable(self, editable: bool) -> None:
+        self._handle.setVisible(editable)
+        self._closeButton.setVisible(editable)
+
+    def resizeEvent(self, event) -> None:
+        super().resizeEvent(event)
+        btn = self._closeButton
+        btn.move(self.width() - btn.width() - 2, 2)
+        btn.raise_()
 
 
 class _InstrumentPicker(QtWidgets.QDialog):
@@ -40,21 +83,26 @@ class _InstrumentPicker(QtWidgets.QDialog):
 
     def __init__(self,
                  instruments: list[str],
-                 parent=None) -> None:
+                 parent: QtWidgets.QWidget | None = None) -> None:
         super().__init__(parent)
+        self._setupUi(instruments)
+        self._connectSignals()
+
+    def _setupUi(self, instruments: list[str]) -> None:
         self.setWindowTitle('Add Instrument')
         layout = QtWidgets.QVBoxLayout(self)
         self._list = QtWidgets.QListWidget()
         self._list.addItems(instruments)
-        self._list.itemDoubleClicked.connect(self.accept)
         layout.addWidget(self._list)
-        BB = QtWidgets.QDialogButtonBox
-        buttons = BB(
-            BB.StandardButton.Ok | BB.StandardButton.Cancel
-        )
-        buttons.accepted.connect(self.accept)
-        buttons.rejected.connect(self.reject)
-        layout.addWidget(buttons)
+        ok = QtWidgets.QDialogButtonBox.StandardButton.Ok
+        cancel = QtWidgets.QDialogButtonBox.StandardButton.Cancel
+        self._buttons = QtWidgets.QDialogButtonBox(ok | cancel)
+        layout.addWidget(self._buttons)
+
+    def _connectSignals(self) -> None:
+        self._list.itemDoubleClicked.connect(self.accept)
+        self._buttons.accepted.connect(self.accept)
+        self._buttons.rejected.connect(self.reject)
 
     def selected(self) -> str | None:
         '''Return the selected instrument name, or ``None``.'''
@@ -72,8 +120,8 @@ class QInstrumentRack(QtWidgets.QWidget):
     the saved list is restored.  On close, the current list is saved.
 
     Instruments can be added at runtime via the "Add instrument…"
-    button.  Right-clicking any instrument opens a context menu with
-    a "Remove" action.
+    button, removed via the "×" button on each slot, and reordered
+    by dragging the "⋮" handle when :attr:`editable` is ``True``.
 
     Parameters
     ----------
@@ -84,15 +132,19 @@ class QInstrumentRack(QtWidgets.QWidget):
         Each name is the bare instrument name without the ``Q``
         prefix or ``Widget`` suffix (e.g. ``'DS345'``).
         Default: ``None`` (empty rack).
+    editable : bool
+        If ``False``, the toolbar, drag handles, and close buttons
+        are all hidden. Default: ``True``.
     '''
 
     def __init__(self,
                  parent: QtWidgets.QWidget | None = None,
-                 instruments: list[str] | None = None) -> None:
+                 instruments: list[str] | None = None,
+                 editable: bool = True) -> None:
         super().__init__(parent)
-        self._instrument_names: list[str] = []
         self._configure = Configure()
         self._shown = False
+        self._editable = editable
         self._setupUi()
         self.addInstrumentsByNames(instruments)
 
@@ -100,7 +152,9 @@ class QInstrumentRack(QtWidgets.QWidget):
         outer = QtWidgets.QVBoxLayout(self)
         outer.setContentsMargins(0, 0, 0, 0)
         outer.setSpacing(0)
-        outer.addWidget(self._makeToolbar())
+        self._toolbar = self._makeToolbar()
+        self._toolbar.setVisible(self._editable)
+        outer.addWidget(self._toolbar)
         self._slots = QtWidgets.QVBoxLayout()
         self._slots.setContentsMargins(0, 0, 0, 0)
         self._slots.setSpacing(0)
@@ -117,21 +171,46 @@ class QInstrumentRack(QtWidgets.QWidget):
         layout.addStretch()
         return bar
 
+    def _slotAt(self, index: int) -> '_InstrumentSlot | None':
+        item = self._slots.itemAt(index)
+        return item.widget() if item else None
+
+    def _iterSlots(self):
+        for i in range(self._slots.count()):
+            if slot := self._slotAt(i):
+                yield slot
+
     @property
     def settings(self) -> dict:
         '''dict: instrument list as ``{'instruments': [...]}``.
 
-        Getting returns the names of all currently loaded instruments.
+        Getting returns instrument names in their current display order,
+        preserving any reordering done by dragging.
         Setting clears the rack and reloads from the supplied dict.
         '''
-        return {'instruments': list(self._instrument_names)}
+        names = [slot._name for slot in self._iterSlots()]
+        return {'instruments': names}
 
     @settings.setter
     def settings(self, settings: dict) -> None:
         self.clearInstruments()
-        self.addInstrumentsByNames(
-            settings.get('instruments', [])
-        )
+        self.addInstrumentsByNames(settings.get('instruments', []))
+
+    @property
+    def editable(self) -> bool:
+        '''bool: whether the user can add, remove, or reorder instruments.
+
+        When ``False``, the toolbar, drag handles, and close buttons
+        are all hidden. Defaults to ``True``.
+        '''
+        return self._editable
+
+    @editable.setter
+    def editable(self, value: bool) -> None:
+        self._editable = value
+        self._toolbar.setVisible(value)
+        for slot in self._iterSlots():
+            slot.setEditable(value)
 
     def addInstrument(self,
                       instrument: QInstrumentWidget,
@@ -143,8 +222,7 @@ class QInstrumentRack(QtWidgets.QWidget):
         instrument : QInstrumentWidget
             The instrument widget to add.
         name : str
-            Display name for the remove context menu.  Derived from
-            the widget class name if omitted.
+            Display name. Derived from the widget class name if omitted.
         '''
         if not name:
             cls_name = type(instrument).__name__
@@ -153,8 +231,10 @@ class QInstrumentRack(QtWidgets.QWidget):
                     .removesuffix('Widget'))
         slot = _InstrumentSlot(name, instrument, self)
         slot.removeRequested.connect(self._removeInstrument)
+        slot.dropRequested.connect(self._moveSlot)
+        slot.setEditable(self._editable)
         self._slots.addWidget(slot)
-        self._instrument_names.append(name)
+        self.adjustSize()
 
     def addInstruments(self,
                        instruments: list[QInstrumentWidget]
@@ -199,7 +279,7 @@ class QInstrumentRack(QtWidgets.QWidget):
         self.addInstrument(instrument, name)
 
     def addInstrumentsByNames(self,
-                               names: list[str] | None) -> None:
+                              names: list[str] | None) -> None:
         '''Add multiple instruments by their bare names.
 
         Parameters
@@ -213,42 +293,40 @@ class QInstrumentRack(QtWidgets.QWidget):
 
     def clearInstruments(self) -> None:
         '''Remove and schedule deletion of all instrument widgets.'''
-        self._instrument_names.clear()
         while self._slots.count():
             item = self._slots.takeAt(0)
             if item.widget():
                 item.widget().deleteLater()
 
     @classmethod
+    def _instrumentPaths(cls):
+        '''Yield ``(manufacturer, instrument_name)`` for all widget packages.
+
+        Scans ``instruments/`` two levels deep for subdirectories that
+        contain a ``widget.py``.
+        '''
+        instruments_dir = Path(__file__).parent / 'instruments'
+        for mfr in instruments_dir.iterdir():
+            if not mfr.is_dir() or mfr.name.startswith('_'):
+                continue
+            for inst in mfr.iterdir():
+                if inst.is_dir() and (inst / 'widget.py').exists():
+                    yield mfr.name, inst.name
+
+    @classmethod
     def availableInstruments(cls) -> list[str]:
         '''Return names of all instruments that have a widget module.
-
-        Scans the ``instruments/`` directory two levels deep for
-        subpackages that contain a ``widget.py`` file.  Instruments
-        are organised under manufacturer subdirectories; only the bare
-        instrument name is returned.
 
         Returns
         -------
         list[str]
             Sorted list of bare instrument names.
         '''
-        instruments_dir = Path(__file__).parent / 'instruments'
-        names = []
-        for mfr in instruments_dir.iterdir():
-            if not mfr.is_dir() or mfr.name.startswith('_'):
-                continue
-            for inst in mfr.iterdir():
-                if inst.is_dir() and (inst / 'widget.py').exists():
-                    names.append(inst.name)
-        return sorted(names)
+        return sorted(name for _, name in cls._instrumentPaths())
 
     @classmethod
     def _findInstrumentModule(cls, name: str) -> str | None:
         '''Resolve a bare instrument name to its full module path.
-
-        Searches manufacturer subdirectories under ``instruments/``
-        for a directory matching ``name`` that contains a ``widget.py``.
 
         Parameters
         ----------
@@ -261,23 +339,30 @@ class QInstrumentRack(QtWidgets.QWidget):
             Dotted module path for the widget module, or ``None`` if
             not found.
         '''
-        instruments_dir = Path(__file__).parent / 'instruments'
-        for mfr in instruments_dir.iterdir():
-            if not mfr.is_dir() or mfr.name.startswith('_'):
-                continue
-            inst = mfr / name
-            if inst.is_dir() and (inst / 'widget.py').exists():
-                return f'QInstrument.instruments.{mfr.name}.{name}.widget'
-        return None
+        return next(
+            (f'QInstrument.instruments.{mfr}.{name}.widget'
+             for mfr, inst in cls._instrumentPaths() if inst == name),
+            None)
 
     def _removeInstrument(self, name: str) -> None:
         for i in range(self._slots.count()):
-            item = self._slots.itemAt(i)
-            slot = item.widget() if item else None
-            if slot is not None and slot._name == name:
+            if (slot := self._slotAt(i)) is not None and slot._name == name:
                 self._slots.takeAt(i).widget().deleteLater()
-                self._instrument_names.remove(name)
+                self.adjustSize()
                 break
+
+    def _moveSlot(self,
+                  slot: '_InstrumentSlot',
+                  drop_pos: QtCore.QPoint) -> None:
+        local_pos = self.mapFromGlobal(drop_pos)
+        target = next(
+            (w for w in self._iterSlots() if w.geometry().contains(local_pos)),
+            None)
+        if target is None or target is slot:
+            return
+        target_index = self._slots.indexOf(target)
+        self._slots.removeWidget(slot)
+        self._slots.insertWidget(target_index, slot)
 
     def _addInstrumentDialog(self) -> None:
         available = self.availableInstruments()
@@ -299,7 +384,7 @@ class QInstrumentRack(QtWidgets.QWidget):
         '''
         if not self._shown:
             self._shown = True
-            if not self._instrument_names:
+            if not self._slots.count():
                 self._configure.restore(self)
         super().showEvent(event)
 
