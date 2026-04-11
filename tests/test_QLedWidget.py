@@ -1,5 +1,5 @@
 import pytest
-from qtpy import QtCore
+from qtpy import QtCore, QtWidgets
 from widgets.QLedWidget import QLedWidget
 
 
@@ -108,6 +108,57 @@ class TestBlink:
         led.interval = 200
         assert led.timer.isActive()
         assert led.interval == 200
+
+
+# ---------------------------------------------------------------------------
+# Disabled appearance
+# ---------------------------------------------------------------------------
+
+class TestDisabled:
+
+    def test_disabled_led_is_white_off(self, led):
+        led.color = QLedWidget.GREEN
+        led.state = QLedWidget.ON
+        led.setEnabled(False)
+        assert led.color == QLedWidget.WHITE
+        assert led.state == QLedWidget.OFF
+
+    def test_reenabled_restores_color(self, led):
+        led.color = QLedWidget.GREEN
+        led.setEnabled(False)
+        led.setEnabled(True)
+        assert led.color == QLedWidget.GREEN
+
+    def test_reenabled_restores_state(self, led):
+        led.color = QLedWidget.RED
+        led.state = QLedWidget.ON
+        led.setEnabled(False)
+        led.setEnabled(True)
+        assert led.state == QLedWidget.ON
+
+    def test_disabled_stops_blinking(self, led):
+        led.blink = True
+        led.setEnabled(False)
+        assert not led.timer.isActive()
+
+    def test_reenabled_restores_blink(self, led):
+        led.blink = True
+        led.setEnabled(False)
+        led.setEnabled(True)
+        assert led.timer.isActive()
+
+    def test_disabled_via_parent(self, qtbot):
+        parent = QtWidgets.QWidget()
+        qtbot.addWidget(parent)
+        led = QLedWidget(parent)
+        led.color = QLedWidget.BLUE
+        led.state = QLedWidget.ON
+        parent.setEnabled(False)
+        assert led.color == QLedWidget.WHITE
+        assert led.state == QLedWidget.OFF
+        parent.setEnabled(True)
+        assert led.color == QLedWidget.BLUE
+        assert led.state == QLedWidget.ON
 
 
 # ---------------------------------------------------------------------------

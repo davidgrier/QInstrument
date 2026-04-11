@@ -152,6 +152,28 @@ class QLedWidget(QtWidgets.QWidget):
         '''Toggle the LED between ON and OFF states.'''
         self.state = self.OFF if self.state == self.ON else self.ON
 
+    def changeEvent(self, event: QtCore.QEvent) -> None:
+        '''Gray out the LED when disabled; restore its color when re-enabled.
+
+        When the widget (or any ancestor) is disabled, the LED switches
+        to WHITE/OFF so it looks unpowered, consistent with the rest of
+        the disabled instrument UI.  The original color, state, and blink
+        are saved and restored when the widget is re-enabled.
+        '''
+        if event.type() == QtCore.QEvent.Type.EnabledChange:
+            if not self.isEnabled():
+                self._disabledColor = self.color
+                self._disabledState = self.state
+                self._disabledBlink = self.blink
+                self.blink = False
+                self.color = self.WHITE
+                self.state = self.OFF
+            else:
+                self.color = self._disabledColor
+                self.state = self._disabledState
+                self.blink = self._disabledBlink
+        super().changeEvent(event)
+
     def paintEvent(self, event: QtGui.QPaintEvent) -> None:
         painter = QtGui.QPainter(self)
         painter.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing, True)
