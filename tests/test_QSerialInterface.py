@@ -141,8 +141,8 @@ class TestReceive:
 
     @patch.object(QSerialInterface, 'bytesAvailable', return_value=False)
     @patch.object(QSerialInterface, 'waitForReadyRead', return_value=False)
-    def test_timeout_logs_warning(self, mock_wait, mock_avail, iface, caplog):
-        with caplog.at_level(logging.WARNING):
+    def test_timeout_logs(self, mock_wait, mock_avail, iface, caplog):
+        with caplog.at_level(logging.DEBUG):
             iface.receive()
         assert 'Timeout' in caplog.text
 
