@@ -1,0 +1,4 @@
+#!/bin/sh
+ROOT="$(git rev-parse --show-toplevel)"
+echo "Running tests before push..."
+"$ROOT/.qi/bin/pytest" tests/ -q
