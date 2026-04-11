@@ -28,6 +28,12 @@ python -m QInstrument.instruments.StanfordResearch.DS345.widget
 
 Tests cover `QSerialInterface` and `QInstrumentWidget`; run with `pytest tests/`. No build step or linter configuration.
 
+Git hooks live in `.githooks/` (tracked). Activate them once per clone:
+```bash
+git config core.hooksPath .githooks
+```
+The `pre-push` hook runs the full test suite and blocks the push on failure.
+
 ## Architecture
 
 ### Core Class Hierarchy
