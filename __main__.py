@@ -7,6 +7,9 @@ Run as:
 If no instrument names are given, the previously saved rack
 configuration is restored from
 ``~/.QInstrument/QInstrumentRack.json``.
+
+Pass ``-f`` / ``--fake`` to load fake instruments instead of probing
+for real hardware; all widgets will be fully enabled.
 '''
 import sys
 import argparse
@@ -26,11 +29,14 @@ def main() -> None:
         metavar='INSTRUMENT',
         help='instrument names to load (e.g. DS345 SR830)',
     )
+    parser.add_argument(
+        '-f', '--fake', action='store_true',
+        help='use fake instruments instead of probing for hardware',
+    )
     args = parser.parse_args()
     app = QApplication.instance() or QApplication(sys.argv)
-    rack = QInstrumentRack(
-        instruments=args.instruments or None,
-    )
+    rack = QInstrumentRack()
+    rack.addInstrumentsByNames(args.instruments or None, fake=args.fake)
     rack.setWindowTitle('QInstrument')
     rack.setMinimumWidth(400)
     rack.show()

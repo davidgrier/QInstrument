@@ -332,7 +332,7 @@ class QInstrumentRack(QtWidgets.QWidget):
         for instrument in instruments:
             self.addInstrument(instrument)
 
-    def addInstrumentByName(self, name: str) -> None:
+    def addInstrumentByName(self, name: str, fake: bool = False) -> None:
         '''Add an instrument widget by its bare instrument name.
 
         Searches manufacturer subdirectories under ``instruments/``
@@ -345,6 +345,12 @@ class QInstrumentRack(QtWidgets.QWidget):
         name : str
             Bare instrument name without the ``Q`` prefix or
             ``Widget`` suffix (e.g. ``'DS345'``).
+        fake : bool
+            If ``True``, instantiate the widget with its fake device
+            (from the sibling ``fake.py``) instead of probing for
+            real hardware.  The widget will be fully enabled.
+            Falls back to normal instantiation if no fake is available.
+            Default: ``False``.
         '''
         modulename = self._findInstrumentModule(name)
         if modulename is None:
@@ -354,7 +360,16 @@ class QInstrumentRack(QtWidgets.QWidget):
         try:
             mod = importlib.import_module(modulename)
             cls = getattr(mod, widgetname)
-            instrument = cls()
+            if fake:
+                fake_cls = cls._fakeCls()
+                if fake_cls is not None:
+                    instrument = cls(device=fake_cls())
+                else:
+                    logger.warning(
+                        f"No fake available for '{name}'; loading normally.")
+                    instrument = cls()
+            else:
+                instrument = cls()
         except (ModuleNotFoundError, AttributeError) as e:
             logger.warning(
                 f"Error loading instrument '{name}': {e}")
@@ -362,7 +377,8 @@ class QInstrumentRack(QtWidgets.QWidget):
         self.addInstrument(instrument, name)
 
     def addInstrumentsByNames(self,
-                              names: list[str] | None) -> None:
+                              names: list[str] | None,
+                              fake: bool = False) -> None:
         '''Add multiple instruments by their bare names.
 
         Parameters
@@ -370,9 +386,12 @@ class QInstrumentRack(QtWidgets.QWidget):
         names : list[str] | None
             Bare instrument names to load.
             ``None`` is treated as an empty list.
+        fake : bool
+            Passed to :meth:`addInstrumentByName` for each name.
+            Default: ``False``.
         '''
         for name in (names or []):
-            self.addInstrumentByName(name)
+            self.addInstrumentByName(name, fake=fake)
 
     def clearInstruments(self) -> None:
         '''Remove and schedule deletion of all instrument widgets.'''
@@ -528,11 +547,22 @@ class QInstrumentRack(QtWidgets.QWidget):
 
     @classmethod
     def example(cls) -> None:
-        '''Display a rack populated with example instruments.'''
+        '''Display a rack populated with example instruments.
+
+        Accepts ``-f`` / ``--fake`` on the command line to load fake
+        devices instead of probing for real hardware.
+        '''
         import sys
+        import argparse
         from qtpy.QtWidgets import QApplication
+        parser = argparse.ArgumentParser()
+        parser.add_argument('-f', '--fake', action='store_true',
+                            help='use fake instruments')
+        args, _ = parser.parse_known_args()
         app = QApplication.instance() or QApplication(sys.argv)
-        rack = cls(instruments='Proscan DS345 SR830'.split())
+        names = 'Proscan DS345 SR830'.split()
+        rack = cls()
+        rack.addInstrumentsByNames(names, fake=args.fake)
         rack.show()
         sys.exit(app.exec())
 
