@@ -35,8 +35,10 @@ def main() -> None:
     )
     args = parser.parse_args()
     app = QApplication.instance() or QApplication(sys.argv)
-    rack = QInstrumentRack()
-    rack.addInstrumentsByNames(args.instruments or None, fake=args.fake)
+    rack = QInstrumentRack(
+        instruments=args.instruments or None,
+        fake=args.fake,
+    )
     rack.setWindowTitle('QInstrument')
     rack.setMinimumWidth(400)
     rack.show()

@@ -217,18 +217,24 @@ class QInstrumentRack(QtWidgets.QWidget):
     editable : bool
         If ``False``, the toolbar, drag handles, and close buttons
         are all hidden. Default: ``True``.
+    fake : bool
+        If ``True``, all instruments — including those added later
+        via the "Add instrument…" dialog — use fake devices instead
+        of probing for real hardware.  Default: ``False``.
     '''
 
     def __init__(self,
                  parent: QtWidgets.QWidget | None = None,
                  instruments: list[str] | None = None,
-                 editable: bool = True) -> None:
+                 editable: bool = True,
+                 fake: bool = False) -> None:
         super().__init__(parent)
         self._configure = Configure()
         self._shown = False
         self._editable = editable
+        self._fake = fake
         self._setupUi()
-        self.addInstrumentsByNames(instruments)
+        self.addInstrumentsByNames(instruments, fake=fake)
 
     def _setupUi(self) -> None:
         outer = QtWidgets.QVBoxLayout(self)
@@ -518,7 +524,7 @@ class QInstrumentRack(QtWidgets.QWidget):
         if picker.exec() == DD.Accepted:
             name = picker.selected()
             if name:
-                self.addInstrumentByName(name)
+                self.addInstrumentByName(name, fake=self._fake)
 
     def showEvent(self, event) -> None:
         '''Restore the instrument list on first show.
@@ -560,9 +566,7 @@ class QInstrumentRack(QtWidgets.QWidget):
                             help='use fake instruments')
         args, _ = parser.parse_known_args()
         app = QApplication.instance() or QApplication(sys.argv)
-        names = 'Proscan DS345 SR830'.split()
-        rack = cls()
-        rack.addInstrumentsByNames(names, fake=args.fake)
+        rack = cls(instruments='Proscan DS345 SR830'.split(), fake=args.fake)
         rack.show()
         sys.exit(app.exec())
 
