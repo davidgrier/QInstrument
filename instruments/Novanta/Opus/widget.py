@@ -44,13 +44,17 @@ class QOpusWidget(QInstrumentWidget):
             self._timer.start()
 
     def _setupControls(self) -> None:
-        '''Configure the LED color and the power setpoint encoder.
+        '''Configure the group box title, LED color, and power setpoint encoder.
 
-        Called once after the device is confirmed open.  Sets the
+        Called once after the device is confirmed open.  Updates the
+        group box title with the device wavelength if available, sets the
         emission LED to red, configures the ``power_setpoint`` rotary
         encoder appearance, and applies the current ``maximum_power``
         as the encoder upper bound.
         '''
+        wavelength = getattr(type(self.device), 'WAVELENGTH', None)
+        if wavelength is not None:
+            self.groupBox.setTitle(f'Opus {int(wavelength)} nm DPSS Laser')
         self.emission.color = QLedWidget.RED
         self.power_setpoint.setTitle('Power [W]')
         self.power_setpoint.setSingleStep(0.01)

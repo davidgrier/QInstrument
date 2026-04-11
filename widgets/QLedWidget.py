@@ -27,26 +27,26 @@ class QLedWidget(QtWidgets.QWidget):
     '''
 
     class Color(Enum):
-        RED    = 1
-        AMBER  = 2
-        GREEN  = 3
-        BLUE   = 4
+        RED = 1
+        AMBER = 2
+        GREEN = 3
+        BLUE = 4
         VIOLET = 5
-        WHITE  = 6
+        WHITE = 6
 
     class State(Enum):
         OFF = 0
-        ON  = 1
+        ON = 1
 
-    RED    = Color.RED
-    AMBER  = Color.AMBER
-    GREEN  = Color.GREEN
-    BLUE   = Color.BLUE
+    RED = Color.RED
+    AMBER = Color.AMBER
+    GREEN = Color.GREEN
+    BLUE = Color.BLUE
     VIOLET = Color.VIOLET
-    WHITE  = Color.WHITE
+    WHITE = Color.WHITE
 
     OFF = State.OFF
-    ON  = State.ON
+    ON = State.ON
 
     hexcodes = {RED:    {OFF: ('3f0000', 'a00000'),
                          ON:  ('af0000', 'ff0f0f')},
@@ -133,7 +133,8 @@ class QLedWidget(QtWidgets.QWidget):
         Returns
         -------
         bool
-            ``True`` when the LED is :attr:`ON`, ``False`` when :attr:`OFF`.
+            ``True`` when the LED is :attr:`ON`
+            ``False`` when :attr:`OFF`.
         '''
         return self.state == self.ON
 
@@ -153,7 +154,7 @@ class QLedWidget(QtWidgets.QWidget):
         self.state = self.OFF if self.state == self.ON else self.ON
 
     def changeEvent(self, event: QtCore.QEvent) -> None:
-        '''Gray out the LED when disabled; restore its color when re-enabled.
+        '''Gray out the LED when disabled; restore color when re-enabled.
 
         When the widget (or any ancestor) is disabled, the LED switches
         to WHITE/OFF so it looks unpowered, consistent with the rest of
@@ -195,7 +196,7 @@ def example() -> None:
     app = QApplication.instance() or QApplication(sys.argv)
     led = QLedWidget()
     led.show()
-    led.color = QLedWidget.WHITE
+    led.color = QLedWidget.RED
     led.blink = True
     sys.exit(app.exec())
 

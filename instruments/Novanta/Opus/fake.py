@@ -12,15 +12,17 @@ class QFakeOpus(QFakeInstrument, QOpus):
     '''
 
     def _registerProperties(self) -> None:
+        default_max = getattr(type(self), 'MAXIMUM_POWER', 1000.)
+        self._store.setdefault('maximum_power', default_max)
         self.registerProperty(
             'power', ptype=float,
             getter=lambda: self._store.get('power', 0.),
             setter=lambda v: self._store.__setitem__(
                 'power',
-                min(float(v), self._store.get('maximum_power', 1000.))))
+                min(float(v), self._store.get('maximum_power', default_max))))
         self.registerProperty(
             'maximum_power', ptype=float,
-            getter=lambda: self._store.get('maximum_power', 1000.),
+            getter=lambda: self._store.get('maximum_power', default_max),
             setter=lambda v: self._store.__setitem__('maximum_power', float(v)),
             minimum=0.)
         self.registerProperty(

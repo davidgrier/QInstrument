@@ -62,7 +62,7 @@ class QOpus(QSerialInstrument):
         hardware at runtime.  They are initialised to defaults here and
         restored from the saved configuration on the first widget show.
         '''
-        self._maximum_power = 1000.
+        self._maximum_power = getattr(type(self), 'MAXIMUM_POWER', 1000.)
         self._wavelength = 532.
         self._power: float = 0.
         register = self.registerProperty

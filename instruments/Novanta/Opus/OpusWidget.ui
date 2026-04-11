@@ -5,240 +5,215 @@
   <property name="windowTitle">
    <string>Opus DPSS Laser</string>
   </property>
-  <layout class="QHBoxLayout" name="outerLayout">
+  <layout class="QVBoxLayout" name="outerLayout">
    <property name="spacing">
-    <number>6</number>
+    <number>2</number>
    </property>
    <property name="leftMargin">
-    <number>6</number>
+    <number>2</number>
    </property>
    <property name="topMargin">
-    <number>6</number>
+    <number>1</number>
    </property>
    <property name="rightMargin">
-    <number>6</number>
+    <number>2</number>
    </property>
    <property name="bottomMargin">
-    <number>6</number>
+    <number>1</number>
    </property>
-   <!-- Left column: title, read-only displays, emission control -->
    <item>
-    <layout class="QVBoxLayout" name="leftLayout">
-     <property name="spacing">
-      <number>4</number>
+    <widget class="QGroupBox" name="groupBox">
+     <property name="title">
+      <string>Opus DPSS Laser</string>
      </property>
-     <!-- Title -->
-     <item>
-      <widget class="QLabel" name="titleLabel">
-       <property name="text">
-        <string>Opus DPSS Laser</string>
-       </property>
-       <property name="font">
-        <font>
-         <bold>true</bold>
-        </font>
-       </property>
-      </widget>
-     </item>
-     <!-- Read-only display row: actual power and diode current -->
-     <item>
-      <layout class="QHBoxLayout" name="displayLayout">
-       <property name="spacing">
-        <number>4</number>
-       </property>
-       <item>
-        <widget class="QGroupBox" name="powerGroup">
-         <property name="title">
-          <string>Power [W]</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignCenter</set>
-         </property>
-         <property name="minimumSize">
-          <size>
-           <width>80</width>
-           <height>52</height>
-          </size>
-         </property>
-         <property name="maximumSize">
-          <size>
-           <width>120</width>
-           <height>64</height>
-          </size>
-         </property>
-         <layout class="QVBoxLayout" name="powerSpinLayout">
-          <property name="leftMargin">
-           <number>4</number>
-          </property>
-          <property name="topMargin">
-           <number>2</number>
-          </property>
-          <property name="rightMargin">
-           <number>4</number>
-          </property>
-          <property name="bottomMargin">
+     <layout class="QHBoxLayout" name="innerLayout">
+      <property name="spacing">
+       <number>6</number>
+      </property>
+      <property name="leftMargin">
+       <number>6</number>
+      </property>
+      <property name="topMargin">
+       <number>4</number>
+      </property>
+      <property name="rightMargin">
+       <number>6</number>
+      </property>
+      <property name="bottomMargin">
+       <number>6</number>
+      </property>
+      <!-- Left column: read-only displays and emission control -->
+      <item>
+       <layout class="QVBoxLayout" name="leftLayout">
+        <property name="spacing">
+         <number>4</number>
+        </property>
+        <!-- Read-only display row: actual power and diode current -->
+        <item>
+         <layout class="QHBoxLayout" name="displayLayout">
+          <property name="spacing">
            <number>4</number>
           </property>
           <item>
-           <widget class="QDoubleSpinBox" name="power_display">
-            <property name="readOnly">
-             <bool>true</bool>
-            </property>
-            <property name="buttonSymbols">
-             <enum>QAbstractSpinBox::NoButtons</enum>
+           <widget class="QGroupBox" name="powerGroup">
+            <property name="title">
+             <string>Power [W]</string>
             </property>
             <property name="alignment">
              <set>Qt::AlignCenter</set>
             </property>
-            <property name="decimals">
-             <number>3</number>
-            </property>
-            <property name="maximum">
-             <double>9.999</double>
-            </property>
+            <layout class="QVBoxLayout" name="powerSpinLayout">
+             <property name="leftMargin">
+              <number>4</number>
+             </property>
+             <property name="topMargin">
+              <number>2</number>
+             </property>
+             <property name="rightMargin">
+              <number>4</number>
+             </property>
+             <property name="bottomMargin">
+              <number>4</number>
+             </property>
+             <item>
+              <widget class="QDoubleSpinBox" name="power_display">
+               <property name="readOnly">
+                <bool>true</bool>
+               </property>
+               <property name="buttonSymbols">
+                <enum>QAbstractSpinBox::NoButtons</enum>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+               <property name="decimals">
+                <number>3</number>
+               </property>
+               <property name="maximum">
+                <double>9.999</double>
+               </property>
+              </widget>
+             </item>
+            </layout>
            </widget>
           </item>
-         </layout>
-        </widget>
-       </item>
-       <item>
-        <widget class="QGroupBox" name="currentGroup">
-         <property name="title">
-          <string>Current [%]</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignCenter</set>
-         </property>
-         <property name="minimumSize">
-          <size>
-           <width>80</width>
-           <height>52</height>
-          </size>
-         </property>
-         <property name="maximumSize">
-          <size>
-           <width>120</width>
-           <height>64</height>
-          </size>
-         </property>
-         <layout class="QVBoxLayout" name="currentSpinLayout">
-          <property name="leftMargin">
-           <number>4</number>
-          </property>
-          <property name="topMargin">
-           <number>2</number>
-          </property>
-          <property name="rightMargin">
-           <number>4</number>
-          </property>
-          <property name="bottomMargin">
-           <number>4</number>
-          </property>
           <item>
-           <widget class="QDoubleSpinBox" name="current_display">
-            <property name="readOnly">
-             <bool>true</bool>
-            </property>
-            <property name="buttonSymbols">
-             <enum>QAbstractSpinBox::NoButtons</enum>
+           <widget class="QGroupBox" name="currentGroup">
+            <property name="title">
+             <string>Current [%]</string>
             </property>
             <property name="alignment">
              <set>Qt::AlignCenter</set>
             </property>
-            <property name="decimals">
-             <number>1</number>
-            </property>
-            <property name="maximum">
-             <double>100.0</double>
-            </property>
+            <layout class="QVBoxLayout" name="currentSpinLayout">
+             <property name="leftMargin">
+              <number>4</number>
+             </property>
+             <property name="topMargin">
+              <number>2</number>
+             </property>
+             <property name="rightMargin">
+              <number>4</number>
+             </property>
+             <property name="bottomMargin">
+              <number>4</number>
+             </property>
+             <item>
+              <widget class="QDoubleSpinBox" name="current_display">
+               <property name="readOnly">
+                <bool>true</bool>
+               </property>
+               <property name="buttonSymbols">
+                <enum>QAbstractSpinBox::NoButtons</enum>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+               <property name="decimals">
+                <number>1</number>
+               </property>
+               <property name="maximum">
+                <double>100.0</double>
+               </property>
+              </widget>
+             </item>
+            </layout>
            </widget>
           </item>
          </layout>
-        </widget>
-       </item>
-      </layout>
-     </item>
-     <!-- Emission: status LED + toggle button -->
-     <item>
-      <layout class="QHBoxLayout" name="controlLayout">
-       <property name="spacing">
-        <number>4</number>
-       </property>
-       <item>
-        <widget class="QLedWidget" name="emission">
-         <property name="minimumSize">
-          <size>
-           <width>20</width>
-           <height>20</height>
-          </size>
-         </property>
-         <property name="maximumSize">
-          <size>
-           <width>24</width>
-           <height>24</height>
-          </size>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QPushButton" name="emission_button">
-         <property name="text">
-          <string>Emission</string>
-         </property>
-         <property name="minimumSize">
-          <size>
-           <width>60</width>
-           <height>0</height>
-          </size>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <spacer name="controlSpacer">
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>0</width>
-           <height>0</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-      </layout>
-     </item>
-     <!-- Vertical spacer to fill remaining height beside the rotary encoder -->
-     <item>
-      <spacer name="verticalSpacer">
-       <property name="orientation">
-        <enum>Qt::Vertical</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>0</width>
-         <height>0</height>
-        </size>
-       </property>
-      </spacer>
-     </item>
-    </layout>
-   </item>
-   <!-- Right column: rotary encoder spinbox for power setpoint -->
-   <item>
-    <widget class="QRotaryEncoderSpinBox" name="power_setpoint">
-     <property name="minimumSize">
-      <size>
-       <width>100</width>
-       <height>0</height>
-      </size>
-     </property>
-     <property name="maximumSize">
-      <size>
-       <width>120</width>
-       <height>16777215</height>
-      </size>
-     </property>
+        </item>
+        <!-- Emission: status LED + toggle button -->
+        <item>
+         <layout class="QHBoxLayout" name="controlLayout">
+          <property name="spacing">
+           <number>4</number>
+          </property>
+          <item>
+           <widget class="QLedWidget" name="emission">
+            <property name="minimumSize">
+             <size>
+              <width>20</width>
+              <height>20</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>24</width>
+              <height>24</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="emission_button">
+            <property name="text">
+             <string>Emission</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="controlSpacer">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>0</width>
+              <height>0</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
+        </item>
+        <!-- Vertical spacer to push displays and controls to the top -->
+        <item>
+         <spacer name="verticalSpacer">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>0</width>
+            <height>0</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
+      </item>
+      <!-- Right column: rotary encoder spinbox for power setpoint -->
+      <item>
+       <widget class="QRotaryEncoderSpinBox" name="power_setpoint">
+        <property name="minimumSize">
+         <size>
+          <width>100</width>
+          <height>0</height>
+         </size>
+        </property>
+       </widget>
+      </item>
+     </layout>
     </widget>
    </item>
   </layout>
