@@ -75,7 +75,7 @@ class QOpusWidget(QInstrumentWidget):
         super().showEvent(event)
         if self.device is not None and self.device.isOpen():
             self._updatePowerRange()
-        self._timer.start()
+            self._timer.start()
 
     def _connectSignals(self) -> None:
         '''Connect the emission toggle button and power setpoint encoder.
