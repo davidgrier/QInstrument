@@ -63,11 +63,11 @@ class TestOpen:
              patch.object(dev._interface, 'isOpen', return_value=False):
             assert dev.open('ttyUSB0') is False
 
-    def test_logs_warning_when_identify_fails(self, qtbot, caplog):
+    def test_logs_when_identify_fails(self, qtbot, caplog):
         dev = NeverIdentifies()
         with patch.object(dev._interface, 'open', return_value=True), \
              patch.object(dev._interface, 'isOpen', return_value=False), \
-             caplog.at_level(logging.WARNING):
+             caplog.at_level(logging.DEBUG):
             dev.open('ttyUSB0')
         assert 'NeverIdentifies' in caplog.text
 
