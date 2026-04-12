@@ -16,12 +16,12 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 project = 'QInstrument'
 author = 'David G. Grier'
-copyright = '2022, David G. Grier'
+copyright = '2022–2026, David G. Grier'
 from importlib.metadata import version as _get_version, PackageNotFoundError
 try:
     release = _get_version('QInstrument')
 except PackageNotFoundError:
-    release = '0.4.0'
+    release = '2.1.0'
 
 # -- General configuration ---------------------------------------------------
 
@@ -65,6 +65,45 @@ intersphinx_mapping = {
 
 exclude_patterns = ['_build']
 
+# Suppress unresolvable forward references for inner classes (e.g.
+# QLedWidget.Color) and the sphinx_autodoc_typehints forward_reference
+# category in general.
+suppress_warnings = ['sphinx_autodoc_typehints.forward_reference']
+
+
+def _skip_signal_docstring(app, what, name, obj, options, lines):
+    '''Clear per-attribute docstrings for Qt Signal class attributes.
+
+    Signals are documented in their class docstrings' Signals sections;
+    per-attribute autodoc adds only noise.
+
+    Two cases:
+
+    * **PyQt6 installed** (local build): ``pyqtSignal`` objects carry a
+      C-extension docstring ``pyqtSignal(*types, ...)`` whose ``*types``
+      triggers an RST "Inline emphasis start-string" parse error.
+    * **Qt mocked** (ReadTheDocs build): Signal attributes become
+      ``MagicMock`` instances whose ``__doc__`` is the ``MagicMock``
+      class docstring — irrelevant content that would clutter the page.
+
+    Both cases are caught here and the lines are cleared.
+    '''
+    # Case 1: real pyqtSignal (PyQt6 installed locally)
+    try:
+        from PyQt6.QtCore import pyqtSignal
+        if isinstance(obj, pyqtSignal):
+            lines.clear()
+            return
+    except ImportError:
+        pass
+    # Case 2: mocked Signal (MagicMock on ReadTheDocs / CI)
+    try:
+        from unittest.mock import NonCallableMock
+        if isinstance(obj, NonCallableMock):
+            lines.clear()
+    except ImportError:
+        pass
+
 
 def setup(app):
     '''Suppress spurious duplicate-object warnings from Sphinx 8.x.
@@ -89,6 +128,7 @@ def setup(app):
         return _orig(self, name, objtype, node_id, aliased, location)
 
     PythonDomain.note_object = _dedup
+    app.connect('autodoc-process-docstring', _skip_signal_docstring)
 
 # -- HTML output -------------------------------------------------------------
 

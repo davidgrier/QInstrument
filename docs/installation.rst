@@ -24,6 +24,16 @@ for example::
 Installing from PyPI also places a ``qinstrument`` command on your
 PATH that launches the rack application.
 
+Optional extras
+~~~~~~~~~~~~~~~
+
+The :class:`~QInstrument.lib.QInstrumentTree.QInstrumentTree`
+parameter-tree inspector requires ``pyqtgraph``:
+
+.. code-block:: bash
+
+   pip install 'QInstrument[tree]'
+
 Install from source
 -------------------
 

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 # TODO: Provide methods to search for instruments by type or
 #       identification string.
 from pathlib import Path
@@ -507,7 +509,8 @@ class QInstrumentRack(QtWidgets.QWidget):
             s.setHighlighted(False)
         local_pos = self.mapFromGlobal(drop_pos)
         target = next(
-            (w for w in self._iterSlots() if w.geometry().contains(local_pos)),
+            (w for w in self._iterSlots()
+             if w.geometry().contains(local_pos)),
             None)
         if target is None or target is slot:
             return

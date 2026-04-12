@@ -12,6 +12,8 @@ Any Qt binding (PyQt5, PyQt6, PySide2, PySide6) is supported via ``qtpy``.
 
    installation
    quickstart
+   add_instrument
    api/index
    instruments/index
    widgets/index
+   changelog

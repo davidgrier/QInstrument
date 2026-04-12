@@ -1,0 +1,181 @@
+Changelog
+=========
+
+All notable changes to QInstrument are documented here.
+The format follows `Keep a Changelog <https://keepachangelog.com>`_.
+
+.. _v2.1.0:
+
+2.1.0
+-----
+
+Added
+~~~~~
+
+- ``QInstrumentRack`` now supports drag-to-reorder instrument slots.
+  A ``⋮`` drag handle appears on each slot; dragging highlights the
+  target with a colored bar and commits the move on release.
+- ``QInstrumentRack`` close button (``×``) overlaid on each slot.
+- ``QInstrumentRack.editable`` property (default ``True``) hides or
+  shows the toolbar, drag handles, and close buttons as a unit.
+  Set ``editable=False`` for embedded rack contexts where the
+  instrument set should be fixed.
+- ``-f`` / ``--fake`` command-line flag for the ``qinstrument`` CLI
+  and ``QInstrumentRack.example()``: loads all instruments in fake
+  (simulated) mode without probing hardware.  The flag is remembered
+  by the rack, so instruments added interactively via the picker
+  dialog also use fake devices.
+- ``QLedWidget``: disabled widgets now render as ``WHITE/OFF``
+  (grayed out) regardless of their current color.  Re-enabling
+  restores the original color and state.
+- Tests: ``QInstrumentRack``, ``QLedWidget``, and
+  ``QRotaryEncoderSpinBox`` now have pytest coverage.
+
+Fixed
+~~~~~
+
+- Opus widget: poll timer is no longer started when the device port
+  is not open, preventing spurious "Cannot send data: device is not
+  open" log messages at startup.
+- Opus widget: ``maximum_power`` is now initialized from the model
+  subclass constant (``MAXIMUM_POWER``) rather than a hard-coded
+  default.
+
+.. _v2.0.0:
+
+2.0.0
+-----
+
+Added
+~~~~~
+
+- Instruments are now organized in a two-level manufacturer hierarchy:
+  ``instruments/<Manufacturer>/<Name>/``.  The instrument picker in
+  ``QInstrumentRack`` discovers all packages that contain a
+  ``widget.py`` at this depth.
+- Novanta Opus family: ``Opus`` base class plus ``Opus532``,
+  ``Opus660``, and ``Opus1064`` model subclasses.  Each subclass
+  sets ``WAVELENGTH``, ``MINIMUM_POWER``, and ``MAXIMUM_POWER`` as
+  class attributes — no code duplication.
+- ``QInstrumentRack``: "Add instrument…" toolbar button that opens a
+  picker dialog listing all discovered instrument widgets.
+- ``QInstrumentRack``: right-click context menu on each instrument
+  slot to remove it at runtime.
+
+Changed
+~~~~~~~
+
+- All existing instrument packages moved to their manufacturer
+  subdirectory.  Import paths change from
+  ``QInstrument.instruments.<Name>`` to
+  ``QInstrument.instruments.<Manufacturer>.<Name>``.
+
+.. _v1.3.0:
+
+1.3.0
+-----
+
+Added
+~~~~~
+
+- ``QInstrumentTree``: a ``pyqtgraph`` ``ParameterTree``-based
+  inspector that presents all registered properties and methods for
+  any instrument without requiring a ``.ui`` file.  Properties are
+  editable live; methods appear as buttons.  Read-only properties are
+  displayed but cannot be edited.
+- ``tree.py`` module added to each instrument package (``QDS345Tree``,
+  ``QSR830Tree``, ``QOpusTree``, etc.).
+- ``[tree]`` optional dependency (``pip install 'QInstrument[tree]'``)
+  pulls in ``pyqtgraph>=0.13``.
+- ``QInstrumentTree.fields`` / ``FIELDS``: restrict the parameter tree
+  to a named subset of properties and methods.
+
+.. _v1.2.0:
+
+1.2.0
+-----
+
+Added
+~~~~~
+
+- ``registerProperty`` accepts a ``debounce`` keyword (milliseconds).
+  ``QInstrumentWidget`` coalesces rapid UI changes and sends only the
+  final value to the device after the user pauses.  Designed for
+  controls (e.g. laser power) that must not receive a rapid stream of
+  intermediate values.
+- ``QJoystick``: ``padColor`` and ``knobColor`` style properties,
+  ``setRange()`` method, and several paint-event improvements.
+
+Changed
+~~~~~~~
+
+- IPGLaser widget overhauled: LED fault indicator, aiming-beam toggle,
+  emission toggle, and improved status polling.
+
+.. _v1.1.0:
+
+1.1.0
+-----
+
+Added
+~~~~~
+
+- ``QInstrumentRack``: top-level widget that holds multiple
+  ``QInstrumentWidget`` instances in a vertical layout.
+- ``qinstrument`` CLI entry point (also invokable as
+  ``python -m QInstrument``).  With no arguments it restores the last
+  session; with instrument names it loads those instruments.
+- Instrument list is persisted to ``~/.QInstrument/QInstrumentRack.json``
+  on close and restored on next launch.
+
+.. _v1.0.2:
+
+1.0.2
+-----
+
+Fixed
+~~~~~
+
+- ``QSerialInterface``: corrected PyQt6 compatibility — integer enum
+  values are now accessed via the long-form scoped path
+  (``BaudRate.Baud9600``, etc.) throughout.
+
+.. _v1.0.1:
+
+1.0.1
+-----
+
+Added
+~~~~~
+
+- GitHub Actions CI workflow: runs the full test suite on push/PR.
+
+.. _v1.0.0:
+
+1.0.0
+-----
+
+Added
+~~~~~
+
+- PiezoDrive PDUS210 ultrasonic amplifier: fully migrated to the
+  ``registerProperty()`` API with fake device and widget.
+- ``Configure``: JSON-based save/restore gated on the ``_shown``
+  flag so test widgets closed during teardown do not write config
+  files.
+- Expanded pytest suite covering ``QSerialInterface`` and
+  ``QInstrumentWidget`` auto-binding.
+
+.. _v0.4.0:
+
+0.4.0
+-----
+
+Added
+~~~~~
+
+- ``pyproject.toml``-based packaging; installable from PyPI as
+  ``pip install QInstrument``.
+- Initial Sphinx documentation published to Read the Docs.
+- ``pytest`` test suite.
+- ``LICENSE.md`` (GPLv3).

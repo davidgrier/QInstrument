@@ -34,9 +34,9 @@ tree = [
     "pyqtgraph>=0.13",
 ]
 docs = [
-    "sphinx>=7.0",
-    "pydata-sphinx-theme>=0.15",
-    "sphinx-autodoc-typehints>=1.25",
+    "sphinx>=8.0",
+    "pydata-sphinx-theme>=0.16",
+    "sphinx-autodoc-typehints>=2.0",
 ]
 dev = [
     "pytest>=7.0",
