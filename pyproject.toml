@@ -49,6 +49,9 @@ qinstrument = "QInstrument.__main__:main"
 [project.urls]
 Homepage = "https://github.com/davidgrier/QInstrument"
 Repository = "https://github.com/davidgrier/QInstrument"
+Documentation = "https://qinstrument.readthedocs.io"
+Changelog = "https://github.com/davidgrier/QInstrument/blob/main/CHANGELOG.rst"
+"Issue Tracker" = "https://github.com/davidgrier/QInstrument/issues"
 
 # The project root IS the QInstrument package — no src/ subdirectory.
 # package-dir maps the Python package name to the filesystem root.
