@@ -4,7 +4,7 @@ import logging
 from pathlib import Path
 from qtpy import QtCore
 from QInstrument.lib.QInstrumentWidget import QInstrumentWidget
-from QInstrument.instruments.PiezoDrive.instrument import QPDUS210
+from QInstrument.instruments.PiezoDrive.PDUS210.instrument import QPDUS210
 
 logger = logging.getLogger(__name__)
 

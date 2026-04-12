@@ -9,6 +9,7 @@ class QOpus(QSerialInstrument):
     '''Laser Quantum Opus Continuous-wave Laser
 
     The Opus command interface uses plain text:
+
     - Queries end in ``?`` and return a value with a units suffix
       (e.g. ``POWER?`` → ``'0123.4mW'``).
     - Setpoint commands use ``CMD=value`` syntax

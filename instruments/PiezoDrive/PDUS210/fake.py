@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from QInstrument.lib.QFakeInstrument import QFakeInstrument
-from QInstrument.instruments.PiezoDrive.instrument import QPDUS210
+from QInstrument.instruments.PiezoDrive.PDUS210.instrument import QPDUS210
 
 
 class QFakePDUS210(QFakeInstrument, QPDUS210):

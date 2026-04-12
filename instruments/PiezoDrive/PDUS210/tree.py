@@ -1,5 +1,5 @@
 from QInstrument.lib.QInstrumentTree import QInstrumentTree
-from QInstrument.instruments.PiezoDrive.instrument import QPDUS210
+from QInstrument.instruments.PiezoDrive.PDUS210.instrument import QPDUS210
 
 
 class QPDUS210Tree(QInstrumentTree):

@@ -60,46 +60,67 @@ class QIPGLaser(QSerialInstrument):
     IPG Photonics Fiber Laser User Manual, dated February 26, 2010.
 
     Interface Commands
-    |---------+--------------------------+--------------------------|
+
+    +---------+--------------------------+--------------------------+
     | Command | Description              | Response                 |
-    |---------+--------------------------+--------------------------|
+    +=========+==========================+==========================+
     | SDC v   | Set Diode Current        | SDC: v                   |
     |         | v: percent of full range | ERR: Out of range        |
+    +---------+--------------------------+--------------------------+
     | RCS     | Read Current Setpoint    | RCS: v                   |
+    +---------+--------------------------+--------------------------+
     | RNC     | Read Minimum Current     | RNC: v                   |
+    +---------+--------------------------+--------------------------+
     | RDC     | Read Diode Current       | RDC: v                   |
     |         | v: Amps                  |                          |
+    +---------+--------------------------+--------------------------+
     | ROP     | Read Output Power        | ROP: v                   |
     |         | v: Watts                 | ROP: Off                 |
     |         |                          | ROP: Low                 |
+    +---------+--------------------------+--------------------------+
     | RFV     | Read Firmware Version    | RFV: version             |
+    +---------+--------------------------+--------------------------+
     | RCT     | Read Laser Temperature   | RCT: v                   |
     |         | v: degrees Centigrade    |                          |
+    +---------+--------------------------+--------------------------+
     | STA     | Read Device Status       | STA: v                   |
     |         | v: int: status bits      |                          |
+    +---------+--------------------------+--------------------------+
     | EMON    | Start Emission           | EMON                     |
     |         |                          | ERR: Keyswitch in remote |
+    +---------+--------------------------+--------------------------+
     | EMOFF   | Stop Emission            | EMOFF                    |
     |         |                          | ERR: Keyswitch in remote |
+    +---------+--------------------------+--------------------------+
     | EMOD    | Enable Modulation        | EMOD                     |
     |         |                          | ERR: Emission is on      |
+    +---------+--------------------------+--------------------------+
     | DMOD    | Disable Modulation       | DMOD                     |
     |         |                          | ERR: Emission is on      |
+    +---------+--------------------------+--------------------------+
     | EEC     | Enable External Control  | EEC                      |
     |         | analog control           | ERR: Emission is on      |
+    +---------+--------------------------+--------------------------+
     | DEC     | Disable External Control | DEC                      |
     |         |                          | ERR: Emission is on      |
+    +---------+--------------------------+--------------------------+
     | RERR    | Reset Errors             | RERR                     |
+    +---------+--------------------------+--------------------------+
     | ABN     | Aiming Beam On           | ABN                      |
+    +---------+--------------------------+--------------------------+
     | ABF     | Aiming Beam Off          | ABF                      |
+    +---------+--------------------------+--------------------------+
     | EEABC   | Enable External          | EEABC                    |
     |         | Aiming Beam Control      |                          |
+    +---------+--------------------------+--------------------------+
     | DEABC   | Disable EABC             | DEABC                    |
+    +---------+--------------------------+--------------------------+
     | SFWS v  | Set Filter Window Size   | SFWS: v                  |
     |         | v: averaging time [s]    | ERR: Out of Range        |
     |         | multiple of 0.2 s        |                          |
+    +---------+--------------------------+--------------------------+
     | RFWS    | Read Filter Window Size  | RFWS: v                  |
-    |---------+--------------------------+--------------------------|
+    +---------+--------------------------+--------------------------+
     '''
 
     flag = {'TMP': 0x2,        # over-temperature condition
