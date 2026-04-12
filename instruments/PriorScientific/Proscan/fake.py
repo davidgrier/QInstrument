@@ -49,6 +49,11 @@ class QFakeProscan(QFakeInstrument, QProscan):
             getter=lambda: self._store.get('moving', False),
             setter=None,
             ptype=bool)
+        self.registerProperty(
+            'limits',
+            getter=lambda: self._store.get('limits', 0),
+            setter=None,
+            ptype=int)
         self.identification = 'Fake Prior Proscan'
 
     def identify(self) -> bool:
@@ -73,6 +78,15 @@ class QFakeProscan(QFakeInstrument, QProscan):
     def status(self) -> int:
         '''Return 0 (not moving, no faults).'''
         return 0
+
+    def emergency_stop(self) -> bool:
+        return True
+
+    def triggered_limits(self) -> None:
+        return None
+
+    def active_limits(self) -> None:
+        return None
 
     def stop(self) -> bool:
         return True

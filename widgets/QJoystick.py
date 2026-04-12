@@ -183,7 +183,9 @@ class QJoystick(QtWidgets.QWidget):
         painter.drawLine(QtCore.QPointF(c.x(), c.y() - r),
                          QtCore.QPointF(c.x(), c.y() + r))
 
-    def _drawRimHighlight(self, painter: QtGui.QPainter, enabled: bool) -> None:
+    def _drawRimHighlight(self,
+                          painter: QtGui.QPainter,
+                          enabled: bool) -> None:
         '''Draw a bright arc across the upper-left rim to suggest a bevel.'''
         rect = self._limitRect()
         if enabled:
@@ -201,13 +203,13 @@ class QJoystick(QtWidgets.QWidget):
         offset = rect.width() * 0.12
         shadow = rect.translated(offset, offset)
         shadow.adjust(-offset * 0.2, -offset * 0.2,
-                       offset * 0.2,  offset * 0.2)
+                      offset * 0.2,  offset * 0.2)
         painter.setPen(QtCore.Qt.PenStyle.NoPen)
         painter.setBrush(QtGui.QColor(0, 0, 0, 55))
         painter.drawEllipse(shadow)
 
     def _drawKnob(self, painter: QtGui.QPainter, enabled: bool) -> None:
-        '''Draw the knob as a sphere with a radial gradient and specular dot.'''
+        '''Draw the knob as a sphere.'''
         rect = self._knobRect()
         c = rect.center()
         r = rect.width() / 2.
@@ -225,7 +227,7 @@ class QJoystick(QtWidgets.QWidget):
         # Specular highlight
         sr = r * 0.22
         spec = QtCore.QRectF(fx - 0.7 * sr - sr, fy - 0.5 * sr - sr,
-                              sr * 2, sr * 2)
+                             sr * 2, sr * 2)
         painter.setBrush(QtGui.QColor(255, 255, 255, 190))
         painter.drawEllipse(spec)
 
@@ -286,7 +288,7 @@ class QJoystick(QtWidgets.QWidget):
         self._emitSignal()
 
     def _fractions(self) -> np.ndarray:
-        '''Return the current knob displacement as fractions of the travel radius.
+        '''Return the current fractional knob displacement.
 
         Returns
         -------
@@ -304,7 +306,7 @@ class QJoystick(QtWidgets.QWidget):
         return np.array([fx, fy])
 
     def _emitSignal(self) -> None:
-        '''Emit :attr:`positionChanged` if the position changed beyond tolerance.
+        '''Emit :attr:`positionChanged` if the position changed.
 
         Suppresses emission when the change from the last emitted value
         is within :attr:`tolerance` on both axes.
