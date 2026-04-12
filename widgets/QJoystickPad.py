@@ -126,8 +126,10 @@ class QJoystickPad(QtWidgets.QWidget):
     '''
 
     positionChanged = QtCore.Signal(object)
+    stepped        = QtCore.Signal(str)
 
-    _BUTTON_SIZE = 24   # px; fixed size of each triangular step button
+    _BUTTON_SIZE       = 24   # px; fixed size of each triangular step button
+    _HOLD_THRESHOLD_MS = 300  # ms before a press is treated as a hold
 
     # Unit step vectors (fx, fy) in joystick fraction space [-1, 1]^2.
     _STEP_VECTORS: dict[str, tuple[float, float]] = {
@@ -140,9 +142,11 @@ class QJoystickPad(QtWidgets.QWidget):
     def __init__(self, *args,
                  fullscale: float | None = None,
                  stepFraction: float = 0.25,
+                 holdThreshold: int = _HOLD_THRESHOLD_MS,
                  **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self._stepFraction = float(stepFraction)
+        self._stepFraction  = float(stepFraction)
+        self._holdThreshold = int(holdThreshold)
         self._setupUi(fullscale)
 
     def _setupUi(self, fullscale: float | None) -> None:
@@ -152,13 +156,22 @@ class QJoystickPad(QtWidgets.QWidget):
             QtWidgets.QSizePolicy.Policy.Expanding)
         self.joystick.positionChanged.connect(self.positionChanged)
 
+        self._isHeld:        bool      = False
+        self._wasHeld:       bool      = False
+        self._heldDirection: str | None = None
+        self._holdTimer = QtCore.QTimer(self)
+        self._holdTimer.setSingleShot(True)
+        self._holdTimer.timeout.connect(self._onHeld)
+
         self._buttons: dict[str, QTriangleButton] = {}
         for direction in ('up', 'down', 'left', 'right'):
             btn = QTriangleButton(direction, parent=self)
             btn.setFixedSize(self._BUTTON_SIZE, self._BUTTON_SIZE)
             btn.pressed.connect(
-                lambda d=direction: self._onPressed(d))
+                lambda d=direction: self._startHoldTimer(d))
             btn.released.connect(self._onReleased)
+            btn.clicked.connect(
+                lambda checked=False, d=direction: self._onClicked(d))
             self._buttons[direction] = btn
 
         layout = QtWidgets.QGridLayout(self)
@@ -207,23 +220,48 @@ class QJoystickPad(QtWidgets.QWidget):
     # Step button slots
     # ------------------------------------------------------------------
 
+    def _startHoldTimer(self, direction: str) -> None:
+        '''Begin hold detection for *direction*.'''
+        self._isHeld = False
+        self._wasHeld = False
+        self._heldDirection = direction
+        self._holdTimer.start(self._holdThreshold)
+
     @QtCore.Slot()
-    def _onPressed(self, direction: str) -> None:
-        '''Emit step velocity for *direction* and deflect the knob.'''
+    def _onHeld(self) -> None:
+        '''Hold threshold reached — begin continuous velocity motion.'''
+        self._isHeld = True
+        direction = self._heldDirection
         fx, fy = self._STEP_VECTORS[direction]
         fracs  = np.array([fx, fy]) * self._stepFraction
         lo, hi = self.joystick.minimum(), self.joystick.maximum()
-        values = lo + (fracs + 1.) / 2. * (hi - lo)
         self.joystick.setKnobFraction(fx * self._stepFraction,
                                       fy * self._stepFraction)
-        self.positionChanged.emit(values)
+        self.positionChanged.emit(lo + (fracs + 1.) / 2. * (hi - lo))
 
     @QtCore.Slot()
     def _onReleased(self) -> None:
-        '''Return the knob to centre and emit zero velocity.'''
-        self.joystick.setKnobFraction(0., 0.)
-        lo, hi = self.joystick.minimum(), self.joystick.maximum()
-        self.positionChanged.emit(np.full(2, (lo + hi) / 2.))
+        '''Handle button release for both click and hold paths.'''
+        self._holdTimer.stop()
+        if self._isHeld:
+            self._isHeld = False
+            self._wasHeld = True
+            self._heldDirection = None
+            self.joystick.setKnobFraction(0., 0.)
+            lo, hi = self.joystick.minimum(), self.joystick.maximum()
+            self.positionChanged.emit(np.full(2, (lo + hi) / 2.))
+
+    def _onClicked(self, direction: str) -> None:
+        '''Handle click: suppress at end of hold, else emit stepped.'''
+        if self._wasHeld:
+            self._wasHeld = False
+            return
+        fx, fy = self._STEP_VECTORS[direction]
+        self.joystick.setKnobFraction(fx * self._stepFraction,
+                                      fy * self._stepFraction)
+        QtCore.QTimer.singleShot(
+            200, lambda: self.joystick.setKnobFraction(0., 0.))
+        self.stepped.emit(direction)
 
     # ------------------------------------------------------------------
     # stepFraction property
@@ -247,6 +285,30 @@ class QJoystickPad(QtWidgets.QWidget):
             Fraction of full-scale in the range ``(0, 1]``.
         '''
         self._setStepFraction(value)
+
+    # ------------------------------------------------------------------
+    # holdThreshold property
+    # ------------------------------------------------------------------
+
+    def _getHoldThreshold(self) -> int:
+        return self._holdThreshold
+
+    def _setHoldThreshold(self, value: int) -> None:
+        self._holdThreshold = int(value)
+
+    holdThreshold = QtCore.Property(int, _getHoldThreshold, _setHoldThreshold)
+
+    def setHoldThreshold(self, value: int) -> None:
+        '''Set the press duration that distinguishes a click from a hold.
+
+        Parameters
+        ----------
+        value : int
+            Threshold in milliseconds.  A press shorter than this emits
+            :attr:`stepped`; a press longer than this starts continuous
+            velocity motion via :attr:`positionChanged`.
+        '''
+        self._setHoldThreshold(value)
 
     # ------------------------------------------------------------------
     # padColor / knobColor — forwarded to joystick and buttons

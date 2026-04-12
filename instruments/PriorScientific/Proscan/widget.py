@@ -39,6 +39,7 @@ class QProscanWidget(QInstrumentWidget):
     def _connectSignals(self) -> None:
         super()._connectSignals()
         self.joystick.positionChanged.connect(self._updateVelocity)
+        self.joystick.stepped.connect(self._onStep)
         self.zdial.stepUp.connect(self.device.stepUp)
         self.zdial.stepDown.connect(self.device.stepDown)
         self.stop.clicked.connect(self.device.stop)
@@ -64,6 +65,17 @@ class QProscanWidget(QInstrumentWidget):
         self.x.setStyleSheet(_LIMIT_STYLE if x_hit else _NORMAL_STYLE)
         self.y.setStyleSheet(_LIMIT_STYLE if y_hit else _NORMAL_STYLE)
         self.z.setStyleSheet(_LIMIT_STYLE if z_hit else _NORMAL_STYLE)
+
+    @QtCore.Slot(str)
+    def _onStep(self, direction: str) -> None:
+        '''Execute one discrete step in *direction*.'''
+        methods = {
+            'left':  self.device.stepLeft,
+            'right': self.device.stepRight,
+            'up':    self.device.stepForward,
+            'down':  self.device.stepBackward,
+        }
+        methods[direction]()
 
     @QtCore.Slot(object)
     def _updateVelocity(self, velocity: object) -> None:
