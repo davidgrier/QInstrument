@@ -32,15 +32,25 @@ class QJoystick(QtWidgets.QWidget):
         Base color of the pad. Gradient stops and border are derived
         from it via ``lighter()`` / ``darker()``.
         Default: ``QColor('#a888c8')`` (medium lavender).
+        Settable via stylesheet: ``qproperty-padColor: #rrggbb;``
     knobColor : QtGui.QColor
         Base color of the knob. Gradient stops are derived from it.
         Default: ``QColor('#3848b8')`` (medium blue).
+        Settable via stylesheet: ``qproperty-knobColor: #rrggbb;``
     tolerance : float
         Fractional dead-band; position changes smaller than this
         fraction of the full pad radius are suppressed. Default: 0.05.
     '''
 
     positionChanged = QtCore.Signal(object)
+
+    _DISABLED_PAD_LIGHT  = QtGui.QColor(244, 244, 244)
+    _DISABLED_PAD_DARK   = QtGui.QColor(192, 192, 192)
+    _DISABLED_PAD_BORDER = QtGui.QColor(144, 144, 144)
+    _DISABLED_CROSS      = QtGui.QColor(160, 160, 160, 80)
+    _DISABLED_RIM        = QtGui.QColor(216, 216, 216, 180)
+    _DISABLED_KNOB_LIGHT = QtGui.QColor(224, 224, 232)
+    _DISABLED_KNOB_DARK  = QtGui.QColor(112, 112, 128)
 
     def __init__(self, *args,
                  fullscale: float | None = None,
@@ -59,6 +69,8 @@ class QJoystick(QtWidgets.QWidget):
         self.position = QtCore.QPointF(0, 0)
         self._values = np.zeros(2)
         self.active = False
+        self.radius = 0.
+        self.limit = 0.
 
     def setRange(self, minimum: float, maximum: float) -> None:
         '''Set the output range for both axes.
@@ -94,41 +106,51 @@ class QJoystick(QtWidgets.QWidget):
     def fullscale(self, value: float) -> None:
         self.setRange(-value, value)
 
-    def padColor(self) -> QtGui.QColor:
-        '''Return the base pad color.'''
+    def _getPadColor(self) -> QtGui.QColor:
         return self._padColor
+
+    def _setPadColor(self, color: QtGui.QColor) -> None:
+        self._padColor = color
+        self.update()
+
+    padColor = QtCore.Property(QtGui.QColor, _getPadColor, _setPadColor)
 
     def setPadColor(self, color: QtGui.QColor) -> None:
         '''Set the base pad color and repaint.
 
         Gradient stops and border are derived automatically via
-        ``lighter()`` / ``darker()``.
+        ``lighter()`` / ``darker()``.  May also be set via stylesheet
+        with ``qproperty-padColor: #rrggbb;``.
 
         Parameters
         ----------
         color : QtGui.QColor
             Base color for the pad.
         '''
-        self._padColor = color
+        self._setPadColor(color)
+
+    def _getKnobColor(self) -> QtGui.QColor:
+        return self._knobColor
+
+    def _setKnobColor(self, color: QtGui.QColor) -> None:
+        self._knobColor = color
         self.update()
 
-    def knobColor(self) -> QtGui.QColor:
-        '''Return the base knob color.'''
-        return self._knobColor
+    knobColor = QtCore.Property(QtGui.QColor, _getKnobColor, _setKnobColor)
 
     def setKnobColor(self, color: QtGui.QColor) -> None:
         '''Set the base knob color and repaint.
 
         Gradient stops are derived automatically via
-        ``lighter()`` / ``darker()``.
+        ``lighter()`` / ``darker()``.  May also be set via stylesheet
+        with ``qproperty-knobColor: #rrggbb;``.
 
         Parameters
         ----------
         color : QtGui.QColor
             Base color for the knob.
         '''
-        self._knobColor = color
-        self.update()
+        self._setKnobColor(color)
 
     def sizeHint(self) -> QtCore.QSize:
         '''Return the preferred widget size.'''
@@ -139,6 +161,29 @@ class QJoystick(QtWidgets.QWidget):
         self.radius = min(self.size().width(), self.size().height()) / 2
         self.radius *= (1. - self.padding)
         self.limit = (1. - self.knobSize) * self.radius
+
+    def setKnobFraction(self, fx: float, fy: float) -> None:
+        '''Position the knob at a given fraction of the travel range.
+
+        Intended for external control (e.g. step buttons on a
+        :class:`QJoystickPad`).  Does not emit :attr:`positionChanged`.
+
+        Parameters
+        ----------
+        fx : float
+            Horizontal fraction in ``[-1, 1]``.  Positive is right.
+        fy : float
+            Vertical fraction in ``[-1, 1]``.  Positive is upward.
+        '''
+        if fx == 0. and fy == 0.:
+            self.active = False
+            self.position = QtCore.QPointF(0., 0.)
+        else:
+            c = self._center()
+            self.position = QtCore.QPointF(c.x() + fx * self.limit,
+                                           c.y() - fy * self.limit)
+            self.active = True
+        self.update()
 
     def paintEvent(self, event: QtGui.QPaintEvent) -> None:
         painter = QtGui.QPainter(self)
@@ -161,9 +206,9 @@ class QJoystick(QtWidgets.QWidget):
             grad.setColorAt(1., self._padColor.darker(108))
             border = self._padColor.darker(130)
         else:
-            grad.setColorAt(0., QtGui.QColor(244, 244, 244))
-            grad.setColorAt(1., QtGui.QColor(192, 192, 192))
-            border = QtGui.QColor(144, 144, 144)
+            grad.setColorAt(0., self._DISABLED_PAD_LIGHT)
+            grad.setColorAt(1., self._DISABLED_PAD_DARK)
+            border = self._DISABLED_PAD_BORDER
         painter.setPen(QtGui.QPen(border, 1.5))
         painter.setBrush(QtGui.QBrush(grad))
         painter.drawEllipse(rect)
@@ -176,7 +221,7 @@ class QJoystick(QtWidgets.QWidget):
             color = self._padColor.darker(160)
             color.setAlpha(80)
         else:
-            color = QtGui.QColor(160, 160, 160, 80)
+            color = self._DISABLED_CROSS
         painter.setPen(QtGui.QPen(color, 1.0, QtCore.Qt.PenStyle.DashLine))
         painter.drawLine(QtCore.QPointF(c.x() - r, c.y()),
                          QtCore.QPointF(c.x() + r, c.y()))
@@ -192,7 +237,7 @@ class QJoystick(QtWidgets.QWidget):
             color = self._padColor.lighter(165)
             color.setAlpha(180)
         else:
-            color = QtGui.QColor(216, 216, 216, 180)
+            color = self._DISABLED_RIM
         painter.setPen(QtGui.QPen(color, 2.0))
         painter.setBrush(QtCore.Qt.BrushStyle.NoBrush)
         painter.drawArc(rect, 45 * 16, 135 * 16)
@@ -219,8 +264,8 @@ class QJoystick(QtWidgets.QWidget):
             grad.setColorAt(0., self._knobColor.lighter(230))
             grad.setColorAt(1., self._knobColor.darker(155))
         else:
-            grad.setColorAt(0., QtGui.QColor(224, 224, 232))
-            grad.setColorAt(1., QtGui.QColor(112, 112, 128))
+            grad.setColorAt(0., self._DISABLED_KNOB_LIGHT)
+            grad.setColorAt(1., self._DISABLED_KNOB_DARK)
         painter.setPen(QtCore.Qt.PenStyle.NoPen)
         painter.setBrush(QtGui.QBrush(grad))
         painter.drawEllipse(rect)

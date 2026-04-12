@@ -2,6 +2,7 @@ import importlib
 
 _lazy = {
     'QJoystick':              'QJoystick',
+    'QJoystickPad':           'QJoystickPad',
     'QLedWidget':             'QLedWidget',
     'QRotaryEncoder':         'QRotaryEncoder',
     'QRotaryEncoderSpinBox':  'QRotaryEncoderSpinBox',
