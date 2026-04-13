@@ -47,7 +47,7 @@ class QTriangleButton(QtWidgets.QAbstractButton):
         self._color = color
         self.update()
 
-    color = QtCore.Property(QtGui.QColor, _getColor, _setColor)
+    color = QtCore.Property('QColor', _getColor, _setColor)
 
     def setColor(self, color: QtGui.QColor) -> None:
         '''Set the button fill color and repaint.
@@ -322,7 +322,7 @@ class QJoystickPad(QtWidgets.QWidget):
         for btn in self._buttons.values():
             btn.setColor(color)
 
-    padColor = QtCore.Property(QtGui.QColor, _getPadColor, _setPadColor)
+    padColor = QtCore.Property('QColor', _getPadColor, _setPadColor)
 
     def setPadColor(self, color: QtGui.QColor) -> None:
         '''Set the pad and step-button color.
@@ -341,7 +341,7 @@ class QJoystickPad(QtWidgets.QWidget):
     def _setKnobColor(self, color: QtGui.QColor) -> None:
         self.joystick.knobColor = color
 
-    knobColor = QtCore.Property(QtGui.QColor, _getKnobColor, _setKnobColor)
+    knobColor = QtCore.Property('QColor', _getKnobColor, _setKnobColor)
 
     def setKnobColor(self, color: QtGui.QColor) -> None:
         '''Set the joystick knob color.

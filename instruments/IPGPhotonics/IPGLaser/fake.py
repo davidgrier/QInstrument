@@ -73,5 +73,8 @@ class QFakeIPGLaser(QFakeInstrument, QIPGLaser):
             getter=lambda: self._store.get('temperature', 25.))
         self.identification = 'Fake IPG Fiber Laser'
 
+    def identify(self) -> bool:
+        return True
+
 
 __all__ = ['QFakeIPGLaser']

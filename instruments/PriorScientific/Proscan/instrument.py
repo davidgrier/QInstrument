@@ -37,8 +37,16 @@ class QProscan(QSerialInstrument):
         Time derivative of focus acceleration. Range [1, 100].
     zstepsize : float
         Focus drive single-step size [µm].
-    resolution : float
-        Stage encoder resolution [µm/step].
+    xresolution : float
+        X-axis encoder resolution [µm/step]. Read-only.
+    yresolution : float
+        Y-axis encoder resolution [µm/step]. Read-only.
+    zresolution : float
+        Z-axis encoder resolution [µm/step]. Read-only.
+    upr : float
+        XY stage µm per revolution [µm/rev].
+    zupr : float
+        Z focus drive µm per revolution [µm/rev].
     flip : bool
         True: invert Y axis direction.
     mirror : bool
@@ -167,8 +175,18 @@ class QProscan(QSerialInstrument):
     +---------+---------+----------+------------------------------------------+
     | SCZ     | [n]     | int/0    | Get/set Z S-curve factor [1–100]         |
     +---------+---------+----------+------------------------------------------+
-    | RES,s   | [v]     | float/0  | Get/set stage encoder resolution         |
+    | RES,X   |         | float    | Query X-axis encoder resolution          |
     |         |         |          | [µm/step]                                |
+    +---------+---------+----------+------------------------------------------+
+    | RES,Y   |         | float    | Query Y-axis encoder resolution          |
+    |         |         |          | [µm/step]                                |
+    +---------+---------+----------+------------------------------------------+
+    | RES,Z   |         | float    | Query Z-axis encoder resolution          |
+    |         |         |          | [µm/step]                                |
+    +---------+---------+----------+------------------------------------------+
+    | UPR     | [v]     | float/0  | Get/set XY µm per revolution [µm/rev]    |
+    +---------+---------+----------+------------------------------------------+
+    | ZUPR    | [v]     | float/0  | Get/set Z µm per revolution [µm/rev]     |
     +---------+---------+----------+------------------------------------------+
     | J       | n       | 0        | Joystick enable (1) / disable (0)        |
     +---------+---------+----------+------------------------------------------+
@@ -222,10 +240,23 @@ class QProscan(QSerialInstrument):
             getter=lambda: self.getValue('C', float),
             setter=lambda v: self.expect(f'C,{float(v)}', '0'),
             ptype=float)
+        for name, axis in (('xresolution', 'X'),
+                            ('yresolution', 'Y'),
+                            ('zresolution', 'Z')):
+            self.registerProperty(
+                name,
+                getter=lambda a=axis: self.getValue(f'RES,{a}', float),
+                setter=None,
+                ptype=float)
         self.registerProperty(
-            'resolution',
-            getter=lambda: self.getValue('RES,s', float),
-            setter=lambda v: self.transmit(f'RES,s,{float(v)}'),
+            'upr',
+            getter=lambda: self.getValue('UPR', float),
+            setter=lambda v: self.expect(f'UPR,{float(v)}', '0'),
+            ptype=float)
+        self.registerProperty(
+            'zupr',
+            getter=lambda: self.getValue('ZUPR', float),
+            setter=lambda v: self.expect(f'ZUPR,{float(v)}', '0'),
             ptype=float)
         self.registerProperty(
             'flip',

@@ -27,8 +27,22 @@ class QFakeProscan(QFakeInstrument, QProscan):
                 setter=lambda v, n=name: self._store.update({n: int(v)}),
                 ptype=int)
         for name, default in (('stepsize',   1.0),
-                              ('zstepsize',  1.0),
-                              ('resolution', 0.1)):
+                              ('zstepsize',  1.0)):
+            self.registerProperty(
+                name,
+                getter=lambda n=name, d=default: self._store.get(n, d),
+                setter=lambda v, n=name: self._store.update({n: float(v)}),
+                ptype=float)
+        for name, default in (('xresolution', 0.1),
+                              ('yresolution', 0.1),
+                              ('zresolution', 0.1)):
+            self.registerProperty(
+                name,
+                getter=lambda n=name, d=default: self._store.get(n, d),
+                setter=None,
+                ptype=float)
+        for name, default in (('upr',  1.0),
+                              ('zupr', 1.0)):
             self.registerProperty(
                 name,
                 getter=lambda n=name, d=default: self._store.get(n, d),

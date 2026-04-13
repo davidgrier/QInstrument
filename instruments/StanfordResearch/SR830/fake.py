@@ -19,6 +19,9 @@ class QFakeSR830(QFakeInstrument, QSR830):
                                   getter=lambda n=name: self._store.get(n, 0.))
         self.identification = 'Fake SR830 Lock-in Amplifier'
 
+    def identify(self) -> bool:
+        return True
+
     def report(self) -> list[float]:
         '''Return simulated [frequency, R, theta].'''
         data = np.random.rand(3)

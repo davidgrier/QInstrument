@@ -113,7 +113,7 @@ class QJoystick(QtWidgets.QWidget):
         self._padColor = color
         self.update()
 
-    padColor = QtCore.Property(QtGui.QColor, _getPadColor, _setPadColor)
+    padColor = QtCore.Property('QColor', _getPadColor, _setPadColor)
 
     def setPadColor(self, color: QtGui.QColor) -> None:
         '''Set the base pad color and repaint.
@@ -136,7 +136,7 @@ class QJoystick(QtWidgets.QWidget):
         self._knobColor = color
         self.update()
 
-    knobColor = QtCore.Property(QtGui.QColor, _getKnobColor, _setKnobColor)
+    knobColor = QtCore.Property('QColor', _getKnobColor, _setKnobColor)
 
     def setKnobColor(self, color: QtGui.QColor) -> None:
         '''Set the base knob color and repaint.

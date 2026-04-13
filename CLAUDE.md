@@ -40,9 +40,10 @@ The `pre-push` hook runs the full test suite and blocks the push on failure.
 
 ```
 QtCore.QObject
-└── QAbstractInstrument          # Property/method registration, thread-safe access
-    └── QSerialInstrument        # Holds QSerialInterface by composition; adds find/open
-        └── QXXXInstrument       # Concrete instrument (e.g. QDS345, QIPGLaser)
+├── QAbstractInstrument          # Property/method registration, thread-safe access
+│   └── QSerialInstrument        # Holds QSerialInterface by composition; adds find/open
+│       └── QXXXInstrument       # Concrete instrument (e.g. QDS345, QIPGLaser)
+└── QInstrumentWorker            # Runs an instrument in a QThread with a poll loop
 
 QtSerialPort.QSerialPort
 └── QSerialInterface             # Raw serial I/O (owned by QSerialInstrument, not inherited)

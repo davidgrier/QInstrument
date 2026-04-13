@@ -45,5 +45,8 @@ class QFakeOpus(QFakeInstrument, QOpus):
             getter=lambda: self._store.get('psu_temperature', 25.))
         self.identification = 'Fake Laser Quantum Opus Laser'
 
+    def identify(self) -> bool:
+        return True
+
 
 __all__ = ['QFakeOpus']

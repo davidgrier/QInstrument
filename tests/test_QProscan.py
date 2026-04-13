@@ -130,7 +130,9 @@ class TestProperties:
     def test_required_properties_registered(self, proscan):
         expected = {'speed', 'acceleration', 'scurve',
                     'zspeed', 'zacceleration', 'zscurve',
-                    'stepsize', 'zstepsize', 'resolution',
+                    'stepsize', 'zstepsize',
+                    'xresolution', 'yresolution', 'zresolution',
+                    'upr', 'zupr',
                     'flip', 'mirror', 'moving', 'limits'}
         assert expected.issubset(set(proscan.properties))
 

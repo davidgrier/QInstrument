@@ -38,5 +38,8 @@ class QFakeDS345(QFakeInstrument, QDS345):
                               getter=lambda: self._muted,
                               setter=_mute_setter)
 
+    def identify(self) -> bool:
+        return True
+
 
 __all__ = ['QFakeDS345']
