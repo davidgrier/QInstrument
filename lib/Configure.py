@@ -142,6 +142,30 @@ class Configure(QtCore.QObject):
                 f'Could not read {filename}: {ex}'
                 '\n\tUsing default configuration.')
 
+    def read(self, obj: object) -> dict | None:
+        '''Read and return *obj*'s saved configuration without applying it.
+
+        Reads the JSON file at :meth:`configname` and returns its
+        contents as a dict.  Returns ``None`` if the file does not
+        exist or cannot be parsed, without logging a warning.
+
+        Parameters
+        ----------
+        obj : object
+            Object whose class name determines the configuration filename.
+
+        Returns
+        -------
+        dict or None
+            Saved configuration dict, or ``None`` if unavailable.
+        '''
+        filename = self.configname(obj)
+        try:
+            with open(filename, 'r', encoding='utf-8') as configfile:
+                return json.load(configfile)
+        except Exception:
+            return None
+
     def query_save(self, obj: object) -> None:
         '''Prompt the user and save *obj*'s settings if confirmed.
 

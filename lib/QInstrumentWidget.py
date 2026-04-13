@@ -1,12 +1,27 @@
-from qtpy import uic, QtWidgets, QtCore
+import math
 from pathlib import Path
 import inspect
 import logging
 
+from qtpy import uic, QtWidgets, QtCore
+
 from .Configure import Configure
+from .QReconcileDialog import QReconcileDialog
 
 
 logger = logging.getLogger(__name__)
+
+
+def _values_differ(a: object, b: object) -> bool:
+    '''Return True if *a* and *b* represent meaningfully different values.
+
+    Floats are compared with a relative tolerance of 1e-6 and an
+    absolute tolerance of 1e-9 to avoid spurious mismatches from
+    JSON round-tripping.  All other types use exact equality.
+    '''
+    if isinstance(a, float) and isinstance(b, float):
+        return not math.isclose(a, b, rel_tol=1e-6, abs_tol=1e-9)
+    return a != b
 
 
 class QInstrumentWidget(QtWidgets.QWidget):
@@ -86,6 +101,7 @@ class QInstrumentWidget(QtWidgets.QWidget):
 
     UIFILE: str | None = None
     INSTRUMENT: type | None = None
+    HARDWARE_DOMINANT: bool = False
 
     propertyChanged = QtCore.Signal(str, object)
     closeRequested = QtCore.Signal()
@@ -197,13 +213,14 @@ class QInstrumentWidget(QtWidgets.QWidget):
         syncing = value is None
         if syncing:
             value = self.device.get(key)
-            widget.blockSignals(True)
         try:
-            setter(value)
+            if syncing:
+                with QtCore.QSignalBlocker(widget):
+                    setter(value)
+            else:
+                setter(value)
         except Exception as ex:
             logger.error(f'Could not set {key} to {value}: {ex}')
-        if syncing:
-            widget.blockSignals(False)
 
     def _wmethod(self,
                  widget: QtWidgets.QWidget,
@@ -362,18 +379,62 @@ class QInstrumentWidget(QtWidgets.QWidget):
         pass
 
     def showEvent(self, event) -> None:
-        '''Restore device settings on first show.
+        '''Reconcile device settings on first show.
 
         On the first time the widget is shown, calls
-        :meth:`Configure.restore` to push the previously saved state to
-        the device, then re-syncs the UI to reflect the restored values.
-        Subsequent show events are passed through without restoring.
+        :meth:`_restoreSettings` to reconcile hardware state with any
+        saved configuration, then re-syncs the UI.  Subsequent show
+        events are passed through without reconciling.
         '''
         if not self._restored and self._device is not None and self._device.isOpen():
-            self._configure.restore(self._device)
+            self._restoreSettings()
             self._syncProperties()
             self._restored = True
         super().showEvent(event)
+
+    def _restoreSettings(self) -> None:
+        '''Reconcile hardware state with the saved configuration file.
+
+        Reads the current hardware state via :attr:`device.settings`
+        and the saved configuration via :meth:`Configure.read`.
+
+        - **No saved file**: writes hardware values to the config file
+          and returns without changing the hardware.
+        - **Files match**: no action.
+        - **Files differ**: shows a :class:`QReconcileDialog`.  If the
+          user chooses "Keep Hardware" (or dismisses the dialog), the
+          config file is updated to reflect the hardware.  If the user
+          chooses "Use Saved", the saved values are pushed to the device.
+
+        The default button in the dialog is controlled by
+        :attr:`HARDWARE_DOMINANT`.
+        '''
+        hw = self._device.settings
+        saved = self._configure.read(self._device)
+
+        if saved is None:
+            self._configure.save(self._device)
+            return
+
+        diff_keys = [
+            k for k in hw
+            if k in saved and _values_differ(hw[k], saved[k])
+        ]
+
+        if not diff_keys:
+            return
+
+        dialog = QReconcileDialog(
+            hw, saved, diff_keys,
+            hardware_dominant=self.HARDWARE_DOMINANT,
+            parent=self,
+        )
+        accepted = dialog.exec()
+
+        if not accepted or dialog.keep_hardware:
+            self._configure.save(self._device)
+        else:
+            self._device.settings = saved
 
     def closeEvent(self, event) -> None:
         '''Save device settings when the widget is closed.

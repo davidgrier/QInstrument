@@ -118,21 +118,18 @@ class QOpusWidget(QInstrumentWidget):
         '''
         power = self.device.get('power')
         if power is not None:
-            self.power_display.blockSignals(True)
-            self.power_display.setValue(float(power) / 1000.)
-            self.power_display.blockSignals(False)
+            with QtCore.QSignalBlocker(self.power_display):
+                self.power_display.setValue(float(power) / 1000.)
 
         current = self.device.get('current')
         if current is not None:
-            self.current_display.blockSignals(True)
-            self.current_display.setValue(float(current))
-            self.current_display.blockSignals(False)
+            with QtCore.QSignalBlocker(self.current_display):
+                self.current_display.setValue(float(current))
 
         emission = self.device.get('emission')
         if emission is not None:
-            self.emission.blockSignals(True)
-            self.emission.setValue(bool(emission))
-            self.emission.blockSignals(False)
+            with QtCore.QSignalBlocker(self.emission):
+                self.emission.setValue(bool(emission))
 
 
 if __name__ == '__main__':

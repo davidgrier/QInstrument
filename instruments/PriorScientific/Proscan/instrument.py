@@ -4,6 +4,7 @@ import logging
 from qtpy import QtCore
 from QInstrument.lib.QSerialInstrument import QSerialInstrument
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -219,17 +220,19 @@ class QProscan(QSerialInstrument):
     def _registerProperties(self) -> None:
         self._flip: bool = False
         self._mirror: bool = False
-        for name, cmd in (('speed',         'SMS'),
-                          ('acceleration',  'SAS'),
-                          ('scurve',        'SCS'),
-                          ('zspeed',        'SMZ'),
-                          ('zacceleration', 'SAZ'),
-                          ('zscurve',       'SCZ')):
+        for name, cmd, persist in (
+                ('speed',         'SMS', False),
+                ('acceleration',  'SAS', True),
+                ('scurve',        'SCS', True),
+                ('zspeed',        'SMZ', False),
+                ('zacceleration', 'SAZ', True),
+                ('zscurve',       'SCZ', True)):
             self.registerProperty(
                 name,
                 getter=lambda c=cmd: self.getValue(c, int),
                 setter=lambda v, c=cmd: self.expect(f'{c},{int(v)}', '0'),
-                ptype=int)
+                ptype=int,
+                persist=persist)
         self.registerProperty(
             'stepsize',
             getter=lambda: float(self.handshake('X').split(',')[0]),
@@ -241,8 +244,8 @@ class QProscan(QSerialInstrument):
             setter=lambda v: self.expect(f'C,{float(v)}', '0'),
             ptype=float)
         for name, axis in (('xresolution', 'X'),
-                            ('yresolution', 'Y'),
-                            ('zresolution', 'Z')):
+                           ('yresolution', 'Y'),
+                           ('zresolution', 'Z')):
             self.registerProperty(
                 name,
                 getter=lambda a=axis: self.getValue(f'RES,{a}', float),

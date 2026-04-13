@@ -26,15 +26,23 @@ class QProscanWidget(QInstrumentWidget):
 
     UIFILE = str(Path(__file__).parent / 'ProscanWidget.ui')
     INSTRUMENT = QProscan
+    HARDWARE_DOMINANT = True
 
-    def __init__(self, *args, interval: int | None = None, **kwargs) -> None:
+    def __init__(self, *args,
+                 interval: int | None = None, **kwargs) -> None:
+        '''Initialize the widget and start a timer to poll the stage.
+
+        Parameters
+        ----------
+        interval: int or None, optional
+            The timer interval in milliseconds for polling position and
+            limit status. Default: 200
+        '''
         super().__init__(*args, **kwargs)
+        self._interval = int(interval or 200)
         self.joystick.setRange(-200., 200.)
         self._prev_limits = None
-        self._timer = QtCore.QTimer(self)
-        self._timer.timeout.connect(self._poll)
-        if self.device is not None and self.device.isOpen():
-            self._timer.start(interval or 200)
+        self._startPolling()
 
     def _connectSignals(self) -> None:
         super()._connectSignals()
@@ -44,6 +52,12 @@ class QProscanWidget(QInstrumentWidget):
         self.zdial.stepDown.connect(self.device.stepDown)
         self.stop.clicked.connect(self.device.stop)
         self.set_origin.clicked.connect(self.device.set_origin)
+
+    def _startPolling(self) -> None:
+        self._timer = QtCore.QTimer(self)
+        self._timer.timeout.connect(self._poll)
+        if self.device is not None and self.device.isOpen():
+            self._timer.start(self._interval)
 
     @QtCore.Slot()
     def _poll(self) -> None:

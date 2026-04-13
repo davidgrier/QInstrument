@@ -113,6 +113,36 @@ class TestRestore:
 
 
 # ---------------------------------------------------------------------------
+# read
+# ---------------------------------------------------------------------------
+
+class TestRead:
+
+    def test_returns_none_when_file_missing(self, cfg):
+        assert cfg.read(SimpleObj()) is None
+
+    def test_returns_saved_dict_when_file_exists(self, cfg):
+        obj = SimpleObj({'freq': 440.0, 'enabled': True})
+        cfg.save(obj)
+        result = cfg.read(obj)
+        assert result == {'freq': 440.0, 'enabled': True}
+
+    def test_returns_none_on_malformed_json(self, cfg):
+        obj = SimpleObj({'x': 1.0})
+        path = cfg.configname(obj)
+        with open(path, 'w') as f:
+            f.write('not valid json {{{')
+        assert cfg.read(obj) is None
+
+    def test_does_not_apply_settings_to_object(self, cfg):
+        saved = SimpleObj({'freq': 440.0})
+        cfg.save(saved)
+        target = SimpleObj({'freq': 0.0})
+        cfg.read(target)
+        assert target._settings == {'freq': 0.0}
+
+
+# ---------------------------------------------------------------------------
 # filename / timestamp
 # ---------------------------------------------------------------------------
 

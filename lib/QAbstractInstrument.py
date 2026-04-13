@@ -174,23 +174,32 @@ class QAbstractInstrument(QtCore.QObject):
 
     @property
     def settings(self) -> Settings:
-        '''Current values of all registered properties as a dict.
+        '''Current values of all writable, persistent registered properties.
 
-        Getting this property calls every registered getter, which may
-        issue instrument queries.  Setting it calls each registered
-        setter for keys present in the supplied dict, skipping unknown
-        keys and read-only properties.
+        Getting this property calls every qualifying getter, which may
+        issue instrument queries.  A property qualifies when its setter
+        is not ``None`` (writable) and its ``persist`` metadata flag is
+        ``True`` (default).
+
+        Setting it calls each registered setter for keys present in the
+        supplied dict, skipping unknown keys, read-only properties, and
+        properties whose ``persist`` flag is ``False``.
         '''
         with QtCore.QMutexLocker(self.mutex):
             props = list(self._properties.items())
-        return {name: info['getter']() for name, info in props}
+        return {
+            name: info['getter']()
+            for name, info in props
+            if info['setter'] is not None and info.get('persist', True)
+        }
 
     @settings.setter
     def settings(self, settings: Settings) -> None:
         with QtCore.QMutexLocker(self.mutex):
             calls = [(self._properties[k]['setter'], v)
                      for k, v in settings.items()
-                     if k in self._properties]
+                     if k in self._properties
+                     and self._properties[k].get('persist', True)]
         for setter, value in calls:
             if setter is not None:
                 setter(value)

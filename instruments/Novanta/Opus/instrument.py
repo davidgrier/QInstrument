@@ -39,6 +39,10 @@ class QOpus(QSerialInstrument):
 
     Status (read-only)
     ------------------
+    status : bool
+        True if the laser is ENABLED (interlock satisfied and ready to
+        emit).  False if DISABLED (keyswitch off or enable button not
+        pressed); a warning is logged when DISABLED is received.
     laser_temperature : float [°C]
         Laser head temperature.
     psu_temperature : float [°C]
@@ -79,10 +83,12 @@ class QOpus(QSerialInstrument):
                  setter=lambda v: setattr(self, '_wavelength', float(v)))
         register('current', ptype=float,
                  getter=self._getCurrent,
-                 setter=lambda v: self.transmit(f'CURRENT={float(v)}'))
+                 setter=lambda v: self.handshake(f'CURRENT={float(v)}'))
         register('emission', ptype=bool,
                  getter=lambda: self._power > 0,
                  setter=self._setEmission)
+        register('status', ptype=bool, setter=None,
+                 getter=self._getStatus)
         register('version', ptype=str, setter=None, getter=self.version)
         register('laser_temperature', ptype=float, setter=None,
                  getter=lambda: self._parseTemp('LASTEMP?'))
@@ -92,10 +98,16 @@ class QOpus(QSerialInstrument):
     def identify(self) -> bool:
         '''Return True if the connected device identifies as an Opus laser.
 
-        Queries the firmware version and checks for the
-        ``'MPC-D'`` controller model token in the response.
+        Queries the firmware version and checks for the ``'MPC-D'``
+        controller model token in the response.  On success, sends
+        ``CONTROL=POWER`` to ensure the controller regulates output
+        power rather than diode current for all subsequent setpoint
+        commands.
         '''
-        return 'MPC-D' in self.version()
+        if 'MPC-D' not in self.version():
+            return False
+        self.handshake('CONTROL=POWER')
+        return True
 
     def _getPower(self) -> float:
         '''Query and return the actual output power [mW].
@@ -131,6 +143,25 @@ class QOpus(QSerialInstrument):
         response = self.handshake(cmd)
         return float(response.rstrip(' C')) if response else 0.
 
+    def _getStatus(self) -> bool:
+        '''Query and return the laser enable status.
+
+        Returns
+        -------
+        bool
+            True if the laser responds ``ENABLED``.
+            False if the laser responds ``DISABLED``; a warning is
+            logged in that case because the condition requires user
+            intervention (keyswitch or enable button).
+        '''
+        response = self.handshake('STATUS?')
+        if response == 'DISABLED':
+            logger.warning(
+                'Opus laser is DISABLED: '
+                'check keyswitch and front-panel enable button')
+            return False
+        return response == 'ENABLED'
+
     def _setPower(self, v: float) -> None:
         '''Transmit a new power setpoint, clamped to ``maximum_power``.
 
@@ -145,7 +176,7 @@ class QOpus(QSerialInstrument):
             logger.warning(
                 f'power {v:.1f} mW exceeds maximum_power '
                 f'{limit:.1f} mW; clamped to {clamped:.1f} mW')
-        self.transmit(f'POWER={clamped}')
+        self.handshake(f'POWER={clamped}')
 
     def _setMaximumPower(self, v: float) -> None:
         '''Set the software upper bound on the power setpoint.
@@ -172,7 +203,7 @@ class QOpus(QSerialInstrument):
         state : bool
             True to enable (``ON``), False to disable (``OFF``).
         '''
-        self.transmit('ON' if bool(state) else 'OFF')
+        self.handshake('ON' if bool(state) else 'OFF')
 
     def version(self) -> str:
         '''Return the firmware version string.'''

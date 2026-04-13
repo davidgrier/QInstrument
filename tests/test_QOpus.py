@@ -1,3 +1,4 @@
+import logging
 import pytest
 from instruments.Novanta.Opus532.fake import QFakeOpus532
 from instruments.Novanta.Opus660.fake import QFakeOpus660
@@ -16,10 +17,11 @@ class TestOpus532(InstrumentContractTests):
 
     required_properties = {
         'power', 'maximum_power', 'wavelength', 'current',
-        'emission', 'laser_temperature', 'psu_temperature',
+        'emission', 'status', 'version',
+        'laser_temperature', 'psu_temperature',
     }
 
-    readonly_properties = {'laser_temperature', 'psu_temperature'}
+    readonly_properties = {'status', 'version', 'laser_temperature', 'psu_temperature'}
 
     roundtrip_cases = [
         ('wavelength',      532.0),
@@ -98,3 +100,39 @@ class TestMaximumPowerValidation:
     def test_small_positive_accepted(self, laser):
         QOpus._setMaximumPower(laser, 0.1)
         assert laser._maximum_power == 0.1
+
+
+# ---------------------------------------------------------------------------
+# _getStatus (real instrument logic via monkeypatched receive)
+# ---------------------------------------------------------------------------
+
+class TestGetStatus:
+
+    @pytest.fixture
+    def laser(self, qtbot):
+        return QFakeOpus532()
+
+    def test_enabled_response_returns_true(self, laser, monkeypatch):
+        monkeypatch.setattr(laser, 'receive', lambda **kw: 'ENABLED')
+        assert QOpus._getStatus(laser) is True
+
+    def test_disabled_response_returns_false(self, laser, monkeypatch):
+        monkeypatch.setattr(laser, 'receive', lambda **kw: 'DISABLED')
+        assert QOpus._getStatus(laser) is False
+
+    def test_disabled_logs_warning(self, laser, monkeypatch, caplog):
+        monkeypatch.setattr(laser, 'receive', lambda **kw: 'DISABLED')
+        with caplog.at_level(logging.WARNING):
+            QOpus._getStatus(laser)
+        assert 'DISABLED' in caplog.text
+
+    def test_unexpected_response_returns_false(self, laser, monkeypatch):
+        monkeypatch.setattr(laser, 'receive', lambda **kw: 'STANDBY')
+        assert QOpus._getStatus(laser) is False
+
+    def test_fake_status_defaults_to_true(self, laser):
+        assert laser.get('status') is True
+
+    def test_status_is_readonly(self, laser):
+        laser.set('status', False)
+        assert laser.get('status') is True

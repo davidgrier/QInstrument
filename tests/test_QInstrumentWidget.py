@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from qtpy import QtWidgets
-from lib.QInstrumentWidget import QInstrumentWidget
+from lib.QInstrumentWidget import QInstrumentWidget, _values_differ
 from lib.QFakeInstrument import QFakeInstrument
 
 
@@ -328,3 +328,190 @@ class TestDebounce:
             w.power.setValue(99.0)
         assert blocker.args[0] == 'power'
         assert blocker.args[1] == pytest.approx(99.0)
+
+
+# ---------------------------------------------------------------------------
+# _values_differ
+# ---------------------------------------------------------------------------
+
+class TestValuesDiffer:
+
+    def test_equal_ints(self):
+        assert _values_differ(1, 1) is False
+
+    def test_unequal_ints(self):
+        assert _values_differ(1, 2) is True
+
+    def test_equal_strings(self):
+        assert _values_differ('a', 'a') is False
+
+    def test_unequal_strings(self):
+        assert _values_differ('a', 'b') is True
+
+    def test_equal_bools(self):
+        assert _values_differ(True, True) is False
+
+    def test_unequal_bools(self):
+        assert _values_differ(True, False) is True
+
+    def test_equal_floats(self):
+        assert _values_differ(1.0, 1.0) is False
+
+    def test_nearly_equal_floats_within_tolerance(self):
+        assert _values_differ(1.0, 1.0 + 1e-10) is False
+
+    def test_floats_outside_tolerance(self):
+        assert _values_differ(1.0, 2.0) is True
+
+
+# ---------------------------------------------------------------------------
+# _restoreSettings
+# ---------------------------------------------------------------------------
+
+class TestRestoreSettings:
+    '''Tests for QInstrumentWidget._restoreSettings().
+
+    The Configure object and QReconcileDialog are patched so no file I/O
+    or Qt dialogs are needed.
+    '''
+
+    def _make_restore_widget(self, qtbot, device, tmp_path):
+        '''Build a minimal widget with a real Configure pointing at tmp_path.'''
+        freq_w = QtWidgets.QDoubleSpinBox()
+        freq_w.setRange(-1e9, 1e9)
+
+        def fake_loadUi(path, parent):
+            freq_w.setObjectName('frequency')
+            setattr(parent, 'frequency', freq_w)
+
+        class RestoreW(QInstrumentWidget):
+            UIFILE = 'RestoreW.ui'
+
+        with patch('qtpy.uic.loadUi', side_effect=fake_loadUi):
+            w = RestoreW(device=device)
+
+        from lib.Configure import Configure
+        w._configure = Configure(
+            datadir=str(tmp_path / 'data'),
+            configdir=str(tmp_path / 'config'))
+        qtbot.addWidget(w)
+        return w
+
+    def test_no_config_file_saves_hardware_values(self, qtbot, tmp_path):
+        device = TwoPropertyDevice()
+        device._frequency = 123.0
+        w = self._make_restore_widget(qtbot, device, tmp_path)
+        w._restoreSettings()
+        saved = w._configure.read(device)
+        assert saved is not None
+        assert saved['frequency'] == pytest.approx(123.0)
+
+    def test_no_config_file_does_not_change_hardware(self, qtbot, tmp_path):
+        device = TwoPropertyDevice()
+        device._frequency = 42.0
+        w = self._make_restore_widget(qtbot, device, tmp_path)
+        w._restoreSettings()
+        assert device._frequency == pytest.approx(42.0)
+
+    def test_matching_config_no_dialog_shown(self, qtbot, tmp_path):
+        device = TwoPropertyDevice()
+        device._frequency = 10.0
+        device._count = 3
+        w = self._make_restore_widget(qtbot, device, tmp_path)
+        w._configure.save(device)
+
+        with patch('lib.QInstrumentWidget.QReconcileDialog') as MockDialog:
+            w._restoreSettings()
+        MockDialog.assert_not_called()
+
+    def test_mismatch_shows_dialog(self, qtbot, tmp_path):
+        device = TwoPropertyDevice()
+        device._frequency = 10.0
+        w = self._make_restore_widget(qtbot, device, tmp_path)
+        w._configure.save(device)
+
+        device._frequency = 99.0
+
+        mock_dialog = MagicMock()
+        mock_dialog.exec.return_value = True
+        mock_dialog.keep_hardware = True
+        with patch('lib.QInstrumentWidget.QReconcileDialog',
+                   return_value=mock_dialog) as MockCls:
+            w._restoreSettings()
+        MockCls.assert_called_once()
+
+    def test_keep_hardware_updates_config_file(self, qtbot, tmp_path):
+        device = TwoPropertyDevice()
+        device._frequency = 10.0
+        w = self._make_restore_widget(qtbot, device, tmp_path)
+        w._configure.save(device)
+
+        device._frequency = 99.0
+
+        mock_dialog = MagicMock()
+        mock_dialog.exec.return_value = True
+        mock_dialog.keep_hardware = True
+        with patch('lib.QInstrumentWidget.QReconcileDialog',
+                   return_value=mock_dialog):
+            w._restoreSettings()
+
+        saved = w._configure.read(device)
+        assert saved['frequency'] == pytest.approx(99.0)
+        assert device._frequency == pytest.approx(99.0)
+
+    def test_use_saved_pushes_to_hardware(self, qtbot, tmp_path):
+        device = TwoPropertyDevice()
+        device._frequency = 10.0
+        w = self._make_restore_widget(qtbot, device, tmp_path)
+        w._configure.save(device)
+
+        device._frequency = 99.0
+
+        mock_dialog = MagicMock()
+        mock_dialog.exec.return_value = True
+        mock_dialog.keep_hardware = False
+        with patch('lib.QInstrumentWidget.QReconcileDialog',
+                   return_value=mock_dialog):
+            w._restoreSettings()
+
+        assert device._frequency == pytest.approx(10.0)
+
+    def test_dismissed_dialog_keeps_hardware(self, qtbot, tmp_path):
+        device = TwoPropertyDevice()
+        device._frequency = 10.0
+        w = self._make_restore_widget(qtbot, device, tmp_path)
+        w._configure.save(device)
+
+        device._frequency = 55.0
+
+        mock_dialog = MagicMock()
+        mock_dialog.exec.return_value = False  # dismissed
+        mock_dialog.keep_hardware = True
+        with patch('lib.QInstrumentWidget.QReconcileDialog',
+                   return_value=mock_dialog):
+            w._restoreSettings()
+
+        assert device._frequency == pytest.approx(55.0)
+
+    def test_hardware_dominant_passed_to_dialog(self, qtbot, tmp_path):
+        device = TwoPropertyDevice()
+        device._frequency = 10.0
+        w = self._make_restore_widget(qtbot, device, tmp_path)
+        w._configure.save(device)
+        device._frequency = 99.0
+
+        class HWDominantW(QInstrumentWidget):
+            UIFILE = 'HWDominantW.ui'
+            HARDWARE_DOMINANT = True
+
+        w.HARDWARE_DOMINANT = True
+
+        mock_dialog = MagicMock()
+        mock_dialog.exec.return_value = True
+        mock_dialog.keep_hardware = True
+        with patch('lib.QInstrumentWidget.QReconcileDialog',
+                   return_value=mock_dialog) as MockCls:
+            w._restoreSettings()
+
+        _, kwargs = MockCls.call_args
+        assert kwargs.get('hardware_dominant') is True

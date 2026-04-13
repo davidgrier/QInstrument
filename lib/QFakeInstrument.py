@@ -66,9 +66,14 @@ class QFakeInstrument(QAbstractInstrument):
         '''
         def getter():
             return self._store.get(name, dtype())
+
         def setter(v):
             self._store[name] = dtype(v)
-        self.registerProperty(name, getter=getter, setter=setter, ptype=dtype)
+
+        self.registerProperty(name,
+                              getter=getter,
+                              setter=setter,
+                              ptype=dtype)
 
     def transmit(self, data) -> None:
         '''No-op: fake instruments have no serial port.'''

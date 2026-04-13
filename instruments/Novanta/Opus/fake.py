@@ -38,6 +38,12 @@ class QFakeOpus(QFakeInstrument, QOpus):
             getter=lambda: self._store.get('emission', False),
             setter=lambda v: self._store.__setitem__('emission', bool(v)))
         self.registerProperty(
+            'status', ptype=bool, setter=None,
+            getter=lambda: self._store.get('status', True))
+        self.registerProperty(
+            'version', ptype=str, setter=None,
+            getter=lambda: self._store.get('version', 'FAKE'))
+        self.registerProperty(
             'laser_temperature', ptype=float, setter=None,
             getter=lambda: self._store.get('laser_temperature', 25.))
         self.registerProperty(

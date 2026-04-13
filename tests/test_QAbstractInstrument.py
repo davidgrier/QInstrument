@@ -141,6 +141,20 @@ class TestSettings:
         assert s['a'] == 1.0
         assert s['b'] == 2.0
 
+    def test_settings_excludes_readonly_properties(self, inst):
+        inst.registerProperty('rw', getter=lambda: 1.0, setter=lambda v: None)
+        inst.registerProperty('ro', getter=lambda: 2.0, setter=None)
+        assert 'rw' in inst.settings
+        assert 'ro' not in inst.settings
+
+    def test_settings_excludes_non_persistent_properties(self, inst):
+        inst.registerProperty('keep', getter=lambda: 1.0,
+                               setter=lambda v: None, persist=True)
+        inst.registerProperty('skip', getter=lambda: 2.0,
+                               setter=lambda v: None, persist=False)
+        assert 'keep' in inst.settings
+        assert 'skip' not in inst.settings
+
     def test_settings_setter_applies_values(self, inst):
         store = {'a': 0.0, 'b': 0.0}
         inst.registerProperty('a',
@@ -155,6 +169,15 @@ class TestSettings:
     def test_settings_setter_skips_unknown_keys(self, inst):
         inst.registerProperty('a', getter=lambda: 1.0, setter=lambda v: None)
         inst.settings = {'a': 1.0, 'bogus': 99.0}  # must not raise
+
+    def test_settings_setter_ignores_non_persistent_keys(self, inst):
+        store = [0.0]
+        inst.registerProperty('transient',
+                               getter=lambda: store[0],
+                               setter=lambda v: store.__setitem__(0, v),
+                               persist=False)
+        inst.settings = {'transient': 99.0}
+        assert store[0] == 0.0  # setter must not have been called
 
 
 # ---------------------------------------------------------------------------
