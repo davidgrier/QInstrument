@@ -1,4 +1,5 @@
 #!/bin/sh
 ROOT="$(git rev-parse --show-toplevel)"
+export TERM=xterm-256color
 echo "Running tests before push..."
 "$ROOT/.qi/bin/pytest" tests/ -q
