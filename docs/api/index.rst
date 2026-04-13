@@ -8,6 +8,7 @@ API Reference
    serial_interface
    serial_instrument
    fake_instrument
+   instrument_worker
    instrument_widget
    instrument_tree
    instrument_rack
