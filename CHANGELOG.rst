@@ -4,6 +4,48 @@ Changelog
 All notable changes to QInstrument are documented here.
 The format follows `Keep a Changelog <https://keepachangelog.com>`_.
 
+.. _v2.2.0:
+
+2.2.0
+-----
+
+Added
+~~~~~
+
+- ``QAbstractInstrument.registerProperty`` accepts a ``persist`` keyword
+  (default ``True``).  Properties with ``persist=False`` are excluded
+  from ``settings`` and never written to or restored from configuration
+  files.  ``Proscan``: ``speed`` and ``zspeed`` set to ``persist=False``.
+- ``Configure.read()`` reads the saved JSON without applying it, enabling
+  comparison before commit.
+- ``QInstrumentWidget._restoreSettings()``: on first show, hardware state
+  is compared against the saved configuration.  If no file exists the
+  hardware state is saved; if values match nothing happens; if they differ
+  a ``QReconcileDialog`` is shown so the user can choose which values to
+  adopt.  ``HARDWARE_DOMINANT = True`` on ``QProscanWidget`` makes "Keep
+  Hardware" the default button.
+- ``QInstrumentWorker``: runs an instrument in a dedicated ``QThread``
+  with a zero-interval poll loop.  ``QSR830Worker`` and ``QSR844Worker``
+  emit ``[frequency, R, theta]`` via ``SNAP?9,3,4``.
+- Opus laser: ``STATUS?`` property returns ``True`` (ENABLED) or
+  ``False`` (DISABLED); logs a ``WARNING`` when ``DISABLED`` is received.
+- Opus laser: ``CONTROL=POWER`` sent in ``identify()`` to establish
+  power-control mode on every connection.
+
+Fixed
+~~~~~
+
+- ``QLedWidget`` rewritten to use ``QPainter`` instead of ``QSvgRenderer``.
+  Eliminates the ``QtSvg`` dependency and fixes a silent packaging bug
+  where ``QLedWidget.svg`` was never included in the distributed wheel,
+  causing ``FileNotFoundError`` on construction for PyPI installs.
+- Opus laser: ``POWER=``, ``CURRENT=``, ``ON``, and ``OFF`` setters now
+  call ``handshake()`` instead of ``transmit()``, consuming the
+  acknowledgement response and preventing read desynchronisation.
+- ``QInstrumentWidget.set()``: replaced ``blockSignals(True/False)`` pair
+  with ``QSignalBlocker`` so signals are correctly restored even if the
+  setter raises.
+
 .. _v2.1.0:
 
 2.1.0

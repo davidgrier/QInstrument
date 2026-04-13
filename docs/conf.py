@@ -21,7 +21,7 @@ from importlib.metadata import version as _get_version, PackageNotFoundError
 try:
     release = _get_version('QInstrument')
 except PackageNotFoundError:
-    release = '2.1.0'
+    release = '2.2.0'
 
 # -- General configuration ---------------------------------------------------
 
