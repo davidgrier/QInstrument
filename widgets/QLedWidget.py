@@ -2,12 +2,11 @@ from __future__ import annotations
 
 import sys
 from enum import Enum
-from pathlib import Path
-from qtpy import QtCore, QtWidgets, QtGui, QtSvg
+from qtpy import QtCore, QtWidgets, QtGui
 
 
 class QLedWidget(QtWidgets.QWidget):
-    '''SVG-based LED indicator widget.
+    '''LED indicator widget drawn with QPainter.
 
     Renders a colored LED that can be on, off, or blinking.
 
@@ -81,12 +80,7 @@ class QLedWidget(QtWidgets.QWidget):
             self.update()
 
     def _setupUi(self) -> None:
-        svgfile = Path(__file__).parent / 'QLedWidget.svg'
-        with open(svgfile, 'r') as f:
-            self.template = f.read()
         self.setMinimumSize(16, 16)
-        self.sizePolicy().setWidthForHeight(True)
-        self.renderer = QtSvg.QSvgRenderer()
         self.timer = QtCore.QTimer()
         self.timer.timeout.connect(self.flipState)
 
@@ -176,18 +170,51 @@ class QLedWidget(QtWidgets.QWidget):
         super().changeEvent(event)
 
     def paintEvent(self, event: QtGui.QPaintEvent) -> None:
-        painter = QtGui.QPainter(self)
-        painter.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing, True)
-        a, b = self.hexcodes[self.color][self.state]
-        svg = self.template.replace('af0000', a).replace('ff0f0f', b)
-        self.renderer.load(QtCore.QByteArray(svg.encode()))
-        self.renderer.render(painter, self._bounds())
+        w, h = self.width(), self.height()
+        size = min(w, h)
+        cx, cy = w / 2., h / 2.
+        r = size / 2.
 
-    def _bounds(self) -> QtCore.QRectF:
-        x, y = self.size().width() / 2., self.size().height() / 2.
-        dim = min(x, y)
-        return QtCore.QRectF(QtCore.QPointF(x - dim, y - dim),
-                             QtCore.QPointF(x + dim, y + dim))
+        painter = QtGui.QPainter(self)
+        painter.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing)
+        painter.setPen(QtCore.Qt.PenStyle.NoPen)
+
+        # Outer bezel: silver metallic ring, lighter at top than bottom
+        bezel = QtGui.QLinearGradient(cx, cy - r, cx, cy + r)
+        bezel.setColorAt(0., QtGui.QColor('#f0f0f0'))
+        bezel.setColorAt(1., QtGui.QColor('#adadad'))
+        painter.setBrush(QtGui.QBrush(bezel))
+        painter.drawEllipse(QtCore.QRectF(cx - r, cy - r, size, size))
+
+        # Shadow ring: semi-transparent dark gray inside the bezel
+        r2 = r * 0.808
+        ring = QtGui.QRadialGradient(cx, cy, r2)
+        ring.setColorAt(0., QtGui.QColor(0x92, 0x92, 0x92, 90))
+        ring.setColorAt(1., QtGui.QColor(0x82, 0x82, 0x82, 200))
+        painter.setBrush(QtGui.QBrush(ring))
+        painter.drawEllipse(QtCore.QRectF(cx - r2, cy - r2, 2*r2, 2*r2))
+
+        # LED body: color gradient lit from upper-left toward bottom-right
+        r3 = r * 0.722
+        a_hex, b_hex = self.hexcodes[self.color][self.state]
+        led = QtGui.QLinearGradient(cx + r3, cy + r3,
+                                    cx + r3 * 0.266, cy + r3 * 0.108)
+        led.setColorAt(0., QtGui.QColor(f'#{a_hex}'))
+        led.setColorAt(1., QtGui.QColor(f'#{b_hex}'))
+        painter.setBrush(QtGui.QBrush(led))
+        painter.drawEllipse(QtCore.QRectF(cx - r3, cy - r3, 2*r3, 2*r3))
+
+        # Specular highlight: small white ellipse, upper-left of LED, rotated
+        painter.save()
+        painter.translate(cx - r * 0.312, cy - r * 0.408)
+        painter.rotate(-34.3)
+        r_a, r_b = r * 0.244, r * 0.149
+        hl = QtGui.QLinearGradient(0., r_b, 0., -r_b * 0.7)
+        hl.setColorAt(0., QtGui.QColor(255, 255, 255, 0))
+        hl.setColorAt(1., QtGui.QColor(255, 255, 255, 220))
+        painter.setBrush(QtGui.QBrush(hl))
+        painter.drawEllipse(QtCore.QRectF(-r_a, -r_b, 2*r_a, 2*r_b))
+        painter.restore()
 
 
 def example() -> None:
