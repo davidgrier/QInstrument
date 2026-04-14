@@ -6,8 +6,8 @@ from qtpy import QtCore
 from QInstrument.lib.QInstrumentWidget import QInstrumentWidget
 from QInstrument.instruments.PriorScientific.Proscan.instrument import QProscan
 
-logger = logging.getLogger(__name__)
 
+logger = logging.getLogger(__name__)
 
 _NORMAL_STYLE = 'background: lightyellow;'
 _LIMIT_STYLE = 'background: #FF6B6B;'
@@ -52,6 +52,20 @@ class QProscanWidget(QInstrumentWidget):
         self.zdial.stepDown.connect(self.device.stepDown)
         self.stop.clicked.connect(self.device.stop)
         self.set_origin.clicked.connect(self.device.set_origin)
+        self.advancedToggle.toggled.connect(self._onAdvancedToggled)
+        self.advanced.setVisible(False)
+
+    @QtCore.Slot(bool)
+    def _onAdvancedToggled(self, checked: bool) -> None:
+        '''Show or hide the advanced settings panel.'''
+        self.advanced.setVisible(checked)
+        self.advancedToggle.setText(
+            '▾ Advanced Settings' if checked else '▸ Advanced Settings')
+        self.window().adjustSize()
+
+    def showEvent(self, event: object) -> None:
+        super().showEvent(event)
+        self.window().adjustSize()
 
     def _startPolling(self) -> None:
         self._timer = QtCore.QTimer(self)

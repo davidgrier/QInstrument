@@ -191,6 +191,10 @@ class QJoystickPad(QtWidgets.QWidget):
         layout.setRowStretch(1, 1)
         layout.setColumnStretch(1, 1)
 
+        self.setSizePolicy(
+            QtWidgets.QSizePolicy.Policy.MinimumExpanding,
+            QtWidgets.QSizePolicy.Policy.MinimumExpanding)
+
         self._syncButtonColors()
 
     def hasHeightForWidth(self) -> bool:
@@ -210,6 +214,10 @@ class QJoystickPad(QtWidgets.QWidget):
         j   = self.joystick.sizeHint().width()
         side = m.left() + b + s + j + s + b + m.right()
         return QtCore.QSize(side, side)
+
+    def minimumSizeHint(self) -> QtCore.QSize:
+        '''Return the minimum widget size, equal to the preferred size.'''
+        return self.sizeHint()
 
     def _syncButtonColors(self) -> None:
         color = self.joystick.padColor
