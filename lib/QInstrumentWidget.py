@@ -476,6 +476,7 @@ class QInstrumentWidget(QtWidgets.QWidget):
                 return
             print(f'{cls.__name__}: instrument not found, using {fake_cls.__name__}.')
             widget = cls(device=fake_cls())
+        widget.adjustSize()
         widget.show()
         sys.exit(app.exec())
 

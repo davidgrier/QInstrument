@@ -117,14 +117,7 @@
     </widget>
    </item>
    <item>
-    <widget class="QRotaryEncoder" name="encoder">
-     <property name="minimumSize">
-      <size>
-       <width>100</width>
-       <height>95</height>
-      </size>
-     </property>
-    </widget>
+    <widget class="QRotaryEncoder" name="encoder"/>
    </item>
   </layout>
  </widget>

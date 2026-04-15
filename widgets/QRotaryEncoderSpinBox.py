@@ -76,6 +76,15 @@ class QRotaryEncoderSpinBox(QWidget):
             setattr(self, method,
                     getattr(self._spinbox, method))
 
+    def sizeHint(self) -> QtCore.QSize:
+        '''Return the preferred size for the widget.
+
+        Provides a compact default so that the widget does not expand
+        aggressively in parent layouts.  The dial scales smoothly to
+        whatever space it is actually allocated.
+        '''
+        return QtCore.QSize(80, 100)
+
     def title(self) -> str:
         '''Return the title label text.'''
         return self.label.text()

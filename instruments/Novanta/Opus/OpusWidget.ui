@@ -44,14 +44,7 @@
       </property>
       <!-- Left: rotary encoder for power setpoint -->
       <item>
-       <widget class="QRotaryEncoderSpinBox" name="power_setpoint">
-        <property name="minimumSize">
-         <size>
-          <width>100</width>
-          <height>100</height>
-         </size>
-        </property>
-       </widget>
+       <widget class="QRotaryEncoderSpinBox" name="power_setpoint"/>
       </item>
       <!-- Right: status displays (top) and emission control (bottom) -->
       <item>

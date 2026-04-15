@@ -205,19 +205,32 @@ class QJoystickPad(QtWidgets.QWidget):
         '''Return *width*, enforcing a square allocation.'''
         return width
 
+    def resizeEvent(self, event: QtGui.QResizeEvent) -> None:
+        '''Centre a square sub-region by adjusting layout margins.
+
+        When the allocated rectangle is not square — which can happen
+        when ``hasHeightForWidth()`` is not propagated correctly through
+        deeply nested layouts — this pads out the shorter axis so the
+        inner grid always operates in a square region.
+        '''
+        w, h = event.size().width(), event.size().height()
+        side = min(w, h)
+        dx = (w - side) // 2
+        dy = (h - side) // 2
+        self.layout().setContentsMargins(dx, dy, dx, dy)
+        super().resizeEvent(event)
+
     def sizeHint(self) -> QtCore.QSize:
         '''Return the preferred widget size with a 1:1 aspect ratio.'''
-        lyt = self.layout()
-        m   = lyt.contentsMargins()
-        s   = lyt.spacing()
-        b   = self._BUTTON_SIZE
-        j   = self.joystick.sizeHint().width()
-        side = m.left() + b + s + j + s + b + m.right()
-        return QtCore.QSize(side, side)
+        return QtCore.QSize(200, 200)
 
     def minimumSizeHint(self) -> QtCore.QSize:
-        '''Return the minimum widget size, equal to the preferred size.'''
-        return self.sizeHint()
+        '''Return the minimum functional size with a 1:1 aspect ratio.
+
+        Two button widths plus a minimum joystick diameter of 60 px.
+        '''
+        side = 2 * self._BUTTON_SIZE + 60
+        return QtCore.QSize(side, side)
 
     def _syncButtonColors(self) -> None:
         color = self.joystick.padColor
