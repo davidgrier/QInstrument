@@ -1,0 +1,24 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it using the metadata below."
+title: "QInstrument"
+version: "2.2.0"
+doi: 10.5281/zenodo.19424797
+date-released: "2026-04-13"
+authors:
+  - family-names: Grier
+    given-names: David G.
+    affiliation: New York University
+    orcid: https://orcid.org/0000-0002-4382-5139
+license: GPL-3.0
+repository-code: "https://github.com/davidgrier/QInstrument"
+url: "https://qinstrument.readthedocs.io"
+abstract: >
+  A Qt-based framework for controlling scientific instruments over serial
+  ports. Instruments are represented as Qt objects with a uniform property
+  system, automatic UI binding, and JSON-based configuration persistence.
+  Any Qt binding (PyQt5, PyQt6, PySide2, PySide6) is supported via qtpy.
+keywords:
+  - scientific instrument
+  - serial port
+  - Qt
+  - laboratory automation
