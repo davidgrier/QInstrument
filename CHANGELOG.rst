@@ -4,6 +4,22 @@ Changelog
 All notable changes to QInstrument are documented here.
 The format follows `Keep a Changelog <https://keepachangelog.com>`_.
 
+.. _v2.3.1:
+
+2.3.1
+-----
+
+Fixed
+~~~~~
+
+- ``lib/lazy.py``: new ``make_getattr(lazy, package)`` factory replaces
+  the hand-written ``__getattr__`` boilerplate in every instrument
+  ``__init__.py``.  The resolved value is cached back into the package
+  ``__dict__`` via ``sys.modules[package].__dict__``, preventing
+  Python's import machinery from shadowing it with the submodule object
+  on subsequent accesses.  All eleven leaf instrument packages updated
+  to use the factory.
+
 .. _v2.3.0:
 
 2.3.0
