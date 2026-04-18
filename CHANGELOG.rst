@@ -4,6 +4,21 @@ Changelog
 All notable changes to QInstrument are documented here.
 The format follows `Keep a Changelog <https://keepachangelog.com>`_.
 
+.. _v2.3.2:
+
+2.3.2
+-----
+
+Fixed
+~~~~~
+
+- ``lib/QInstrumentWidget.py``: ``showEvent`` now defers first-show
+  reconciliation via ``QTimer.singleShot(0, ...)`` instead of calling
+  ``_restoreSettings()`` synchronously.  Opening a ``QReconcileDialog``
+  (nested ``exec()`` event loop) from inside Qt's show-event sequence
+  caused a segfault on all platforms; the deferred call runs after the
+  show sequence completes, eliminating the re-entrancy.
+
 .. _v2.3.1:
 
 2.3.1

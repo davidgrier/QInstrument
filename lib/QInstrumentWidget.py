@@ -381,16 +381,23 @@ class QInstrumentWidget(QtWidgets.QWidget):
     def showEvent(self, event) -> None:
         '''Reconcile device settings on first show.
 
-        On the first time the widget is shown, calls
-        :meth:`_restoreSettings` to reconcile hardware state with any
-        saved configuration, then re-syncs the UI.  Subsequent show
-        events are passed through without reconciling.
+        On the first time the widget is shown, schedules
+        :meth:`_firstShow` via a zero-delay timer so that reconciliation
+        runs after Qt has finished processing the show event.  This
+        avoids a crash caused by opening a modal dialog (nested event
+        loop) from inside an event handler.  Subsequent show events are
+        passed through without reconciling.
         '''
         if not self._restored and self._device is not None and self._device.isOpen():
-            self._restoreSettings()
-            self._syncProperties()
             self._restored = True
+            QtCore.QTimer.singleShot(0, self._firstShow)
         super().showEvent(event)
+
+    @QtCore.Slot()
+    def _firstShow(self) -> None:
+        '''Run first-show reconciliation after the event loop is idle.'''
+        self._restoreSettings()
+        self._syncProperties()
 
     def _restoreSettings(self) -> None:
         '''Reconcile hardware state with the saved configuration file.
