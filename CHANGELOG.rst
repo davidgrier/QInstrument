@@ -4,6 +4,22 @@ Changelog
 All notable changes to QInstrument are documented here.
 The format follows `Keep a Changelog <https://keepachangelog.com>`_.
 
+.. _v2.3.0:
+
+2.3.0
+-----
+
+Added
+~~~~~
+
+- ``instruments/__init__.py``: dynamic ``__getattr__`` aggregates all
+  instrument classes from subpackages via ``pkgutil.walk_packages``.
+  Instrument classes can now be imported directly from
+  ``QInstrument.instruments`` (e.g.
+  ``from QInstrument.instruments import QDS345Widget, QFakeSR830``)
+  without specifying the full subpackage path.  Adding a new instrument
+  requires no changes to ``instruments/__init__.py``.
+
 .. _v2.2.0:
 
 2.2.0

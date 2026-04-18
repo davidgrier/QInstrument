@@ -85,7 +85,7 @@ simulated (fake) device so the UI is always usable.
 
 ```python
 from qtpy.QtWidgets import QApplication
-from QInstrument.instruments.DS345 import QDS345Widget
+from QInstrument.instruments import QDS345Widget
 
 app = QApplication([])
 widget = QDS345Widget()
@@ -98,7 +98,7 @@ app.exec()
 When hardware is not available, pass a fake device directly:
 
 ```python
-from QInstrument.instruments.DS345 import QDS345Widget, QFakeDS345
+from QInstrument.instruments import QDS345Widget, QFakeDS345
 
 app = QApplication([])
 widget = QDS345Widget(device=QFakeDS345())
