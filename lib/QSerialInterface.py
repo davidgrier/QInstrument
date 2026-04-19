@@ -193,8 +193,12 @@ class QSerialInterface(QSerialPort):
         '''Read from the serial interface until the end-of-line sequence.
 
         Reads available data into a buffer until :attr:`eol` is found or
-        the read times out. The EOL bytes are stripped from the returned
+        the read times out.  The EOL bytes are stripped from the returned
         value.
+
+        Waiting is performed via a local ``QEventLoop`` driven by
+        ``readyRead`` and a ``QTimer``, so the main event loop remains
+        alive during the wait and the GUI stays responsive.
 
         Parameters
         ----------
@@ -216,16 +220,25 @@ class QSerialInterface(QSerialPort):
             eol = eol.encode() if isinstance(eol, str) else eol
         else:
             eol = self.eol
+        loop = QtCore.QEventLoop()
+        timer = QtCore.QTimer()
+        timer.setSingleShot(True)
+        timer.timeout.connect(loop.quit)
+        self.readyRead.connect(loop.quit)
         buffer = b''
         while True:
-            if (not self.bytesAvailable() and
-                    not self.waitForReadyRead(self.timeout)):
-                logger.debug('Timeout waiting for response')
-                break
+            if not self.bytesAvailable():
+                timer.start(self.timeout)
+                loop.exec()
+                timer.stop()
+                if not self.bytesAvailable():
+                    logger.debug('Timeout waiting for response')
+                    break
             buffer += bytes(self.readAll())
             if eol and eol in buffer:
                 buffer = buffer[:buffer.index(eol)]
                 break
+        self.readyRead.disconnect(loop.quit)
         return buffer if raw else buffer.decode()
 
     def readn(self, n: int = 1) -> bytes:
@@ -245,13 +258,22 @@ class QSerialInterface(QSerialPort):
         if not self.isOpen():
             logger.warning('Cannot read data: device is not open.')
             return b''
+        loop = QtCore.QEventLoop()
+        timer = QtCore.QTimer()
+        timer.setSingleShot(True)
+        timer.timeout.connect(loop.quit)
+        self.readyRead.connect(loop.quit)
         buffer = b''
         while len(buffer) < n:
-            if (not self.bytesAvailable() and
-                    not self.waitForReadyRead(self.timeout)):
-                logger.warning('Timeout waiting for response')
-                break
+            if not self.bytesAvailable():
+                timer.start(self.timeout)
+                loop.exec()
+                timer.stop()
+                if not self.bytesAvailable():
+                    logger.warning('Timeout waiting for response')
+                    break
             buffer += bytes(self.readAll())
+        self.readyRead.disconnect(loop.quit)
         return buffer[:n]
 
     def sendbreak(self, duration: int = 250) -> None:

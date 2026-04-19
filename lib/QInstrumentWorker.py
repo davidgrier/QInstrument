@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import warnings
 from qtpy import QtCore
 
 logger = logging.getLogger(__name__)
@@ -43,6 +44,13 @@ class QInstrumentWorker(QtCore.QObject):
     '''
 
     def __init__(self, instrument, parent=None) -> None:
+        warnings.warn(
+            'QInstrumentWorker is deprecated and will be removed in a future '
+            'release. QSerialInterface.receive() no longer blocks the event '
+            'loop, so instrument polling does not require a worker thread.',
+            DeprecationWarning,
+            stacklevel=2
+        )
         super().__init__(parent)
         self._instrument = instrument
         self._thread = QtCore.QThread()

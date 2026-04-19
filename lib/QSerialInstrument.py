@@ -133,14 +133,6 @@ class QSerialInstrument(QAbstractInstrument):
             The instance itself, whether or not a device was found.
             Call :meth:`isOpen` to check the result.
         '''
-        # TODO: On macOS, Qt emits "QSocketNotifier: current thread's event
-        # dispatcher has already been destroyed" for each port tried here.
-        # Root cause: QSerialPort's POSIX backend uses QSocketNotifier, which
-        # requires a running event loop, but waitForReadyRead() uses select()
-        # directly and tears down the macOS CF dispatcher context on return.
-        # Fix: replace waitForReadyRead() in QSerialInterface.receive() with
-        # a QEventLoop + QTimer approach so notifiers always have an active
-        # dispatcher. Deferred due to re-entrancy considerations.
         for port in QSerialPortInfo.availablePorts():
             portName = port.portName()
             logger.debug(f'Trying {portName}')

@@ -3,6 +3,8 @@ from qtpy import QtCore
 from instruments.StanfordResearch.SR830.fake import QFakeSR830
 from instruments.StanfordResearch.SR830.worker import QSR830Worker
 from instruments.StanfordResearch.SR844.fake import QFakeSR844
+
+pytestmark = pytest.mark.filterwarnings('ignore::DeprecationWarning')
 from instruments.StanfordResearch.SR844.worker import QSR844Worker
 
 

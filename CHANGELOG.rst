@@ -4,6 +4,30 @@ Changelog
 All notable changes to QInstrument are documented here.
 The format follows `Keep a Changelog <https://keepachangelog.com>`_.
 
+.. _v2.4.0:
+
+2.4.0
+-----
+
+Changed
+~~~~~~~
+
+- ``lib/QSerialInterface.py``: ``receive()`` and ``readn()`` no longer call
+  ``waitForReadyRead()``, which blocked the calling thread and tore down the
+  macOS ``CFRunLoop`` dispatcher context on return.  Both methods now wait via
+  a scoped ``QEventLoop`` driven by ``readyRead`` and a ``QTimer``, keeping
+  the main event loop alive during serial I/O so the GUI stays responsive and
+  ``QSocketNotifier`` always has an active dispatcher.
+
+Deprecated
+~~~~~~~~~~
+
+- ``lib/QInstrumentWorker.py``: ``QInstrumentWorker`` is deprecated and will
+  be removed in a future release.  Its primary motivation was preventing
+  ``waitForReadyRead()`` from blocking the GUI thread; that is no longer
+  necessary.  Instrument polling can run on the main thread using
+  ``QSerialInterface``'s existing ``blocking=False`` / ``dataReady`` path.
+
 .. _v2.3.2:
 
 2.3.2

@@ -22,6 +22,12 @@ def iface_crlf(qtbot):
     return QSerialInterface(eol='\r\n')
 
 
+@pytest.fixture
+def iface_fast(qtbot):
+    '''QSerialInterface with 1 ms timeout for timeout tests.'''
+    return QSerialInterface(eol='\n', timeout=1)
+
+
 # ---------------------------------------------------------------------------
 # Initialization
 # ---------------------------------------------------------------------------
@@ -117,52 +123,42 @@ class TestReceive:
 
     @patch.object(QSerialInterface, 'bytesAvailable', return_value=True)
     @patch.object(QSerialInterface, 'readAll', return_value=b'HELLO\n')
-    @patch.object(QSerialInterface, 'waitForReadyRead', return_value=True)
-    def test_strips_eol(self, mock_wait, mock_read, mock_avail, iface):
+    def test_strips_eol(self, mock_read, mock_avail, iface):
         assert iface.receive() == 'HELLO'
 
     @patch.object(QSerialInterface, 'bytesAvailable', return_value=True)
     @patch.object(QSerialInterface, 'readAll', return_value=b'HELLO\r\n')
-    @patch.object(QSerialInterface, 'waitForReadyRead', return_value=True)
-    def test_multibyte_eol_stripped(
-            self, mock_wait, mock_read, mock_avail, iface_crlf):
+    def test_multibyte_eol_stripped(self, mock_read, mock_avail, iface_crlf):
         assert iface_crlf.receive() == 'HELLO'
 
     @patch.object(QSerialInterface, 'bytesAvailable', return_value=True)
     @patch.object(QSerialInterface, 'readAll', return_value=b'HELLO\n')
-    @patch.object(QSerialInterface, 'waitForReadyRead', return_value=True)
-    def test_raw_returns_bytes(self, mock_wait, mock_read, mock_avail, iface):
+    def test_raw_returns_bytes(self, mock_read, mock_avail, iface):
         assert iface.receive(raw=True) == b'HELLO'
 
     @patch.object(QSerialInterface, 'bytesAvailable', return_value=False)
-    @patch.object(QSerialInterface, 'waitForReadyRead', return_value=False)
-    def test_timeout_returns_empty_string(self, mock_wait, mock_avail, iface):
-        assert iface.receive() == ''
+    def test_timeout_returns_empty_string(self, mock_avail, iface_fast):
+        assert iface_fast.receive() == ''
 
     @patch.object(QSerialInterface, 'bytesAvailable', return_value=False)
-    @patch.object(QSerialInterface, 'waitForReadyRead', return_value=False)
-    def test_timeout_logs(self, mock_wait, mock_avail, iface, caplog):
+    def test_timeout_logs(self, mock_avail, iface_fast, caplog):
         with caplog.at_level(logging.DEBUG):
-            iface.receive()
+            iface_fast.receive()
         assert 'Timeout' in caplog.text
 
     @patch.object(QSerialInterface, 'bytesAvailable', return_value=True)
     @patch.object(QSerialInterface, 'readAll', return_value=b'DATA\r')
-    @patch.object(QSerialInterface, 'waitForReadyRead', return_value=True)
-    def test_override_eol(self, mock_wait, mock_read, mock_avail, iface):
+    def test_override_eol(self, mock_read, mock_avail, iface):
         assert iface.receive(eol='\r') == 'DATA'
 
     @patch.object(QSerialInterface, 'bytesAvailable', return_value=True)
     @patch.object(QSerialInterface, 'readAll', return_value=b'DATA\r')
-    @patch.object(QSerialInterface, 'waitForReadyRead', return_value=True)
-    def test_override_eol_as_bytes(self, mock_wait, mock_read, mock_avail, iface):
+    def test_override_eol_as_bytes(self, mock_read, mock_avail, iface):
         assert iface.receive(eol=b'\r') == 'DATA'
 
     @patch.object(QSerialInterface, 'bytesAvailable', return_value=True)
     @patch.object(QSerialInterface, 'readAll', return_value=b'A\nB\nC')
-    @patch.object(QSerialInterface, 'waitForReadyRead', return_value=True)
-    def test_returns_up_to_first_eol(
-            self, mock_wait, mock_read, mock_avail, iface):
+    def test_returns_up_to_first_eol(self, mock_read, mock_avail, iface):
         assert iface.receive() == 'A'
 
 
@@ -174,27 +170,24 @@ class TestReadn:
 
     @patch.object(QSerialInterface, 'isOpen', return_value=True)
     @patch.object(QSerialInterface, 'bytesAvailable', return_value=True)
-    @patch.object(QSerialInterface, 'waitForReadyRead', return_value=True)
     @patch.object(QSerialInterface, 'readAll', return_value=b'ABCDE')
-    def test_trims_to_n(self, mock_read, mock_wait, mock_avail, mock_open, iface):
+    def test_trims_to_n(self, mock_read, mock_avail, mock_open, iface):
         assert iface.readn(3) == b'ABC'
 
     @patch.object(QSerialInterface, 'isOpen', return_value=True)
     @patch.object(QSerialInterface, 'bytesAvailable', return_value=True)
-    @patch.object(QSerialInterface, 'waitForReadyRead', return_value=True)
     @patch.object(QSerialInterface, 'readAll', return_value=b'AB')
-    def test_exact_match(self, mock_read, mock_wait, mock_avail, mock_open, iface):
+    def test_exact_match(self, mock_read, mock_avail, mock_open, iface):
         assert iface.readn(2) == b'AB'
 
     @patch.object(QSerialInterface, 'isOpen', return_value=True)
     @patch.object(QSerialInterface, 'bytesAvailable',
                   side_effect=[True, False, False])
-    @patch.object(QSerialInterface, 'waitForReadyRead', return_value=False)
     @patch.object(QSerialInterface, 'readAll', return_value=b'AB')
     def test_timeout_returns_partial(
-            self, mock_read, mock_wait, mock_avail, mock_open, iface, caplog):
+            self, mock_read, mock_avail, mock_open, iface_fast, caplog):
         with caplog.at_level(logging.WARNING):
-            result = iface.readn(5)
+            result = iface_fast.readn(5)
         assert result == b'AB'
         assert 'Timeout' in caplog.text
 

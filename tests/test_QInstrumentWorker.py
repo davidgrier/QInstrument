@@ -3,6 +3,8 @@ from qtpy import QtCore
 from lib.QFakeInstrument import QFakeInstrument
 from lib.QInstrumentWorker import QInstrumentWorker
 
+pytestmark = pytest.mark.filterwarnings('ignore::DeprecationWarning')
+
 
 # ---------------------------------------------------------------------------
 # Helpers
