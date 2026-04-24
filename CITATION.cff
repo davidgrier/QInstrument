@@ -1,14 +1,17 @@
 cff-version: 1.2.0
 message: "If you use this software, please cite it using the metadata below."
 title: "QInstrument"
-version: "2.2.0"
+version: "2.3.2"
 doi: 10.5281/zenodo.19424797
-date-released: "2026-04-13"
+date-released: "2026-04-18"
 authors:
   - family-names: Grier
     given-names: David G.
     affiliation: New York University
     orcid: https://orcid.org/0000-0002-4382-5139
+  - family-names: Hornburg
+    given-names: Claire
+    affiliation: New York University
 license: GPL-3.0
 repository-code: "https://github.com/davidgrier/QInstrument"
 url: "https://qinstrument.readthedocs.io"
