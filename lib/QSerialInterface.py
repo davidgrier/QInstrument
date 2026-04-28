@@ -239,7 +239,7 @@ class QSerialInterface(QSerialPort):
                 buffer = buffer[:buffer.index(eol)]
                 break
         self.readyRead.disconnect(loop.quit)
-        return buffer if raw else buffer.decode()
+        return buffer if raw else buffer.decode('utf-8', errors='replace')
 
     def readn(self, n: int = 1) -> bytes:
         '''Receive exactly n bytes from the instrument.
