@@ -36,7 +36,7 @@ jobs:
             libfreetype6
 
       - name: Install Python dependencies
-        run: pip install PyQt6 qtpy numpy pytest pytest-qt
+        run: pip install PyQt6 qtpy numpy pyqtgraph pytest pytest-qt
 
       - name: Run tests
         run: pytest tests/
