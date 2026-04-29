@@ -431,15 +431,15 @@ class QInstrumentWidget(QtWidgets.QWidget):
     def _firstShow(self) -> None:
         '''Run first-show reconciliation after the event loop is idle.
 
-        Restores saved settings synchronously while the device is still
-        on the main thread, then moves the device to a worker thread
-        before requesting a full property sync.  Polling is not started
-        automatically; call :meth:`startPolling` explicitly or connect
-        a control to it when continuous updates are needed.
+        Restores saved settings and syncs the UI while the device is still
+        on the main thread, then moves the device to a dedicated worker
+        thread.  Polling is not started automatically; call
+        :meth:`startPolling` explicitly or connect a control to it when
+        continuous updates are needed.
         '''
         self._restoreSettings()
-        self._startDeviceThread()
         self._syncProperties()
+        self._startDeviceThread()
 
     def _startDeviceThread(self) -> None:
         '''Move the device into a dedicated worker thread.

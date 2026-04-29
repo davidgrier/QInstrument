@@ -4,6 +4,27 @@ Changelog
 All notable changes to QInstrument are documented here.
 The format follows `Keep a Changelog <https://keepachangelog.com>`_.
 
+.. _v3.0.2:
+
+3.0.2 — 2026-04-29
+-------------------
+
+Fixed
+~~~~~
+
+- ``lib/QInstrumentWidget``, ``lib/QInstrumentTree``: ``_firstShow()``
+  now calls ``_syncProperties()`` *before* ``_startDeviceThread()``.
+  Previously the sync ran after the device was moved to its worker
+  thread; because ``_syncProperties()`` uses direct Python method calls
+  (not Qt queued slots), the serial I/O executed on the main thread
+  while the ``QSerialPort`` was owned by the worker thread.  This
+  triggered Qt's "QSocketNotifier: cannot be enabled from another
+  thread" warning, caused ``waitForReadyRead()`` to fail, and left
+  every property getter returning ``None`` — producing errors such as
+  "Could not set harmonic to None" and locking the UI.  Running the
+  sync on the main thread (before the move) eliminates the
+  cross-thread access entirely.
+
 .. _v3.0.1:
 
 3.0.1 — 2026-04-29

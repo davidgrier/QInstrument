@@ -268,17 +268,17 @@ class QInstrumentTree(ParameterTree):
 
     @QtCore.Slot()
     def _firstShow(self) -> None:
-        '''Restore settings, start the device thread, and sync the tree.
+        '''Restore settings, sync the tree, then start the device thread.
 
-        Restores saved settings synchronously while the device is still
-        on the main thread, then moves the device to a worker thread
-        before requesting a full property sync.  Polling is not started
-        automatically; call :meth:`startPolling` explicitly or connect
-        a control to it when continuous updates are needed.
+        Restores saved settings and syncs the tree while the device is
+        still on the main thread, then moves the device to a dedicated
+        worker thread.  Polling is not started automatically; call
+        :meth:`startPolling` explicitly or connect a control to it when
+        continuous updates are needed.
         '''
         self._restoreSettings()
-        self._startDeviceThread()
         self._syncProperties()
+        self._startDeviceThread()
 
     def _restoreSettings(self) -> None:
         '''Reconcile hardware state with the saved configuration file.
