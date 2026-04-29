@@ -98,19 +98,24 @@ class Configure(QtCore.QObject):
         '''
         return str(self.configdir / (obj.__class__.__name__ + '.json'))
 
-    def save(self, obj: object) -> None:
+    def save(self, obj: object,
+             settings: dict | None = None) -> None:
         '''Save *obj*'s settings to its JSON configuration file.
 
         Reads ``obj.settings`` (a dict) and serializes it to
-        :meth:`configname`.  Does nothing when ``obj.settings`` is empty.
+        :meth:`configname`.  Does nothing when the settings dict is empty.
+        An explicit *settings* dict may be supplied to avoid reading from
+        *obj* directly — useful when *obj* lives in a worker thread.
 
         Parameters
         ----------
         obj : object
-            Object with a ``settings`` property returning a
-            ``dict[str, bool | int | float | str]``.
+            Object whose class name determines the configuration filename.
+        settings : dict or None, optional
+            Settings to save.  When ``None`` (default), reads
+            ``obj.settings``.
         '''
-        settings = obj.settings
+        settings = obj.settings if settings is None else settings
         if not settings:
             return
         filename = self.configname(obj)

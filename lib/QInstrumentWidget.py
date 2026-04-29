@@ -111,6 +111,7 @@ class QInstrumentWidget(QtWidgets.QWidget):
         self._device = None
         self._configure = Configure()
         self._restored = False
+        self._thread = None
         uic.loadUi(self._uiPath(), self)
         if device is None and self.INSTRUMENT is not None:
             device = self.INSTRUMENT().find()
@@ -134,8 +135,8 @@ class QInstrumentWidget(QtWidgets.QWidget):
         self._device = device
         self._identifyProperties()
         if self._device.isOpen():
-            self._syncProperties()
             self._connectSignals()
+            self._syncProperties()
         else:
             self.setEnabled(False)
 
@@ -271,18 +272,60 @@ class QInstrumentWidget(QtWidgets.QWidget):
         self._methods = list(uwidgets & dmethods)
 
     def _syncProperties(self) -> None:
-        '''Set all linked widgets to current device values.'''
+        '''Request current device values for all linked properties.
+
+        Calls :meth:`device.get` for each property, which emits
+        :attr:`propertyValue` and updates the corresponding widget
+        via :meth:`_onPropertyValue`.  Works whether the device is
+        on the main thread (direct connection, synchronous) or a
+        worker thread (queued connection, asynchronous).
+        '''
         for prop in self.properties:
-            self.set(prop)
+            self.device.get(prop)
+
+    @QtCore.Slot(str, object)
+    def _onPropertyValue(self, name: str, value: object) -> None:
+        '''Update the widget for *name* with *value*, blocking its signal.
+
+        Connected to :attr:`device.propertyValue` so that values
+        arriving from either synchronous or queued :meth:`device.get`
+        calls are applied without triggering a round-trip back to the
+        device.
+
+        Parameters
+        ----------
+        name : str
+            Registered property name.
+        value : object
+            New value from the device.
+        '''
+        if name not in self._properties:
+            return
+        widget = self.__dict__.get(name)
+        if not isinstance(widget, QtWidgets.QWidget):
+            return
+        setter = self._wmethod(widget, self.wsetter)
+        if setter is None:
+            return
+        with QtCore.QSignalBlocker(widget):
+            try:
+                setter(value)
+            except Exception as ex:
+                logger.error(f'Could not set {name} to {value}: {ex}')
 
     def _connectSignals(self) -> None:
         '''Connect linked widget signals to the device and propertyChanged.
+
+        Connects :attr:`device.propertyValue` to :meth:`_onPropertyValue`
+        so that values emitted by the device (from either direct or queued
+        :meth:`device.get` calls) update the corresponding widget.
 
         Properties with a ``debounce`` metadata value are connected
         through a single-shot :class:`QTimer` so that rapid widget
         changes (e.g. spinbox scrolling) are coalesced: only the final
         value after the debounce interval elapses is sent to the device.
         '''
+        self.device.propertyValue.connect(self._onPropertyValue)
         for prop in self.properties:
             widget = getattr(self, prop)
             signal = self._wmethod(widget, self.wsignal)
@@ -395,9 +438,32 @@ class QInstrumentWidget(QtWidgets.QWidget):
 
     @QtCore.Slot()
     def _firstShow(self) -> None:
-        '''Run first-show reconciliation after the event loop is idle.'''
+        '''Run first-show reconciliation after the event loop is idle.
+
+        Restores saved settings synchronously while the device is still
+        on the main thread, then moves the device to a worker thread
+        before requesting a full property sync.
+        '''
         self._restoreSettings()
+        self._startDeviceThread()
         self._syncProperties()
+
+    def _startDeviceThread(self) -> None:
+        '''Move the device into a dedicated worker thread.
+
+        Only applies to :class:`QSerialInstrument` instances — fake
+        instruments stay on the main thread.  After this call, all
+        :meth:`device.get` and :meth:`device.set` invocations from the
+        GUI thread are delivered as queued slot calls and processed
+        sequentially by the worker thread's event loop, keeping serial
+        I/O off the main thread entirely.
+        '''
+        from QInstrument.lib.QSerialInstrument import QSerialInstrument
+        if not isinstance(self._device, QSerialInstrument):
+            return
+        self._thread = QtCore.QThread(self)
+        self._device.moveToThread(self._thread)
+        self._thread.start()
 
     def _restoreSettings(self) -> None:
         '''Reconcile hardware state with the saved configuration file.
@@ -444,16 +510,20 @@ class QInstrumentWidget(QtWidgets.QWidget):
             self._device.settings = saved
 
     def closeEvent(self, event) -> None:
-        '''Save device settings when the widget is closed.
+        '''Stop the worker thread and save settings when the widget is closed.
 
-        Calls :meth:`Configure.save` to persist the current device state
-        to ``~/.QInstrument/<ClassName>.json`` before passing the event
-        to the parent class.  Only saves if the widget was previously
-        shown, so that test widgets closed during teardown do not
-        overwrite saved configuration.
+        Stops the device worker thread before saving so that no queued
+        slot calls arrive after the widget is gone.  Saves using the
+        current widget values (which reflect the last known device state)
+        rather than querying the device directly, avoiding any cross-thread
+        read.  Only saves if the widget was previously shown, so that test
+        widgets closed during teardown do not overwrite saved configuration.
         '''
+        if self._thread is not None:
+            self._thread.quit()
+            self._thread.wait()
         if self._restored and self._device is not None:
-            self._configure.save(self._device)
+            self._configure.save(self._device, settings=self.settings)
         super().closeEvent(event)
 
     @classmethod

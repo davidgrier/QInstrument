@@ -82,7 +82,8 @@ class QAbstractInstrument(QtCore.QObject):
         self.transmit(data)
         return self.receive(**kwargs).strip()
 
-    def getValue(self, query: str, dtype: type = float) -> PropertyValue | None:
+    def getValue(self, query: str,
+                 dtype: type = float) -> PropertyValue | None:
         '''Query the instrument and return a typed value.
 
         Parameters
@@ -333,5 +334,6 @@ class QAbstractInstrument(QtCore.QObject):
                 return
             method = self._methods[key]
         method()
+
 
 __all__ = ['QAbstractInstrument']
