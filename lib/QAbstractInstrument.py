@@ -9,18 +9,16 @@ _AUTO = object()  # sentinel: auto-generate getter/setter from _name convention
 
 
 class QAbstractInstrument(QtCore.QObject):
-    '''Abstract base class defining the computer-instrument interface.
+    '''Abstract base class for scientific instruments.
 
-    Provides a transport-agnostic property and method registration
-    system for controlling scientific instruments.  Concrete
-    instrument classes inherit from this (via a transport-specific
-    subclass such as :class:`QSerialInstrument`) and must supply
-    ``transmit()`` and ``receive()`` methods.
+    Models instrument state as named properties registered via
+    :meth:`registerProperty` and accessed through the thread-safe
+    :meth:`get` and :meth:`set` slots.  Methods are registered via
+    :meth:`registerMethod` and invoked by name via :meth:`execute`.
 
-    Properties are registered with :meth:`registerProperty` and
-    accessed by name via :meth:`get` and :meth:`set`.  Methods are
-    registered with :meth:`registerMethod` and invoked by name via
-    :meth:`execute`.  Both slots are thread-safe.
+    This class has no concept of hardware communication.  A concrete
+    transport subclass (e.g. :class:`QSerialInstrument`) provides the
+    I/O layer and higher-level communication helpers.
 
     Signals
     -------
@@ -39,92 +37,31 @@ class QAbstractInstrument(QtCore.QObject):
         self.mutex = QtCore.QMutex()
         self._properties = {}
         self._methods = {}
+        self._registerProperties()
+        self._registerMethods()
+
+    def __repr__(self) -> str:
+        return f'{self.__class__.__name__}()'
 
     def _registerProperties(self) -> None:
         '''Register instrument properties.
 
-        No-op base implementation.  Concrete instruments override this
-        to call :meth:`registerProperty` for each of their properties.
-        Subclasses that extend the property set should call
-        ``super()._registerProperties()`` first.
+        Called automatically by :meth:`__init__`.  No-op base
+        implementation; concrete instruments override this to call
+        :meth:`registerProperty` for each of their properties.
+        Subclasses that extend the property set of a parent instrument
+        should call ``super()._registerProperties()`` first.
         '''
 
     def _registerMethods(self) -> None:
         '''Register instrument methods.
 
-        No-op base implementation.  Concrete instruments override this
-        to call :meth:`registerMethod` for each of their methods.
-        Subclasses that extend the method set should call
-        ``super()._registerMethods()`` first.
+        Called automatically by :meth:`__init__`.  No-op base
+        implementation; concrete instruments override this to call
+        :meth:`registerMethod` for each of their methods.
+        Subclasses that extend the method set of a parent instrument
+        should call ``super()._registerMethods()`` first.
         '''
-
-    def __repr__(self) -> str:
-        return f'{self.__class__.__name__}()'
-
-    def handshake(self, data: str, **kwargs) -> str:
-        '''Transmit a command and return the instrument's response.
-
-        Delegates to ``transmit()`` and ``receive()``, which must be
-        provided by the concrete instrument class.
-
-        Parameters
-        ----------
-        data : str
-            Command string to send to the instrument.
-        **kwargs :
-            Passed through to ``receive()``.
-
-        Returns
-        -------
-        str
-            Response string from the instrument.
-        '''
-        self.transmit(data)
-        return self.receive(**kwargs).strip()
-
-    def getValue(self, query: str,
-                 dtype: type = float) -> PropertyValue | None:
-        '''Query the instrument and return a typed value.
-
-        Parameters
-        ----------
-        query : str
-            Command string that elicits a single-value response.
-        dtype : type, optional
-            Converts the response string to the desired type.
-            Default: ``float``.
-
-        Returns
-        -------
-        PropertyValue or None
-            Value converted by *dtype*, or ``None`` if conversion fails.
-        '''
-        response = self.handshake(query)
-        try:
-            value = dtype(response)
-        except ValueError:
-            value = None
-        return value
-
-    def expect(self, query: str, response: str, **kwargs) -> bool:
-        '''Return True if the instrument's response
-        contains the expected string.
-
-        Parameters
-        ----------
-        query : str
-            Command string to send to the instrument.
-        response : str
-            Substring expected in the instrument's reply.
-        **kwargs :
-            Passed through to ``receive()``.
-
-        Returns
-        -------
-        bool
-            ``True`` if *response* appears in the instrument's reply.
-        '''
-        return response in self.handshake(query, **kwargs)
 
     def registerProperty(self,
                          name: str,
@@ -168,6 +105,22 @@ class QAbstractInstrument(QtCore.QObject):
         self._properties[name] = dict(
             getter=getter, setter=setter, ptype=ptype, **meta)
 
+    def registerMethod(self,
+                       name: str,
+                       method: Callable[[], None]) -> None:
+        '''Register a named zero-argument callable.
+
+        Registered methods can be invoked by name via :meth:`execute`.
+
+        Parameters
+        ----------
+        name : str
+            Method name used with :meth:`execute`.
+        method : callable
+            Zero-argument callable to invoke.
+        '''
+        self._methods[name] = method
+
     @property
     def properties(self) -> list[str]:
         '''Names of all registered instrument properties.'''
@@ -175,26 +128,31 @@ class QAbstractInstrument(QtCore.QObject):
 
     @property
     def settings(self) -> Settings:
-        '''Current values of all writable, persistent registered properties.
+        '''Current values of all writable registered properties.
 
         Getting this property calls every qualifying getter, which may
         issue instrument queries.  A property qualifies when its setter
-        is not ``None`` (writable) and its ``persist`` metadata flag is
-        ``True`` (default).
+        is not ``None`` (writable).
 
         Setting it calls each registered setter for keys present in the
-        supplied dict, skipping unknown keys, read-only properties, and
-        properties whose ``persist`` flag is ``False``.  Unlike
-        :meth:`set`, the setter does not emit :attr:`propertyValue` for
-        each key; call :meth:`_syncProperties` after a bulk restore if
-        the UI must reflect the new values.
+        supplied dict, skipping unknown keys and read-only properties.
+        Unlike :meth:`set`, the setter does not emit
+        :attr:`propertyValue` for each key; call
+        :meth:`_syncProperties` after a bulk restore if the UI must
+        reflect the new values.
+
+        Subclasses that need to exclude specific properties from
+        save/restore (e.g. motion-speed parameters that must not be
+        silently overwritten on reconnect) should override both the
+        getter and setter to filter those names.  See
+        :class:`QProscan` for an example.
         '''
         with QtCore.QMutexLocker(self.mutex):
             props = list(self._properties.items())
         return {
             name: info['getter']()
             for name, info in props
-            if info['setter'] is not None and info.get('persist', True)
+            if info['setter'] is not None
         }
 
     @settings.setter
@@ -202,11 +160,44 @@ class QAbstractInstrument(QtCore.QObject):
         with QtCore.QMutexLocker(self.mutex):
             calls = [(self._properties[k]['setter'], v)
                      for k, v in settings.items()
-                     if k in self._properties
-                     and self._properties[k].get('persist', True)]
+                     if k in self._properties]
         for setter, value in calls:
             if setter is not None:
                 setter(value)
+
+    @property
+    def methods(self) -> list[str]:
+        '''Names of all registered instrument methods.'''
+        return list(self._methods.keys())
+
+    @QtCore.Slot(str)
+    def get(self, key: str) -> PropertyValue | None:
+        '''Return the current value of a registered property.
+
+        Thread-safe Qt slot.  The registry lock is released before
+        calling the getter, so the getter may safely call other
+        instrument methods without deadlocking.  Emits
+        :attr:`propertyValue` with the name and value.  Logs an error
+        and returns ``None`` if the key is not registered.
+
+        Parameters
+        ----------
+        key : str
+            Registered property name.
+
+        Returns
+        -------
+        PropertyValue or None
+            Current value, or ``None`` if *key* is unknown.
+        '''
+        with QtCore.QMutexLocker(self.mutex):
+            if key not in self._properties:
+                logger.error(f'Unknown property: {key}')
+                return None
+            getter = self._properties[key]['getter']
+        value = getter()
+        self.propertyValue.emit(key, value)
+        return value
 
     @QtCore.Slot(str, object)
     def set(self, key: str, value: PropertyValue) -> None:
@@ -262,62 +253,6 @@ class QAbstractInstrument(QtCore.QObject):
         info.pop('getter', None)
         info['readonly'] = info.pop('setter', None) is None
         return info
-
-    @QtCore.Slot(str)
-    def get(self, key: str) -> PropertyValue | None:
-        '''Return the current value of a registered property.
-
-        Thread-safe Qt slot.  The registry lock is released before
-        calling the getter, so the getter may safely call other
-        instrument methods without deadlocking.  Emits
-        :attr:`propertyValue` with the name and value.  Logs an error
-        and returns ``None`` if the key is not registered.
-
-        Parameters
-        ----------
-        key : str
-            Registered property name.
-
-        Returns
-        -------
-        PropertyValue or None
-            Current value, or ``None`` if *key* is unknown.
-        '''
-        with QtCore.QMutexLocker(self.mutex):
-            if key not in self._properties:
-                logger.error(f'Unknown property: {key}')
-                return None
-            getter = self._properties[key]['getter']
-        value = getter()
-        self.propertyValue.emit(key, value)
-        return value
-
-    def busy(self) -> bool:
-        '''Return True if the instrument is busy.
-
-        Returns ``False`` by default.  Subclasses should override this
-        if the instrument exposes a queryable busy/ready state.
-        '''
-        return False
-
-    def registerMethod(self, name: str, method: Callable[[], None]) -> None:
-        '''Register a named zero-argument callable.
-
-        Registered methods can be invoked by name via :meth:`execute`.
-
-        Parameters
-        ----------
-        name : str
-            Method name used with :meth:`execute`.
-        method : callable
-            Zero-argument callable to invoke.
-        '''
-        self._methods[name] = method
-
-    @property
-    def methods(self) -> list[str]:
-        '''Names of all registered instrument methods.'''
-        return list(self._methods.keys())
 
     @QtCore.Slot(str)
     def execute(self, key: str) -> None:

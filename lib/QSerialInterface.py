@@ -85,7 +85,9 @@ class QSerialInterface(QSerialPort):
         super().__init__(**kwargs)
         if baudRate is not None:
             # PyQt6 enums expose .value; PyQt5 enums need int()
-            self.setBaudRate(baudRate.value if hasattr(baudRate, 'value') else int(baudRate))
+            baud = (baudRate.value
+                    if hasattr(baudRate, 'value') else int(baudRate))
+            self.setBaudRate(baud)
         if dataBits is not None:
             self.setDataBits(dataBits)
         if stopBits is not None:
@@ -218,6 +220,16 @@ class QSerialInterface(QSerialPort):
     def sendbreak(self, duration: int = 250) -> None:
         '''Send a break signal to the instrument.
 
+        Some instruments use a serial break to reset their communication
+        state after a desynchronisation (e.g. a timeout caused by a
+        dropped response).  This method is not currently called anywhere;
+        it is retained as a building block for future error-recovery
+        logic.  A complete recovery strategy would: detect failure
+        (timeout in :meth:`receive`, ``None`` from
+        :meth:`QSerialInstrument.getValue`), flush buffers, call
+        :meth:`sendbreak`, and retry before surfacing a persistent
+        failure to the caller.
+
         Parameters
         ----------
         duration : int
@@ -228,7 +240,8 @@ class QSerialInterface(QSerialPort):
             logger.warning('Cannot send break: port is not open.')
             return
         self.setBreakEnabled(True)
-        QtCore.QTimer.singleShot(duration, lambda: self.setBreakEnabled(False))
+        QtCore.QTimer.singleShot(duration,
+                                 lambda: self.setBreakEnabled(False))
 
 
 __all__ = ['QSerialInterface']

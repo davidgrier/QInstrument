@@ -5,6 +5,7 @@ _lazy = {
     'QSerialInterface':     'QSerialInterface',
     'QSerialInstrument':    'QSerialInstrument',
     'QFakeInstrument':      'QFakeInstrument',
+    'QPollingMixin':        'QPollingMixin',
     'QInstrumentWidget':    'QInstrumentWidget',
     'Configure':            'Configure',
 }

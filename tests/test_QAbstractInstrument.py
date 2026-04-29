@@ -5,8 +5,6 @@ from lib.QAbstractInstrument import QAbstractInstrument
 
 class SimpleInstrument(QAbstractInstrument):
     '''Minimal concrete instrument for testing.'''
-    def transmit(self, data): pass
-    def receive(self, **kwargs): return ''
 
 
 @pytest.fixture
@@ -147,14 +145,6 @@ class TestSettings:
         assert 'rw' in inst.settings
         assert 'ro' not in inst.settings
 
-    def test_settings_excludes_non_persistent_properties(self, inst):
-        inst.registerProperty('keep', getter=lambda: 1.0,
-                               setter=lambda v: None, persist=True)
-        inst.registerProperty('skip', getter=lambda: 2.0,
-                               setter=lambda v: None, persist=False)
-        assert 'keep' in inst.settings
-        assert 'skip' not in inst.settings
-
     def test_settings_setter_applies_values(self, inst):
         store = {'a': 0.0, 'b': 0.0}
         inst.registerProperty('a',
@@ -169,16 +159,6 @@ class TestSettings:
     def test_settings_setter_skips_unknown_keys(self, inst):
         inst.registerProperty('a', getter=lambda: 1.0, setter=lambda v: None)
         inst.settings = {'a': 1.0, 'bogus': 99.0}  # must not raise
-
-    def test_settings_setter_ignores_non_persistent_keys(self, inst):
-        store = [0.0]
-        inst.registerProperty('transient',
-                               getter=lambda: store[0],
-                               setter=lambda v: store.__setitem__(0, v),
-                               persist=False)
-        inst.settings = {'transient': 99.0}
-        assert store[0] == 0.0  # setter must not have been called
-
 
 # ---------------------------------------------------------------------------
 # registerMethod / execute
@@ -231,26 +211,3 @@ class TestPropertyMeta:
         assert inst.propertyMeta('power')['debounce'] == 500
 
 
-# ---------------------------------------------------------------------------
-# getValue / handshake / expect helpers
-# ---------------------------------------------------------------------------
-
-class TestHelpers:
-
-    def test_getValue_converts_response(self, inst, monkeypatch):
-        monkeypatch.setattr(inst, 'receive', lambda **kw: '3.14')
-        result = inst.getValue('FREQ?', float)
-        assert result == pytest.approx(3.14)
-
-    def test_getValue_returns_none_on_conversion_failure(self, inst, monkeypatch):
-        monkeypatch.setattr(inst, 'receive', lambda **kw: 'bad')
-        assert inst.getValue('FREQ?', float) is None
-
-    def test_expect_returns_true_when_response_matches(self, inst, monkeypatch):
-        monkeypatch.setattr(inst, 'receive', lambda **kw: 'DS345')
-        assert inst.expect('*IDN?', 'DS345') is True
-
-    def test_expect_returns_false_when_response_does_not_match(
-            self, inst, monkeypatch):
-        monkeypatch.setattr(inst, 'receive', lambda **kw: 'OTHER')
-        assert inst.expect('*IDN?', 'DS345') is False

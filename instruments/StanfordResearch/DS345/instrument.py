@@ -108,8 +108,9 @@ class QDS345(QSerialInstrument):
     def _registerProperties(self) -> None:
         '''Register all instrument properties via ``registerProperty()``.
 
-        Called once from ``__init__``. Subclasses that extend the property
-        set should call ``super()._registerProperties()`` first.
+        Called automatically by ``QAbstractInstrument.__init__``. Subclasses
+        that extend the property set should call
+        ``super()._registerProperties()`` first.
         '''
         self._muted: bool = False
         self._saved_amplitude: float
@@ -144,8 +145,8 @@ class QDS345(QSerialInstrument):
     def _registerMethods(self) -> None:
         '''Register all instrument methods via ``registerMethod()``.
 
-        Called once from ``__init__``. Subclasses that add methods should
-        call ``super()._registerMethods()`` first.
+        Called automatically by ``QAbstractInstrument.__init__``. Subclasses
+        that add methods should call ``super()._registerMethods()`` first.
         '''
         self.registerMethod('reset', self.reset)
         self.registerMethod('trigger', self.trigger)

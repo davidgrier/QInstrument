@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 from qtpy import QtCore
+from QInstrument.lib.QAbstractInstrument import QAbstractInstrument
 from QInstrument.lib.QSerialInstrument import QSerialInstrument
 
 
@@ -210,6 +211,20 @@ class QProscan(QSerialInstrument):
 
     positionChanged = QtCore.Signal(object)
 
+    _VOLATILE: frozenset[str] = frozenset({'speed', 'zspeed'})
+    '''Properties excluded from save/restore.
+
+    ``speed`` and ``zspeed`` reflect the stage's live motion limits.
+    Silently writing a stale saved value on reconnect could cause
+    unexpected or unsafe stage behaviour, so they are excluded from
+    :attr:`settings`.
+
+    To exclude additional properties in a subclass, redefine
+    ``_VOLATILE`` as a superset::
+
+        _VOLATILE = QProscan._VOLATILE | frozenset({'stepsize'})
+    '''
+
     comm = dict(baudRate=QSerialInstrument.BaudRate.Baud9600,
                 dataBits=QSerialInstrument.DataBits.Data8,
                 stopBits=QSerialInstrument.StopBits.OneStop,
@@ -217,22 +232,31 @@ class QProscan(QSerialInstrument):
                 flowControl=QSerialInstrument.FlowControl.NoFlowControl,
                 eol='\r')
 
+    @property
+    def settings(self) -> QAbstractInstrument.Settings:
+        return {k: v for k, v in super().settings.items()
+                if k not in self._VOLATILE}
+
+    @settings.setter
+    def settings(self, s: QAbstractInstrument.Settings) -> None:
+        QAbstractInstrument.settings.fset(
+            self, {k: v for k, v in s.items()
+                   if k not in self._VOLATILE})
+
     def _registerProperties(self) -> None:
         self._flip: bool = False
         self._mirror: bool = False
-        for name, cmd, persist in (
-                ('speed',         'SMS', False),
-                ('acceleration',  'SAS', True),
-                ('scurve',        'SCS', True),
-                ('zspeed',        'SMZ', False),
-                ('zacceleration', 'SAZ', True),
-                ('zscurve',       'SCZ', True)):
+        for name, cmd in (('speed',         'SMS'),
+                          ('acceleration',  'SAS'),
+                          ('scurve',        'SCS'),
+                          ('zspeed',        'SMZ'),
+                          ('zacceleration', 'SAZ'),
+                          ('zscurve',       'SCZ')):
             self.registerProperty(
                 name,
                 getter=lambda c=cmd: self.getValue(c, int),
                 setter=lambda v, c=cmd: self.expect(f'{c},{int(v)}', '0'),
-                ptype=int,
-                persist=persist)
+                ptype=int)
         self.registerProperty(
             'stepsize',
             getter=lambda: float(self.handshake('X').split(',')[0]),

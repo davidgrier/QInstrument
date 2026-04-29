@@ -407,7 +407,7 @@ class QInstrumentWidget(QtWidgets.QWidget):
 
         Called by :meth:`_setDeviceProperty` after every device write.
         The base implementation is a no-op; subclasses should override
-        this if the instrument requires a settling delay or a busy-poll.
+        this if the instrument requires a settling delay.
         '''
         pass
 
@@ -421,7 +421,8 @@ class QInstrumentWidget(QtWidgets.QWidget):
         loop) from inside an event handler.  Subsequent show events are
         passed through without reconciling.
         '''
-        if not self._restored and self._device is not None and self._device.isOpen():
+        device_open = self._device is not None and self._device.isOpen()
+        if not self._restored and device_open:
             self._restored = True
             QtCore.QTimer.singleShot(0, self._firstShow)
         super().showEvent(event)
@@ -432,11 +433,18 @@ class QInstrumentWidget(QtWidgets.QWidget):
 
         Restores saved settings synchronously while the device is still
         on the main thread, then moves the device to a worker thread
-        before requesting a full property sync.
+        before requesting a full property sync.  If the device has a
+        :meth:`startPolling` slot (i.e. inherits
+        :class:`QPollingMixin`), it is invoked via a queued connection
+        so it runs inside the worker thread's event loop.
         '''
         self._restoreSettings()
         self._startDeviceThread()
         self._syncProperties()
+        if hasattr(self._device, 'startPolling'):
+            QtCore.QMetaObject.invokeMethod(
+                self._device, 'startPolling',
+                QtCore.Qt.ConnectionType.QueuedConnection)
 
     def _startDeviceThread(self) -> None:
         '''Move the device into a dedicated worker thread.
@@ -503,13 +511,18 @@ class QInstrumentWidget(QtWidgets.QWidget):
         '''Stop the worker thread and save settings when the widget is closed.
 
         Stops the device worker thread before saving so that no queued
-        slot calls arrive after the widget is gone.  Saves using the
-        current widget values (which reflect the last known device state)
-        rather than querying the device directly, avoiding any cross-thread
-        read.  Only saves if the widget was previously shown, so that test
-        widgets closed during teardown do not overwrite saved configuration.
+        slot calls arrive after the widget is gone.  If the device has a
+        :meth:`stopPolling` slot, it is called before the thread is
+        stopped; it only sets a flag, so it is safe from any thread.
+        Saves using the current widget values (which reflect the last
+        known device state) rather than querying the device directly,
+        avoiding any cross-thread read.  Only saves if the widget was
+        previously shown, so that test widgets closed during teardown do
+        not overwrite saved configuration.
         '''
         if self._thread is not None:
+            if hasattr(self._device, 'stopPolling'):
+                self._device.stopPolling()
             self._thread.quit()
             self._thread.wait()
         if self._restored and self._device is not None:
@@ -537,9 +550,11 @@ class QInstrumentWidget(QtWidgets.QWidget):
         if widget.device is None or not widget.device.isOpen():
             fake_cls = cls._fakeCls()
             if fake_cls is None:
-                print(f'{cls.__name__}: instrument not found or not connected.')
+                print(f'{cls.__name__}: instrument not found '
+                      'or not connected.')
                 return
-            print(f'{cls.__name__}: instrument not found, using {fake_cls.__name__}.')
+            print(f'{cls.__name__}: instrument not found, '
+                  f'using {fake_cls.__name__}.')
             widget = cls(device=fake_cls())
         widget.adjustSize()
         widget.show()

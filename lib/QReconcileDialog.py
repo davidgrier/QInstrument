@@ -4,7 +4,8 @@ from qtpy import QtCore, QtWidgets
 
 
 class QReconcileDialog(QtWidgets.QDialog):
-    '''Modal dialog for resolving mismatches between hardware and saved settings.
+    '''Modal dialog for resolving mismatches between hardware and saved
+    settings.
 
     Presents a table of properties whose hardware value differs from the
     value stored in the configuration file, and asks the user to choose
@@ -82,7 +83,8 @@ class QReconcileDialog(QtWidgets.QDialog):
 
     @property
     def keep_hardware(self) -> bool:
-        '''bool: ``True`` if "Keep Hardware" was chosen or dialog was dismissed.'''
+        '''bool: ``True`` if "Keep Hardware" was chosen or the dialog
+        was dismissed.'''
         return self._choice == 'hardware'
 
     @QtCore.Slot()

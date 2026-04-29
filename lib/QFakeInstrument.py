@@ -18,11 +18,11 @@ class QFakeInstrument(QAbstractInstrument):
 
     MRO resolution ensures that :meth:`_register` here is called instead of
     the real instrument's version, wiring every standard property to
-    :attr:`_store` rather than to the serial port.  :meth:`__init__` calls
-    ``QAbstractInstrument.__init__`` directly, bypassing
-    ``QSerialInstrument`` so no serial port is created, then calls
-    ``_registerProperties()`` and ``_registerMethods()`` if the concrete
-    class provides them.
+    :attr:`_store` rather than to the serial port.  :meth:`__init__`
+    initializes :attr:`_store`, then calls ``QAbstractInstrument.__init__``
+    directly, bypassing ``QSerialInstrument`` so no serial port is created.
+    ``QAbstractInstrument.__init__`` calls ``_registerProperties()`` and
+    ``_registerMethods()`` automatically.
 
     Properties whose getters cannot be expressed through :meth:`_register`
     (non-standard response formats, internal state) must be re-registered by
@@ -38,16 +38,15 @@ class QFakeInstrument(QAbstractInstrument):
     def __init__(self, *args, **kwargs) -> None:
         '''Initialize the in-memory store and register all properties.
 
-        Calls ``QAbstractInstrument.__init__`` explicitly to bypass
-        ``QSerialInstrument`` (no serial port is created), initializes
-        :attr:`_store`, then calls ``_registerProperties()`` and
-        ``_registerMethods()`` if the concrete class provides them.
+        Initializes :attr:`_store` before calling
+        ``QAbstractInstrument.__init__`` explicitly (bypassing
+        ``QSerialInstrument`` so no serial port is created).
+        ``QAbstractInstrument.__init__`` calls ``_registerProperties()``
+        and ``_registerMethods()``, so :attr:`_store` must exist first.
         '''
-        QAbstractInstrument.__init__(self, *args, **kwargs)
         self._store: dict = {}
         self.identification = f'Fake {type(self).__name__}'
-        self._registerProperties()
-        self._registerMethods()
+        QAbstractInstrument.__init__(self, *args, **kwargs)
 
     def _register(self, name: str, cmd: str, dtype: type = float) -> None:
         '''Register a property backed by :attr:`_store`.
@@ -76,16 +75,12 @@ class QFakeInstrument(QAbstractInstrument):
                               ptype=dtype)
 
     def transmit(self, data) -> None:
-        '''No-op: fake instruments have no serial port.'''
+        '''No-op: fake instruments have no transport layer.'''
         pass
 
     def receive(self, **kwargs) -> str:
-        '''No-op: fake instruments have no serial port.'''
+        '''No-op: fake instruments have no transport layer.'''
         return ''
-
-    def busy(self) -> bool:
-        '''Return ``False``: fake instruments are never busy.'''
-        return False
 
     def isOpen(self) -> bool:
         '''Return ``True``: fake instruments are always available.'''

@@ -231,7 +231,8 @@ class QInstrumentTree(ParameterTree):
             self._device.get(name)
 
     def _connectSignals(self) -> None:
-        '''Connect parameter signals to the device and device signals to the tree.
+        '''Connect parameter signals to the device and device signals to
+        the tree.
 
         Each writable property's ``sigValueChanged`` is wired to
         :meth:`_onParamChanged`.  Each method's ``sigActivated`` calls
@@ -259,7 +260,8 @@ class QInstrumentTree(ParameterTree):
         avoiding a nested event loop inside an event handler.  Subsequent
         show events are passed through unchanged.
         '''
-        if not self._restored and self._device is not None and self._device.isOpen():
+        device_open = self._device is not None and self._device.isOpen()
+        if not self._restored and device_open:
             self._restored = True
             QtCore.QTimer.singleShot(0, self._firstShow)
         super().showEvent(event)
@@ -271,11 +273,18 @@ class QInstrumentTree(ParameterTree):
         Runs after the event loop is idle on the first show.  Settings
         are restored synchronously while the device is still on the main
         thread; the device is then moved to a worker thread before the
-        async property sync is requested.
+        async property sync is requested.  If the device has a
+        :meth:`startPolling` slot (i.e. inherits
+        :class:`QPollingMixin`), it is invoked via a queued connection
+        so it runs inside the worker thread's event loop.
         '''
         self._restoreSettings()
         self._startDeviceThread()
         self._syncProperties()
+        if hasattr(self._device, 'startPolling'):
+            QtCore.QMetaObject.invokeMethod(
+                self._device, 'startPolling',
+                QtCore.Qt.ConnectionType.QueuedConnection)
 
     def _restoreSettings(self) -> None:
         '''Reconcile hardware state with the saved configuration file.
@@ -342,13 +351,16 @@ class QInstrumentTree(ParameterTree):
         '''Stop the worker thread and save settings when the tree is closed.
 
         Stops the device worker thread before saving so that no queued
-        slot calls arrive after the tree is gone.  Reads settings directly
-        from the device after the thread is stopped (safe because the thread
-        is no longer running).  Only saves if the tree was previously shown,
-        so that test instances closed during teardown do not overwrite
-        saved configuration.
+        slot calls arrive after the tree is gone.  If the device has a
+        :meth:`stopPolling` slot, it is called before the thread is
+        stopped; it only sets a flag, so it is safe from any thread.
+        Only saves if the tree was previously shown, so that test
+        instances closed during teardown do not overwrite saved
+        configuration.
         '''
         if self._thread is not None:
+            if hasattr(self._device, 'stopPolling'):
+                self._device.stopPolling()
             self._thread.quit()
             self._thread.wait()
         if self._restored and self._device is not None:

@@ -11,14 +11,23 @@ logger = logging.getLogger(__name__)
 class QSerialInstrument(QAbstractInstrument):
     '''Base class for instruments connected via serial ports.
 
-    Holds a :class:`QSerialInterface` by composition and delegates all
-    I/O through it.  Concrete instrument classes inherit from this,
-    declare a :attr:`comm` class attribute with serial parameters, and
-    override :meth:`identify` to verify the connected device.
+    Extends :class:`QAbstractInstrument` with a serial transport layer
+    and command-response communication helpers.  Holds a
+    :class:`QSerialInterface` by composition and delegates raw I/O
+    through it.  Concrete instrument classes inherit from this, declare
+    a :attr:`comm` class attribute with serial parameters, and override
+    :meth:`identify` to verify the connected device.
 
-    Because the interface is a separate object, the same instrument class
-    can be instantiated with different transports (e.g. RS-232 today,
-    GPIB tomorrow) simply by swapping out the interface.
+    The full communication API available to concrete instruments is:
+
+    - :meth:`transmit` — send a command with no response expected
+    - :meth:`handshake` — send a command and return the raw response
+    - :meth:`expect` — send a command and test the response string
+    - :meth:`getValue` — send a command and return a typed value
+
+    All four methods are defined here.  A future transport subclass
+    (e.g. ``QGPIBInstrument``) would provide the same API over a
+    different physical layer.
 
     Attributes
     ----------
@@ -54,8 +63,14 @@ class QSerialInstrument(QAbstractInstrument):
         self._interface = QSerialInterface(parent=self, **args)
         if portName:
             self.open(portName)
-        self._registerProperties()
-        self._registerMethods()
+
+    def __repr__(self) -> str:
+        name = self.__class__.__name__
+        if self.isOpen():
+            port = self._interface.portName()
+        else:
+            port = 'not connected'
+        return f'{name}({port})'
 
     def identify(self) -> bool:
         '''Return True if the connected device is the expected instrument.
@@ -69,31 +84,6 @@ class QSerialInstrument(QAbstractInstrument):
             ``True`` if the device is recognized, ``False`` otherwise.
         '''
         return True
-
-    def transmit(self, data: str | bytes) -> None:
-        '''Transmit data to the instrument via the serial interface.
-
-        Parameters
-        ----------
-        data : str | bytes
-            Data to send.  See :meth:`QSerialInterface.transmit`.
-        '''
-        self._interface.transmit(data)
-
-    def receive(self, **kwargs) -> str | bytes:
-        '''Read a response from the instrument via the serial interface.
-
-        Parameters
-        ----------
-        **kwargs
-            Passed through to :meth:`QSerialInterface.receive`.
-
-        Returns
-        -------
-        str | bytes
-            Response from the instrument.
-        '''
-        return self._interface.receive(**kwargs)
 
     def open(self, portName: str) -> bool:
         '''Open a specific serial port and verify the connected device.
@@ -120,6 +110,14 @@ class QSerialInstrument(QAbstractInstrument):
             self._interface.close()
         return self._interface.isOpen()
 
+    def isOpen(self) -> bool:
+        '''Return True if the serial interface is currently open.'''
+        return self._interface.isOpen()
+
+    def close(self) -> None:
+        '''Close the serial interface.'''
+        self._interface.close()
+
     def find(self) -> 'QSerialInstrument':
         '''Scan all available serial ports to locate the instrument.
 
@@ -141,18 +139,92 @@ class QSerialInstrument(QAbstractInstrument):
             logger.error(f'Could not find {self.__class__.__name__}')
         return self
 
-    def isOpen(self) -> bool:
-        '''Return True if the serial interface is currently open.'''
-        return self._interface.isOpen()
+    def transmit(self, data: str | bytes) -> None:
+        '''Transmit data to the instrument via the serial interface.
 
-    def close(self) -> None:
-        '''Close the serial interface.'''
-        self._interface.close()
+        Parameters
+        ----------
+        data : str | bytes
+            Data to send.  See :meth:`QSerialInterface.transmit`.
+        '''
+        self._interface.transmit(data)
 
-    def __repr__(self) -> str:
-        if self.isOpen():
-            return f'{self.__class__.__name__}({self._interface.portName()})'
-        return f'{self.__class__.__name__}(not connected)'
+    def receive(self, **kwargs) -> str | bytes:
+        '''Read a response from the instrument via the serial interface.
+
+        Parameters
+        ----------
+        **kwargs
+            Passed through to :meth:`QSerialInterface.receive`.
+
+        Returns
+        -------
+        str | bytes
+            Response from the instrument.
+        '''
+        return self._interface.receive(**kwargs)
+
+    def handshake(self, data: str, **kwargs) -> str:
+        '''Transmit a command and return the instrument's response.
+
+        Parameters
+        ----------
+        data : str
+            Command string to send to the instrument.
+        **kwargs :
+            Passed through to :meth:`receive`.
+
+        Returns
+        -------
+        str
+            Stripped response string from the instrument.
+        '''
+        self.transmit(data)
+        return self.receive(**kwargs).strip()
+
+    def expect(self, query: str, response: str, **kwargs) -> bool:
+        '''Return True if the instrument's response contains *response*.
+
+        Parameters
+        ----------
+        query : str
+            Command string to send to the instrument.
+        response : str
+            Substring expected in the instrument's reply.
+        **kwargs :
+            Passed through to :meth:`receive`.
+
+        Returns
+        -------
+        bool
+            ``True`` if *response* appears in the instrument's reply.
+        '''
+        return response in self.handshake(query, **kwargs)
+
+    def getValue(self, query: str,
+                 dtype: type = float
+                 ) -> QAbstractInstrument.PropertyValue | None:
+        '''Query the instrument and return a typed value.
+
+        Parameters
+        ----------
+        query : str
+            Command string that elicits a single-value response.
+        dtype : type, optional
+            Converts the response string to the desired type.
+            Default: ``float``.
+
+        Returns
+        -------
+        PropertyValue or None
+            Value converted by *dtype*, or ``None`` if conversion fails.
+        '''
+        response = self.handshake(query)
+        try:
+            value = dtype(response)
+        except (ValueError, TypeError):
+            value = None
+        return value
 
     @classmethod
     def example(cls, portname: str | None = None) -> None:
@@ -160,7 +232,7 @@ class QSerialInstrument(QAbstractInstrument):
 
         Creates a ``QCoreApplication``, opens the instrument on *portname*
         (or auto-detects it with :meth:`find` when *portname* is ``None``),
-        then prints the instrument repr showing all registered property values.
+        then prints the instrument repr.
 
         Intended to be run from ``__main__`` in each instrument module:
 

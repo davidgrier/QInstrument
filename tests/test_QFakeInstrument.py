@@ -32,10 +32,6 @@ class TestContract:
         f = QFakeInstrument()
         assert f.isOpen() is True
 
-    def test_busy_returns_false(self, qtbot):
-        f = QFakeInstrument()
-        assert f.busy() is False
-
     def test_transmit_is_noop(self, qtbot):
         f = QFakeInstrument()
         f.transmit('FREQ?')          # must not raise

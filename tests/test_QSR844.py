@@ -1,4 +1,5 @@
 import pytest
+from unittest.mock import patch
 from instruments.StanfordResearch.SR844.fake import QFakeSR844
 from instruments.StanfordResearch.SR844.instrument import QSR844
 from instrument_contract import InstrumentContractTests
@@ -70,3 +71,41 @@ class TestSR844AutoOffset:
 
     def test_invalid_channel_four_ignored(self, sr844):
         QSR844.auto_offset(sr844, 4)
+
+
+# ---------------------------------------------------------------------------
+# _poll() — batched SNAP output
+# ---------------------------------------------------------------------------
+
+class TestSR844Poll:
+
+    @pytest.fixture
+    def sr844(self, qtbot):
+        return QFakeSR844()
+
+    def test_poll_emits_frequency_r_theta(self, sr844):
+        sr844._polling = True
+        received = {}
+        sr844.propertyValue.connect(lambda n, v: received.update({n: v}))
+        with patch.object(sr844, 'report', return_value=[50e6, 0.3, 30.0]), \
+             patch('qtpy.QtCore.QTimer.singleShot'):
+            sr844._poll()
+        assert received.get('frequency') == pytest.approx(50e6)
+        assert received.get('r') == pytest.approx(0.3)
+        assert received.get('theta') == pytest.approx(30.0)
+
+    def test_poll_does_not_emit_when_stopped(self, sr844):
+        sr844._polling = False
+        received = []
+        sr844.propertyValue.connect(lambda n, v: received.append(n))
+        with patch.object(sr844, 'report') as mock_report:
+            sr844._poll()
+        mock_report.assert_not_called()
+        assert received == []
+
+    def test_poll_schedules_next_call(self, sr844):
+        sr844._polling = True
+        with patch.object(sr844, 'report', return_value=[0., 0., 0.]), \
+             patch('qtpy.QtCore.QTimer.singleShot') as mock_shot:
+            sr844._poll()
+        mock_shot.assert_called_once_with(sr844.POLL_INTERVAL, sr844._poll)

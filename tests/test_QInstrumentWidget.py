@@ -4,10 +4,11 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
-from qtpy import QtWidgets
+from qtpy import QtCore, QtWidgets
 from lib.QInstrumentWidget import QInstrumentWidget
 from lib.lazy import values_differ as _values_differ
 from lib.QFakeInstrument import QFakeInstrument
+from lib.QPollingMixin import QPollingMixin
 
 
 # ---------------------------------------------------------------------------
@@ -516,3 +517,66 @@ class TestRestoreSettings:
 
         _, kwargs = MockCls.call_args
         assert kwargs.get('hardware_dominant') is True
+
+
+# ---------------------------------------------------------------------------
+# Polling integration — startPolling / stopPolling
+# ---------------------------------------------------------------------------
+
+class PollingDevice(QPollingMixin, QFakeInstrument):
+    '''Fake device that also has startPolling/stopPolling slots.'''
+
+
+class TestPollingIntegration:
+
+    def _make_polling_widget(self, qtbot):
+        device = PollingDevice()
+
+        def fake_loadUi(path, parent):
+            pass
+
+        class PollingW(QInstrumentWidget):
+            UIFILE = 'PollingW.ui'
+
+        with patch('qtpy.uic.loadUi', side_effect=fake_loadUi):
+            w = PollingW(device=device)
+        qtbot.addWidget(w)
+        return w, device
+
+    def test_firstShow_invokes_startPolling_when_device_has_slot(
+            self, qtbot):
+        w, device = self._make_polling_widget(qtbot)
+        with patch.object(w, '_restoreSettings'), \
+             patch.object(w, '_syncProperties'), \
+             patch('lib.QInstrumentWidget.QtCore.QMetaObject.invokeMethod'
+                   ) as mock_invoke:
+            w._firstShow()
+        mock_invoke.assert_called_once_with(
+            device, 'startPolling',
+            QtCore.Qt.ConnectionType.QueuedConnection)
+
+    def test_firstShow_does_not_invoke_startPolling_when_absent(
+            self, qtbot):
+        device = TwoPropertyDevice()
+        w = _make_widget(qtbot, device)
+        with patch.object(w, '_restoreSettings'), \
+             patch.object(w, '_syncProperties'), \
+             patch('lib.QInstrumentWidget.QtCore.QMetaObject.invokeMethod'
+                   ) as mock_invoke:
+            w._firstShow()
+        mock_invoke.assert_not_called()
+
+    def test_closeEvent_calls_stopPolling_when_thread_running(self, qtbot):
+        w, device = self._make_polling_widget(qtbot)
+        w._thread = MagicMock()
+        with patch.object(device, 'stopPolling') as mock_stop:
+            w.close()
+        mock_stop.assert_called_once()
+
+    def test_closeEvent_does_not_call_stopPolling_when_no_thread(
+            self, qtbot):
+        w, device = self._make_polling_widget(qtbot)
+        assert w._thread is None
+        with patch.object(device, 'stopPolling') as mock_stop:
+            w.close()
+        mock_stop.assert_not_called()

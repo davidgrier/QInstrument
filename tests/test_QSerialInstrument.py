@@ -117,6 +117,7 @@ class TestFind:
 
 class TestDelegation:
 
+
     def test_transmit_delegates_to_interface(self, inst):
         with patch.object(inst._interface, 'transmit') as mock_tx:
             inst.transmit('CMD')
@@ -134,3 +135,37 @@ class TestDelegation:
         with patch.object(inst._interface, 'close') as mock_close:
             inst.close()
         mock_close.assert_called_once()
+
+
+# ---------------------------------------------------------------------------
+# Communication helpers — handshake / expect / getValue
+# ---------------------------------------------------------------------------
+
+class TestHelpers:
+
+    def test_handshake_returns_stripped_response(self, inst):
+        with patch.object(inst._interface, 'receive', return_value='  DS345\n'):
+            result = inst.handshake('*IDN?')
+        assert result == 'DS345'
+
+    def test_getValue_converts_response(self, inst):
+        with patch.object(inst._interface, 'receive', return_value='3.14'):
+            result = inst.getValue('FREQ?', float)
+        assert result == pytest.approx(3.14)
+
+    def test_getValue_returns_none_on_conversion_failure(self, inst):
+        with patch.object(inst._interface, 'receive', return_value='bad'):
+            assert inst.getValue('FREQ?', float) is None
+
+    def test_getValue_returns_none_on_type_error(self, inst):
+        bad_dtype = MagicMock(side_effect=TypeError('bad'))
+        with patch.object(inst._interface, 'receive', return_value='3.14'):
+            assert inst.getValue('FREQ?', bad_dtype) is None
+
+    def test_expect_returns_true_when_response_matches(self, inst):
+        with patch.object(inst._interface, 'receive', return_value='DS345'):
+            assert inst.expect('*IDN?', 'DS345') is True
+
+    def test_expect_returns_false_when_response_does_not_match(self, inst):
+        with patch.object(inst._interface, 'receive', return_value='OTHER'):
+            assert inst.expect('*IDN?', 'DS345') is False

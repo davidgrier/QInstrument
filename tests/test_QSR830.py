@@ -1,4 +1,5 @@
 import pytest
+from unittest.mock import patch
 from instruments.StanfordResearch.SR830.fake import QFakeSR830
 from instruments.StanfordResearch.SR830.instrument import QSR830
 from instrument_contract import InstrumentContractTests
@@ -71,3 +72,41 @@ class TestSR830AutoOffset:
 
     def test_invalid_channel_four_ignored(self, sr830):
         QSR830.auto_offset(sr830, 4)
+
+
+# ---------------------------------------------------------------------------
+# _poll() — batched SNAP output
+# ---------------------------------------------------------------------------
+
+class TestSR830Poll:
+
+    @pytest.fixture
+    def sr830(self, qtbot):
+        return QFakeSR830()
+
+    def test_poll_emits_frequency_r_theta(self, sr830):
+        sr830._polling = True
+        received = {}
+        sr830.propertyValue.connect(lambda n, v: received.update({n: v}))
+        with patch.object(sr830, 'report', return_value=[1000.0, 0.5, 45.0]), \
+             patch('qtpy.QtCore.QTimer.singleShot'):
+            sr830._poll()
+        assert received.get('frequency') == pytest.approx(1000.0)
+        assert received.get('r') == pytest.approx(0.5)
+        assert received.get('theta') == pytest.approx(45.0)
+
+    def test_poll_does_not_emit_when_stopped(self, sr830):
+        sr830._polling = False
+        received = []
+        sr830.propertyValue.connect(lambda n, v: received.append(n))
+        with patch.object(sr830, 'report') as mock_report:
+            sr830._poll()
+        mock_report.assert_not_called()
+        assert received == []
+
+    def test_poll_schedules_next_call(self, sr830):
+        sr830._polling = True
+        with patch.object(sr830, 'report', return_value=[0., 0., 0.]), \
+             patch('qtpy.QtCore.QTimer.singleShot') as mock_shot:
+            sr830._poll()
+        mock_shot.assert_called_once_with(sr830.POLL_INTERVAL, sr830._poll)

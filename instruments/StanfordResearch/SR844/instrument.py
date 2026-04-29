@@ -1,11 +1,13 @@
 import logging
+from qtpy import QtCore
+from QInstrument.lib.QPollingMixin import QPollingMixin
 from QInstrument.lib.QSerialInstrument import QSerialInstrument
 
 
 logger = logging.getLogger(__name__)
 
 
-class QSR844(QSerialInstrument):
+class QSR844(QPollingMixin, QSerialInstrument):
     '''SRS SR844 RF Lock-in Amplifier
 
     Properties
@@ -93,8 +95,9 @@ class QSR844(QSerialInstrument):
     def _registerProperties(self) -> None:
         '''Register all instrument properties via ``registerProperty()``.
 
-        Called once from ``__init__``. Subclasses that extend the property
-        set should call ``super()._registerProperties()`` first.
+        Called automatically by ``QAbstractInstrument.__init__``. Subclasses
+        that extend the property set should call
+        ``super()._registerProperties()`` first.
         '''
         # Reference and Phase
         self._register('frequency',           'FREQ', float)
@@ -128,8 +131,8 @@ class QSR844(QSerialInstrument):
     def _registerMethods(self) -> None:
         '''Register all instrument methods via ``registerMethod()``.
 
-        Called once from ``__init__``. Subclasses that add methods should
-        call ``super()._registerMethods()`` first.
+        Called automatically by ``QAbstractInstrument.__init__``. Subclasses
+        that add methods should call ``super()._registerMethods()`` first.
         '''
         self.registerMethod('reset',              self.reset)
         self.registerMethod('auto_gain',          self.auto_gain)
@@ -171,6 +174,23 @@ class QSR844(QSerialInstrument):
         checks for the ``'SR844'`` model token in the response.
         '''
         return 'SR844' in self.handshake('*IDN?')
+
+    def _poll(self) -> None:
+        '''Poll frequency, R, and theta simultaneously and emit results.
+
+        Overrides :meth:`QPollingMixin._poll` to use the ``SNAP?9,3,4``
+        batch command instead of three sequential queries, keeping the
+        captured values time-coherent.
+        '''
+        if not getattr(self, '_polling', False):
+            return
+        frequency, r, theta = self.report()
+        self.propertyValue.emit('frequency', frequency)
+        self.propertyValue.emit('r', r)
+        self.propertyValue.emit('theta', theta)
+        if getattr(self, '_polling', False):
+            QtCore.QTimer.singleShot(
+                self.POLL_INTERVAL, self._poll)
 
     def report(self) -> list[float]:
         '''Return the current frequency, magnitude, and phase simultaneously.

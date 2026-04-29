@@ -4,8 +4,10 @@ Changelog
 All notable changes to QInstrument are documented here.
 The format follows `Keep a Changelog <https://keepachangelog.com>`_.
 
-Unreleased
-----------
+.. _v3.0.0:
+
+3.0.0 — 2026-04-29
+-------------------
 
 Changed
 ~~~~~~~
@@ -37,15 +39,56 @@ Changed
 - ``lib/lazy.py``: ``values_differ()`` extracted from
   ``QInstrumentWidget`` (was duplicated) and exported in ``__all__``.
   ``find_fake_cls()`` added to ``__all__``.
+- ``lib/QAbstractInstrument.py``: ``handshake()``, ``expect()``, and
+  ``getValue()`` moved to ``QSerialInstrument``.
+  ``QAbstractInstrument`` now has no concept of hardware communication;
+  it models only instrument state (property and method registry).  A
+  future transport subclass (e.g. ``QGPIBInstrument``) would provide
+  the same communication helpers over a different physical layer.
+- ``lib/QAbstractInstrument.py``: ``persist`` metadata flag removed
+  from ``settings`` getter and setter.  The base class now treats all
+  writable properties as persistent.  Instruments that need to exclude
+  specific properties from save/restore should override ``settings``
+  in the instrument subclass (see ``QProscan``).
+- ``instruments/PriorScientific/Proscan/instrument.py``: ``speed`` and
+  ``zspeed`` are excluded from save/restore via a ``settings`` override
+  and a ``_VOLATILE`` class attribute, replacing the former
+  ``persist=False`` argument to ``registerProperty()``.
+- ``lib/QInstrumentWidget.py``: ``_firstShow()`` now invokes
+  ``startPolling`` via a queued ``QMetaObject.invokeMethod`` call after
+  moving the device to its worker thread, if the device inherits
+  :class:`QPollingMixin`.  ``closeEvent()`` calls ``stopPolling()``
+  before stopping the thread when the device supports it.
+- ``lib/QInstrumentTree.py``: same polling integration as
+  ``QInstrumentWidget``.
+- ``instruments/StanfordResearch/SR830/instrument.py``: ``QSR830`` now
+  inherits :class:`QPollingMixin` and overrides ``_poll()`` to use the
+  ``SNAP?9,3,4`` batch command, emitting ``frequency``, ``r``, and
+  ``theta`` as ``propertyValue`` signals on every tick.
+- ``instruments/StanfordResearch/SR844/instrument.py``: same as SR830.
 
-Deprecated
-~~~~~~~~~~
+Added
+~~~~~
 
-- ``lib/QInstrumentWorker.py``: ``QInstrumentWorker`` is deprecated and
-  will be removed in a future release.  ``QInstrumentWidget`` and
-  ``QInstrumentTree`` now move every ``QSerialInstrument`` into a worker
-  thread automatically on first show; there is no longer any need to
-  manage a separate worker.
+- ``lib/QPollingMixin.py``: new mixin class that adds a self-scheduling
+  poll loop to any instrument.  ``startPolling()`` begins the loop;
+  ``stopPolling()`` ends it (safe to call from any thread).  The loop
+  uses ``QTimer.singleShot`` so the next query starts only after the
+  current one completes, preventing query backup under any load.
+  ``POLL_INTERVAL`` (default ``0``) sets the delay between the end of
+  one response and the start of the next.  The default ``_poll()``
+  calls ``get()`` for every registered property; instruments that can
+  batch multiple properties into a single query should override it.
+
+Removed
+~~~~~~~
+
+- ``lib/QInstrumentWorker.py``: ``QInstrumentWorker`` removed.
+  Use :class:`QPollingMixin` on the instrument class instead.
+- ``instruments/StanfordResearch/SR830/worker.py``: ``QSR830Worker``
+  removed.  Polling is now handled by ``QSR830._poll()``.
+- ``instruments/StanfordResearch/SR844/worker.py``: ``QSR844Worker``
+  removed.  Polling is now handled by ``QSR844._poll()``.
 
 .. _v2.4.1:
 
