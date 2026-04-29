@@ -3,13 +3,14 @@ from __future__ import annotations
 import logging
 from qtpy import QtCore
 from QInstrument.lib.QAbstractInstrument import QAbstractInstrument
+from QInstrument.lib.QPollingMixin import QPollingMixin
 from QInstrument.lib.QSerialInstrument import QSerialInstrument
 
 
 logger = logging.getLogger(__name__)
 
 
-class QProscan(QSerialInstrument):
+class QProscan(QPollingMixin, QSerialInstrument):
     '''Prior Scientific Proscan II/III Microscope Stage Controller.
 
     Controls the XY stage and Z focus drive of a Prior Scientific
@@ -20,6 +21,10 @@ class QProscan(QSerialInstrument):
     positionChanged(list[int])
         Emitted by :meth:`position` with the current ``[x, y, z]``
         coordinates in µm.
+    limitsChanged(object)
+        Emitted by :meth:`_poll` with the result of :meth:`active_limits`
+        after each position update.  Value is a
+        ``tuple[bool, bool, bool, bool]`` or ``None``.
 
     Properties
     ==========
@@ -210,6 +215,9 @@ class QProscan(QSerialInstrument):
     '''
 
     positionChanged = QtCore.Signal(object)
+    limitsChanged = QtCore.Signal(object)
+
+    POLL_INTERVAL: int = 200
 
     _VOLATILE: frozenset[str] = frozenset({'speed', 'zspeed'})
     '''Properties excluded from save/restore.
@@ -340,6 +348,26 @@ class QProscan(QSerialInstrument):
     def version(self) -> str:
         '''Return the 3-character firmware version string.'''
         return self.handshake('VERSION')
+
+    def _poll(self) -> None:
+        '''Query position and limit switches, emitting both signals.
+
+        Overrides :meth:`QPollingMixin._poll` to batch the two most
+        time-sensitive reads — stage position and active limits — into
+        a single poll cycle.  Position is emitted via
+        :attr:`positionChanged`; limits via :attr:`limitsChanged`.
+        Parse errors are logged at DEBUG level and skipped without
+        stopping the loop.
+        '''
+        if not getattr(self, '_polling', False):
+            return
+        try:
+            self.position()
+            self.limitsChanged.emit(self.active_limits())
+        except (ValueError, TypeError) as exc:
+            logger.debug('poll error: %s', exc)
+        if getattr(self, '_polling', False):
+            QtCore.QTimer.singleShot(self.POLL_INTERVAL, self._poll)
 
     def position(self) -> list[int]:
         '''Return the current stage position and emit :attr:`positionChanged`.

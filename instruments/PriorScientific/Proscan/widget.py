@@ -30,19 +30,18 @@ class QProscanWidget(QInstrumentWidget):
 
     def __init__(self, *args,
                  interval: int | None = None, **kwargs) -> None:
-        '''Initialize the widget and start a timer to poll the stage.
+        '''Initialize the widget.
 
         Parameters
         ----------
-        interval: int or None, optional
-            The timer interval in milliseconds for polling position and
-            limit status. Default: 200
+        interval : int or None, optional
+            Poll interval in milliseconds for position and limit updates.
+            Overrides :attr:`QProscan.POLL_INTERVAL`. Default: 200.
         '''
         super().__init__(*args, **kwargs)
         self._interval = int(interval or 200)
-        self.joystick.setRange(-200., 200.)
         self._prev_limits = None
-        self._startPolling()
+        self.joystick.setRange(-200., 200.)
 
     def _connectSignals(self) -> None:
         super()._connectSignals()
@@ -54,6 +53,15 @@ class QProscanWidget(QInstrumentWidget):
         self.set_origin.clicked.connect(self.device.set_origin)
         self.advancedToggle.toggled.connect(self._onAdvancedToggled)
         self.advanced.setVisible(False)
+        self.device.positionChanged.connect(self._onPositionChanged)
+        self.device.limitsChanged.connect(self._onLimitsChanged)
+
+    def _firstShow(self) -> None:
+        super()._firstShow()
+        self.device.POLL_INTERVAL = self._interval
+        QtCore.QMetaObject.invokeMethod(
+            self.device, 'startPolling',
+            QtCore.Qt.ConnectionType.QueuedConnection)
 
     @QtCore.Slot(bool)
     def _onAdvancedToggled(self, checked: bool) -> None:
@@ -67,23 +75,20 @@ class QProscanWidget(QInstrumentWidget):
         super().showEvent(event)
         self.window().adjustSize()
 
-    def _startPolling(self) -> None:
-        self._timer = QtCore.QTimer(self)
-        self._timer.timeout.connect(self._poll)
-        if self.device is not None and self.device.isOpen():
-            self._timer.start(self._interval)
-
-    @QtCore.Slot()
-    def _poll(self) -> None:
-        '''Query and display the current stage position and limit status.'''
+    @QtCore.Slot(object)
+    def _onPositionChanged(self, pos: list[int]) -> None:
+        '''Update the XYZ position displays.'''
         try:
-            x, y, z = self.device.position()
-            limits = self.device.active_limits()
-        except (ValueError, TypeError):
+            x, y, z = pos
+        except (TypeError, ValueError):
             return
         self.x.display(x)
         self.y.display(y)
         self.z.display(z)
+
+    @QtCore.Slot(object)
+    def _onLimitsChanged(self, limits: object) -> None:
+        '''Update limit-switch indicator styles and log new activations.'''
         if limits and not self._prev_limits:
             logger.warning(
                 f'Limit switch active: X={limits[0]}, '

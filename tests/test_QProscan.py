@@ -1,4 +1,5 @@
 import pytest
+from unittest.mock import patch, MagicMock
 from instruments.PriorScientific.Proscan.fake import QFakeProscan
 from instruments.PriorScientific.Proscan.instrument import QProscan
 
@@ -173,3 +174,61 @@ class TestFakeBehaviour:
 
     def test_stop_returns_true(self, proscan):
         assert proscan.stop() is True
+
+
+# ---------------------------------------------------------------------------
+# _poll() — position + limits batch
+# ---------------------------------------------------------------------------
+
+class TestProscanPoll:
+
+    @pytest.fixture
+    def proscan(self, qtbot):
+        return QFakeProscan()
+
+    def test_poll_emits_position_changed(self, proscan):
+        proscan._polling = True
+        received = []
+        proscan.positionChanged.connect(received.append)
+        with patch('qtpy.QtCore.QTimer.singleShot'):
+            proscan._poll()
+        assert received == [[0, 0, 0]]
+
+    def test_poll_emits_limits_changed(self, proscan):
+        proscan._polling = True
+        received = []
+        proscan.limitsChanged.connect(received.append)
+        with patch('qtpy.QtCore.QTimer.singleShot'):
+            proscan._poll()
+        assert received == [None]
+
+    def test_poll_does_not_run_when_stopped(self, proscan):
+        proscan._polling = False
+        received = []
+        proscan.positionChanged.connect(received.append)
+        with patch.object(proscan, 'position') as mock_pos:
+            proscan._poll()
+        mock_pos.assert_not_called()
+        assert received == []
+
+    def test_poll_schedules_next_call(self, proscan):
+        proscan._polling = True
+        with patch('qtpy.QtCore.QTimer.singleShot') as mock_shot:
+            proscan._poll()
+        mock_shot.assert_called_once_with(proscan.POLL_INTERVAL, proscan._poll)
+
+    def test_poll_skips_on_parse_error(self, proscan):
+        proscan._polling = True
+        received = []
+        proscan.limitsChanged.connect(received.append)
+        with patch.object(proscan, 'position', side_effect=ValueError('bad')), \
+             patch('qtpy.QtCore.QTimer.singleShot'):
+            proscan._poll()
+        assert received == []
+
+    def test_poll_reschedules_after_error(self, proscan):
+        proscan._polling = True
+        with patch.object(proscan, 'position', side_effect=ValueError('bad')), \
+             patch('qtpy.QtCore.QTimer.singleShot') as mock_shot:
+            proscan._poll()
+        mock_shot.assert_called_once_with(proscan.POLL_INTERVAL, proscan._poll)

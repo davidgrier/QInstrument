@@ -13,6 +13,7 @@ class QFakeProscan(QFakeInstrument, QProscan):
     '''
 
     positionChanged = QtCore.Signal(object)
+    limitsChanged = QtCore.Signal(object)
 
     def _registerProperties(self) -> None:
         for name, default in (('speed',         50),
