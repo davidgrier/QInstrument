@@ -543,22 +543,8 @@ class TestPollingIntegration:
         qtbot.addWidget(w)
         return w, device
 
-    def test_firstShow_invokes_startPolling_when_device_has_slot(
-            self, qtbot):
+    def test_firstShow_does_not_auto_start_polling(self, qtbot):
         w, device = self._make_polling_widget(qtbot)
-        with patch.object(w, '_restoreSettings'), \
-             patch.object(w, '_syncProperties'), \
-             patch('lib.QInstrumentWidget.QtCore.QMetaObject.invokeMethod'
-                   ) as mock_invoke:
-            w._firstShow()
-        mock_invoke.assert_called_once_with(
-            device, 'startPolling',
-            QtCore.Qt.ConnectionType.QueuedConnection)
-
-    def test_firstShow_does_not_invoke_startPolling_when_absent(
-            self, qtbot):
-        device = TwoPropertyDevice()
-        w = _make_widget(qtbot, device)
         with patch.object(w, '_restoreSettings'), \
              patch.object(w, '_syncProperties'), \
              patch('lib.QInstrumentWidget.QtCore.QMetaObject.invokeMethod'

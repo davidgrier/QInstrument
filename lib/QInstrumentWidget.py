@@ -433,18 +433,13 @@ class QInstrumentWidget(QtWidgets.QWidget):
 
         Restores saved settings synchronously while the device is still
         on the main thread, then moves the device to a worker thread
-        before requesting a full property sync.  If the device has a
-        :meth:`startPolling` slot (i.e. inherits
-        :class:`QPollingMixin`), it is invoked via a queued connection
-        so it runs inside the worker thread's event loop.
+        before requesting a full property sync.  Polling is not started
+        automatically; call :meth:`startPolling` explicitly or connect
+        a control to it when continuous updates are needed.
         '''
         self._restoreSettings()
         self._startDeviceThread()
         self._syncProperties()
-        if hasattr(self._device, 'startPolling'):
-            QtCore.QMetaObject.invokeMethod(
-                self._device, 'startPolling',
-                QtCore.Qt.ConnectionType.QueuedConnection)
 
     def _startDeviceThread(self) -> None:
         '''Move the device into a dedicated worker thread.
