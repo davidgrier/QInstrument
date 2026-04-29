@@ -10,14 +10,13 @@ logger = logging.getLogger(__name__)
 
 
 class QSerialInterface(QSerialPort):
-    '''Base class for instruments connected to serial ports.
+    '''Serial port wrapper providing framed I/O for instrument communication.
 
     Wraps ``QSerialPort`` to provide raw serial I/O with custom
-    end-of-line handling for :meth:`transmit` and :meth:`receive`,
-    and optional non-blocking (signal-driven) I/O.
-
-    Port discovery and device identification are handled by the
-    instrument layer (:class:`QSerialInstrument`), not here.
+    end-of-line handling for :meth:`transmit` and :meth:`receive`.
+    Intended to run in a dedicated worker thread owned by
+    :class:`QSerialInstrument`; port discovery and device identification
+    are handled by the instrument layer, not here.
 
     Parameters
     ----------
@@ -32,10 +31,6 @@ class QSerialInterface(QSerialPort):
     timeout : int | None
         Milliseconds to wait for incoming data before giving up.
         Default: ``None``, which is treated as ``100`` ms.
-    blocking : bool
-        If ``True`` (default), I/O is synchronous (polling).
-        If ``False``, incoming data is handled by the
-        :attr:`dataReady` signal.
     baudRate : QSerialPort.BaudRate | None
         Port baud rate. Uses the ``QSerialPort`` default if ``None``.
     dataBits : QSerialPort.DataBits | None
@@ -53,8 +48,6 @@ class QSerialInterface(QSerialPort):
         End-of-line sequence used for read/write termination.
     timeout : int
         Read timeout in milliseconds.
-    blocking : bool
-        Toggles between synchronous polling and signal-driven I/O.
     BaudRate : type
         Alias for ``QSerialPort.BaudRate``. Use as
         ``QSerialInstrument.BaudRate.Baud9600`` in ``comm`` dicts.
@@ -67,27 +60,11 @@ class QSerialInterface(QSerialPort):
     FlowControl : type
         Alias for ``QSerialPort.FlowControl``.
 
-    Signals
-    -------
-    dataReady(str)
-        Emitted in non-blocking mode when a complete line (terminated
-        by :attr:`eol`) has been received.
-
     Examples
     --------
-    Synchronous use:
-
     >>> iface = QSerialInterface(eol='\\n')
     >>> iface.open('ttyUSB0')
-
-    Non-blocking use with a signal handler:
-
-    >>> iface = QSerialInterface(eol='\\n', blocking=False)
-    >>> iface.dataReady.connect(handle_response)
-    >>> iface.open('ttyUSB0')
     '''
-
-    dataReady = QtCore.Signal(str)
 
     BaudRate = QSerialPort.BaudRate
     DataBits = QSerialPort.DataBits
@@ -99,7 +76,6 @@ class QSerialInterface(QSerialPort):
                  portName: str = '',
                  eol: bytes | str = '',
                  timeout: int | None = None,
-                 blocking: bool = True,
                  baudRate: QSerialPort.BaudRate | None = None,
                  dataBits: QSerialPort.DataBits | None = None,
                  stopBits: QSerialPort.StopBits | None = None,
@@ -108,6 +84,7 @@ class QSerialInterface(QSerialPort):
                  **kwargs) -> None:
         super().__init__(**kwargs)
         if baudRate is not None:
+            # PyQt6 enums expose .value; PyQt5 enums need int()
             self.setBaudRate(baudRate.value if hasattr(baudRate, 'value') else int(baudRate))
         if dataBits is not None:
             self.setDataBits(dataBits)
@@ -119,8 +96,6 @@ class QSerialInterface(QSerialPort):
             self.setFlowControl(flowControl)
         self.eol = eol if isinstance(eol, bytes) else eol.encode()
         self.timeout = timeout or 100
-        self.blocking = blocking
-        self._buffer = QtCore.QByteArray()
         self.open(portName)
 
     def open(self, portName: str) -> bool:
@@ -146,24 +121,6 @@ class QSerialInterface(QSerialPort):
             return False
         self.clear()
         return True
-
-    @property
-    def blocking(self) -> bool:
-        '''bool: ``True`` for synchronous polling I/O; ``False`` for
-        signal-driven I/O via :attr:`dataReady`.
-        '''
-        return self._blocking
-
-    @blocking.setter
-    def blocking(self, blocking: bool) -> None:
-        if blocking:
-            try:
-                self.readyRead.disconnect(self._handleReadyRead)
-            except TypeError:
-                pass
-        else:
-            self.readyRead.connect(self._handleReadyRead)
-        self._blocking = blocking
 
     def transmit(self, data: str | bytes) -> None:
         '''Transmit data to the instrument.
@@ -272,28 +229,6 @@ class QSerialInterface(QSerialPort):
             return
         self.setBreakEnabled(True)
         QtCore.QTimer.singleShot(duration, lambda: self.setBreakEnabled(False))
-
-    @QtCore.Slot()
-    def _handleReadyRead(self) -> None:
-        '''Slot for non-blocking data reception.
-
-        Accumulates incoming bytes in an internal buffer. When a complete
-        line (terminated by :attr:`eol`) is detected, emits
-        :attr:`dataReady` with the decoded string.
-        '''
-        self._buffer.append(self.readAll())
-        if self._buffer.contains(self.eol):
-            pos = self._buffer.indexOf(self.eol)
-            eol_end = pos + len(self.eol)
-            data = bytes(self._buffer.left(pos))
-            if eol_end < self._buffer.size():
-                self._buffer.remove(0, eol_end)
-            else:
-                self._buffer.clear()
-            logger.debug(f'emitting {data}')
-            self.dataReady.emit(data.decode('utf-8', 'backslashreplace'))
-        else:
-            logger.debug(f'buffered {bytes(self._buffer)}')
 
 
 __all__ = ['QSerialInterface']

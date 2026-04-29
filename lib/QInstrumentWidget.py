@@ -7,6 +7,7 @@ from qtpy import uic, QtWidgets, QtCore
 
 from .Configure import Configure
 from .QReconcileDialog import QReconcileDialog
+from .lazy import find_fake_cls
 
 
 logger = logging.getLogger(__name__)
@@ -191,9 +192,10 @@ class QInstrumentWidget(QtWidgets.QWidget):
 
         When *value* is provided, sets the widget directly; the widget
         then emits its signal, which propagates the change to the device.
-        When *value* is ``None``, reads the current value from the device
-        and updates the widget with signals blocked to avoid a feedback
-        loop.
+        When *value* is ``None``, requests the current value from the
+        device via :meth:`device.get`; the result arrives via
+        :attr:`device.propertyValue` and is applied by
+        :meth:`_onPropertyValue` with signals blocked.
 
         Parameters
         ----------
@@ -207,19 +209,15 @@ class QInstrumentWidget(QtWidgets.QWidget):
         if not isinstance(widget, QtWidgets.QWidget):
             logger.error(f'Unknown property {key}')
             return
+        if value is None:
+            self.device.get(key)
+            return
         setter = self._wmethod(widget, self.wsetter)
         if setter is None:
             logger.debug(f'No setter for widget type of {key!r}; skipping')
             return
-        syncing = value is None
-        if syncing:
-            value = self.device.get(key)
         try:
-            if syncing:
-                with QtCore.QSignalBlocker(widget):
-                    setter(value)
-            else:
-                setter(value)
+            setter(value)
         except Exception as ex:
             logger.error(f'Could not set {key} to {value}: {ex}')
 
@@ -394,7 +392,7 @@ class QInstrumentWidget(QtWidgets.QWidget):
         value : bool | int | float | str
             New value to send to the device.
         '''
-        if name in self.device.properties:
+        if name in self._properties:
             logger.debug(f'Setting device: {name}: {value}')
             self.device.set(name, value)
             self.waitForDevice()
@@ -541,13 +539,11 @@ class QInstrumentWidget(QtWidgets.QWidget):
                 QMyWidget.example()
         '''
         import sys
-        import inspect
-        import importlib
         from qtpy.QtWidgets import QApplication
         app = QApplication.instance() or QApplication(sys.argv)
         widget = cls()
         if widget.device is None or not widget.device.isOpen():
-            fake_cls = cls._fakeCls()
+            fake_cls = find_fake_cls(cls)
             if fake_cls is None:
                 print(f'{cls.__name__}: instrument not found or not connected.')
                 return
@@ -561,41 +557,8 @@ class QInstrumentWidget(QtWidgets.QWidget):
     def _fakeCls(cls) -> type | None:
         '''Return the fake instrument class from the sibling ``fake`` module.
 
-        Looks for a ``fake.py`` in the same package as the widget class and
-        returns the class named in its ``__all__``.  Returns ``None`` if no
-        ``fake`` module exists.
-
-        Works when the widget is imported normally and when its module is run
-        directly as ``__main__`` (e.g. ``python3 widget.py``), in which case
-        the package is derived from the file path and :data:`sys.path`.
+        Delegates to :func:`~QInstrument.lib.lazy.find_fake_cls`.
         '''
-        import importlib
-        import inspect
-        import sys
-        from pathlib import Path
-
-        module = inspect.getmodule(cls)
-        package = getattr(module, '__package__', None)
-
-        if not package:
-            widget_dir = Path(inspect.getfile(cls)).parent
-            for entry in sys.path:
-                if not entry:
-                    continue
-                try:
-                    parts = widget_dir.relative_to(entry).parts
-                    if parts:
-                        package = '.'.join(parts)
-                        break
-                except ValueError:
-                    continue
-
-        if not package:
-            return None
-        try:
-            fake_mod = importlib.import_module('.fake', package=package)
-        except ImportError:
-            return None
-        return getattr(fake_mod, fake_mod.__all__[0])
+        return find_fake_cls(cls)
 
 __all__ = ['QInstrumentWidget']

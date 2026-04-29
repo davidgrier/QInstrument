@@ -1,6 +1,7 @@
 import logging
 from qtpy import QtCore
 from QInstrument.lib.QAbstractInstrument import QAbstractInstrument
+from QInstrument.lib.lazy import find_fake_cls
 
 try:
     from pyqtgraph.parametertree import Parameter, ParameterTree
@@ -117,8 +118,8 @@ class QInstrumentTree(ParameterTree):
         self._device = device
         self._buildTree()
         if device.isOpen():
-            self._syncProperties()
             self._connectSignals()
+            self._syncProperties()
         else:
             self.setEnabled(False)
 
@@ -208,22 +209,14 @@ class QInstrumentTree(ParameterTree):
         self.setParameters(root, showTop=True)
 
     def _syncProperties(self) -> None:
-        '''Read each registered property from the device and update the tree.
+        '''Request current device values for all visible properties.
 
-        Signals are suppressed during the update to avoid triggering
-        device writes.
+        Calls :meth:`device.get` for each property, which emits
+        :attr:`device.propertyValue` and updates the tree via
+        :meth:`_onDevicePropertyValue`.
         '''
-        self._updating = True
-        try:
-            for name in self._visibleProps:
-                value = self._device.get(name)
-                if value is not None and name in self._params:
-                    try:
-                        self._params[name].setValue(value)
-                    except Exception:
-                        logger.debug(f'Could not sync {name!r} = {value!r}')
-        finally:
-            self._updating = False
+        for name in self._visibleProps:
+            self._device.get(name)
 
     def _connectSignals(self) -> None:
         '''Connect parameter signals to the device and device signals to the tree.
@@ -317,8 +310,8 @@ class QInstrumentTree(ParameterTree):
                 print(f'{cls.__name__}: instrument not found'
                       ' or not connected.')
                 return
-            print(f'{cls.__name__}: instrument not found, using {
-                  fake_cls.__name__}.')
+            print(f'{cls.__name__}: instrument not found, '
+                  f'using {fake_cls.__name__}.')
             tree = cls(device=fake_cls())
         tree.show()
         sys.exit(app.exec())
@@ -327,41 +320,9 @@ class QInstrumentTree(ParameterTree):
     def _fakeCls(cls) -> type | None:
         '''Return the fake instrument class from the sibling ``fake`` module.
 
-        Looks for a ``fake.py`` in the same package as the tree class and
-        returns the class named in its ``__all__``.  Returns ``None`` if no
-        ``fake`` module exists.
-
-        Works when the tree is imported normally and when its module is run
-        directly as ``__main__``.
+        Delegates to :func:`~QInstrument.lib.lazy.find_fake_cls`.
         '''
-        import importlib
-        import inspect
-        import sys
-        from pathlib import Path
-
-        module = inspect.getmodule(cls)
-        package = getattr(module, '__package__', None)
-
-        if not package:
-            tree_dir = Path(inspect.getfile(cls)).parent
-            for entry in sys.path:
-                if not entry:
-                    continue
-                try:
-                    parts = tree_dir.relative_to(entry).parts
-                    if parts:
-                        package = '.'.join(parts)
-                        break
-                except ValueError:
-                    continue
-
-        if not package:
-            return None
-        try:
-            fake_mod = importlib.import_module('.fake', package=package)
-        except ImportError:
-            return None
-        return getattr(fake_mod, fake_mod.__all__[0])
+        return find_fake_cls(cls)
 
 
 __all__ = ['QInstrumentTree']

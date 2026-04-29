@@ -1,5 +1,52 @@
 import importlib
+import inspect
 import sys
+from pathlib import Path
+
+
+def find_fake_cls(cls: type) -> type | None:
+    '''Return the fake instrument class from the sibling ``fake`` module.
+
+    Looks for a ``fake.py`` in the same package as *cls* and returns the
+    class named in its ``__all__``.  Returns ``None`` if no ``fake``
+    module exists.
+
+    Works when *cls* is imported normally and when its module is run
+    directly as ``__main__``.
+
+    Parameters
+    ----------
+    cls : type
+        Widget or tree class whose sibling ``fake`` module to search.
+
+    Returns
+    -------
+    type or None
+        The fake instrument class, or ``None`` if unavailable.
+    '''
+    module = inspect.getmodule(cls)
+    package = getattr(module, '__package__', None)
+
+    if not package:
+        cls_dir = Path(inspect.getfile(cls)).parent
+        for entry in sys.path:
+            if not entry:
+                continue
+            try:
+                parts = cls_dir.relative_to(entry).parts
+                if parts:
+                    package = '.'.join(parts)
+                    break
+            except ValueError:
+                continue
+
+    if not package:
+        return None
+    try:
+        fake_mod = importlib.import_module('.fake', package=package)
+    except ImportError:
+        return None
+    return getattr(fake_mod, fake_mod.__all__[0])
 
 
 def make_getattr(lazy: dict, package: str):

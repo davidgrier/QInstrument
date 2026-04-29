@@ -8,24 +8,21 @@ logger = logging.getLogger(__name__)
 
 
 class QInstrumentWorker(QtCore.QObject):
-    '''Runs a QAbstractInstrument in a dedicated QThread with a poll loop.
+    '''Deprecated. Runs a QAbstractInstrument in a dedicated QThread.
 
-    The instrument is moved into the worker thread on construction.
-    All serial I/O therefore occurs off the GUI thread, preventing
-    ``waitForReadyRead()`` from blocking the event loop.
+    .. deprecated::
+        :class:`QInstrumentWidget` now moves every :class:`QSerialInstrument`
+        into a worker thread automatically on first show.  There is no longer
+        any need to manage a separate worker.
 
     Subclass and override :meth:`poll` to define continuous measurement
-    behaviour.  Connect :meth:`startPolling` and :meth:`stopPolling` via
-    signals from the widget — Qt uses a queued connection automatically
-    once the worker has been moved to its thread, serialising all access
-    to the instrument.
+    behavior.  Connect :meth:`startPolling` and :meth:`stopPolling` via
+    signals from the widget.
 
     Parameters
     ----------
     instrument : QAbstractInstrument
-        Instrument to run in the worker thread.  After construction the
-        instrument must not be accessed directly from any other thread;
-        use signal/slot connections instead.
+        Instrument to run in the worker thread.
 
     Example
     -------
@@ -46,8 +43,8 @@ class QInstrumentWorker(QtCore.QObject):
     def __init__(self, instrument, parent=None) -> None:
         warnings.warn(
             'QInstrumentWorker is deprecated and will be removed in a future '
-            'release. QSerialInterface.receive() no longer blocks the event '
-            'loop, so instrument polling does not require a worker thread.',
+            'release. QInstrumentWidget now moves QSerialInstrument instances '
+            'into a worker thread automatically.',
             DeprecationWarning,
             stacklevel=2
         )

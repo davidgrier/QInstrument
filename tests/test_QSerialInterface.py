@@ -1,6 +1,6 @@
 import logging
 import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 import lib.QSerialInterface as module
 from lib.QSerialInterface import QSerialInterface
@@ -50,33 +50,9 @@ class TestInitialization:
         iface = QSerialInterface(timeout=500)
         assert iface.timeout == 500
 
-    def test_blocking_default_true(self, qtbot):
-        iface = QSerialInterface()
-        assert iface.blocking is True
-
     def test_not_open_on_construction(self, qtbot):
         iface = QSerialInterface()
         assert not iface.isOpen()
-
-
-# ---------------------------------------------------------------------------
-# blocking property
-# ---------------------------------------------------------------------------
-
-class TestBlocking:
-
-    def test_set_false(self, iface):
-        iface.blocking = False
-        assert iface.blocking is False
-
-    def test_set_true_after_false(self, iface):
-        iface.blocking = False
-        iface.blocking = True
-        assert iface.blocking is True
-
-    def test_set_true_when_already_true_does_not_raise(self, iface):
-        iface.blocking = True  # readyRead was never connected
-        assert iface.blocking is True
 
 
 # ---------------------------------------------------------------------------
@@ -194,64 +170,6 @@ class TestReadn:
     @patch.object(QSerialInterface, 'isOpen', return_value=False)
     def test_closed_returns_empty(self, mock_open, iface):
         assert iface.readn(3) == b''
-
-
-# ---------------------------------------------------------------------------
-# _handleReadyRead
-# ---------------------------------------------------------------------------
-
-class TestHandleReadyRead:
-
-    @patch.object(QSerialInterface, 'readAll', return_value=b'DATA\n')
-    def test_emits_data_ready(self, mock_read, iface, qtbot):
-        with qtbot.waitSignal(iface.dataReady, timeout=1000) as blocker:
-            iface._handleReadyRead()
-        assert blocker.args == ['DATA']
-
-    @patch.object(QSerialInterface, 'readAll', return_value=b'HELLO\n')
-    def test_emitted_value_has_no_eol(self, mock_read, iface, qtbot):
-        with qtbot.waitSignal(iface.dataReady, timeout=1000) as blocker:
-            iface._handleReadyRead()
-        assert '\n' not in blocker.args[0]
-
-    @patch.object(QSerialInterface, 'readAll', return_value=b'PARTIAL')
-    def test_no_emit_without_eol(self, mock_read, iface, qtbot):
-        with qtbot.assertNotEmitted(iface.dataReady):
-            iface._handleReadyRead()
-
-    @patch.object(QSerialInterface, 'readAll', return_value=b'LINE1\nLINE2')
-    def test_remainder_retained_in_buffer(self, mock_read, iface, qtbot):
-        with qtbot.waitSignal(iface.dataReady, timeout=1000):
-            iface._handleReadyRead()
-        assert bytes(iface._buffer) == b'LINE2'
-
-    @patch.object(QSerialInterface, 'readAll', return_value=b'LINE1\n')
-    def test_buffer_cleared_when_no_remainder(self, mock_read, iface, qtbot):
-        with qtbot.waitSignal(iface.dataReady, timeout=1000):
-            iface._handleReadyRead()
-        assert iface._buffer.isEmpty()
-
-    @patch.object(QSerialInterface, 'readAll', return_value=b'DATA\r\n')
-    def test_multibyte_eol_no_remainder(self, mock_read, iface_crlf, qtbot):
-        with qtbot.waitSignal(iface_crlf.dataReady, timeout=1000) as blocker:
-            iface_crlf._handleReadyRead()
-        assert blocker.args == ['DATA']
-        assert iface_crlf._buffer.isEmpty()
-
-    @patch.object(QSerialInterface, 'readAll', return_value=b'DATA\r\nEXTRA')
-    def test_multibyte_eol_with_remainder(self, mock_read, iface_crlf, qtbot):
-        with qtbot.waitSignal(iface_crlf.dataReady, timeout=1000) as blocker:
-            iface_crlf._handleReadyRead()
-        assert blocker.args == ['DATA']
-        assert bytes(iface_crlf._buffer) == b'EXTRA'
-
-    @patch.object(QSerialInterface, 'readAll', side_effect=[b'LI', b'NE\n'])
-    def test_accumulates_across_multiple_reads(self, mock_read, iface, qtbot):
-        with qtbot.assertNotEmitted(iface.dataReady):
-            iface._handleReadyRead()
-        with qtbot.waitSignal(iface.dataReady, timeout=1000) as blocker:
-            iface._handleReadyRead()
-        assert blocker.args == ['LINE']
 
 
 # ---------------------------------------------------------------------------
