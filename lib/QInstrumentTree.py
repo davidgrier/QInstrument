@@ -1,7 +1,9 @@
 import logging
 from qtpy import QtCore
 from QInstrument.lib.QAbstractInstrument import QAbstractInstrument
-from QInstrument.lib.lazy import find_fake_cls
+from QInstrument.lib.Configure import Configure
+from QInstrument.lib.QReconcileDialog import QReconcileDialog
+from QInstrument.lib.lazy import find_fake_cls, values_differ
 
 try:
     from pyqtgraph.parametertree import Parameter, ParameterTree
@@ -24,15 +26,21 @@ _PTYPE_MAP: dict[type, str] = {
 class QInstrumentTree(ParameterTree):
     '''ParameterTree that auto-builds from a QAbstractInstrument.
 
-    The tree is constructed at runtime from the device's property registry.
-    Property metadata (``ptype``, ``minimum``, ``maximum``, ``step``)
-    registered via :meth:`registerProperty` maps directly to pyqtgraph
-    parameter types and constraints.  Read-only properties (``setter=None``)
-    appear as non-editable display items.  Registered methods appear as
-    action buttons.
+    An alternative to :class:`QInstrumentWidget` that uses a pyqtgraph
+    ``ParameterTree`` instead of a Qt Designer ``.ui`` file.  The tree is
+    constructed at runtime from the device's property registry so no UI
+    file is needed.  Property metadata (``ptype``, ``minimum``, ``maximum``,
+    ``step``) registered via :meth:`registerProperty` maps directly to
+    pyqtgraph parameter types and constraints.  Read-only properties
+    (``setter=None``) appear as non-editable display items.  Registered
+    methods appear as action buttons.
 
-    No ``.ui`` file is needed.  Subclass this for each instrument and
-    declare :attr:`INSTRUMENT`:
+    On first show, saved settings are reconciled with the hardware state
+    via :class:`QReconcileDialog`, and the device is moved to a dedicated
+    worker thread so that serial I/O does not block the GUI.  Settings are
+    saved on close.
+
+    Subclass this for each instrument and declare :attr:`INSTRUMENT`:
 
     .. code-block:: python
 
@@ -82,6 +90,7 @@ class QInstrumentTree(ParameterTree):
 
     INSTRUMENT: type | None = None
     FIELDS: list[str] | None = None
+    HARDWARE_DOMINANT: bool = False
 
     def __init__(self, *args,
                  device: QAbstractInstrument | None = None,
@@ -91,6 +100,9 @@ class QInstrumentTree(ParameterTree):
         self._device: QAbstractInstrument | None = None
         self._params: dict[str, Parameter] = {}
         self._updating: bool = False
+        self._restored: bool = False
+        self._thread: QtCore.QThread | None = None
+        self._configure = Configure()
         self._fields: list[str] | None = (
             fields if fields is not None else self.FIELDS)
         self._visibleProps: list[str] = []
@@ -238,6 +250,110 @@ class QInstrumentTree(ParameterTree):
                 lambda p, n=name: self._device.execute(n))
 
         self._device.propertyValue.connect(self._onDevicePropertyValue)
+
+    def showEvent(self, event) -> None:
+        '''Reconcile device settings and move to a worker thread on first show.
+
+        Schedules :meth:`_firstShow` via a zero-delay timer so that
+        reconciliation runs after Qt finishes processing the show event,
+        avoiding a nested event loop inside an event handler.  Subsequent
+        show events are passed through unchanged.
+        '''
+        if not self._restored and self._device is not None and self._device.isOpen():
+            self._restored = True
+            QtCore.QTimer.singleShot(0, self._firstShow)
+        super().showEvent(event)
+
+    @QtCore.Slot()
+    def _firstShow(self) -> None:
+        '''Restore settings, start the device thread, and sync the tree.
+
+        Runs after the event loop is idle on the first show.  Settings
+        are restored synchronously while the device is still on the main
+        thread; the device is then moved to a worker thread before the
+        async property sync is requested.
+        '''
+        self._restoreSettings()
+        self._startDeviceThread()
+        self._syncProperties()
+
+    def _restoreSettings(self) -> None:
+        '''Reconcile hardware state with the saved configuration file.
+
+        Reads the current hardware state via :attr:`device.settings`
+        and the saved configuration via :meth:`Configure.read`.
+
+        - **No saved file**: writes hardware values to the config file
+          and returns without changing the hardware.
+        - **Files match**: no action.
+        - **Files differ**: shows a :class:`QReconcileDialog`.  If the
+          user chooses "Keep Hardware" (or dismisses the dialog), the
+          config file is updated to reflect the hardware.  If the user
+          chooses "Use Saved", the saved values are pushed to the device.
+
+        The default button in the dialog is controlled by
+        :attr:`HARDWARE_DOMINANT`.
+        '''
+        hw = self._device.settings
+        saved = self._configure.read(self._device)
+
+        if saved is None:
+            self._configure.save(self._device)
+            return
+
+        diff_keys = [
+            k for k in hw
+            if k in saved and values_differ(hw[k], saved[k])
+        ]
+
+        if not diff_keys:
+            return
+
+        dialog = QReconcileDialog(
+            hw, saved, diff_keys,
+            hardware_dominant=self.HARDWARE_DOMINANT,
+            parent=self,
+        )
+        accepted = dialog.exec()
+
+        if not accepted or dialog.keep_hardware:
+            self._configure.save(self._device)
+        else:
+            self._device.settings = saved
+
+    def _startDeviceThread(self) -> None:
+        '''Move the device into a dedicated worker thread.
+
+        Only applies to :class:`QSerialInstrument` instances — fake
+        instruments stay on the main thread.  After this call, all
+        :meth:`device.get` and :meth:`device.set` invocations from the
+        GUI thread are delivered as queued slot calls and processed
+        sequentially by the worker thread's event loop, keeping serial
+        I/O off the main thread entirely.
+        '''
+        from QInstrument.lib.QSerialInstrument import QSerialInstrument
+        if not isinstance(self._device, QSerialInstrument):
+            return
+        self._thread = QtCore.QThread(self)
+        self._device.moveToThread(self._thread)
+        self._thread.start()
+
+    def closeEvent(self, event) -> None:
+        '''Stop the worker thread and save settings when the tree is closed.
+
+        Stops the device worker thread before saving so that no queued
+        slot calls arrive after the tree is gone.  Reads settings directly
+        from the device after the thread is stopped (safe because the thread
+        is no longer running).  Only saves if the tree was previously shown,
+        so that test instances closed during teardown do not overwrite
+        saved configuration.
+        '''
+        if self._thread is not None:
+            self._thread.quit()
+            self._thread.wait()
+        if self._restored and self._device is not None:
+            self._configure.save(self._device)
+        super().closeEvent(event)
 
     def _onParamChanged(self, name: str, value) -> None:
         '''Send a tree-initiated value change to the device.

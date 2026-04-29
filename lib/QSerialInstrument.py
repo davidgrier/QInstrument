@@ -184,7 +184,4 @@ class QSerialInstrument(QAbstractInstrument):
         print(instrument)
 
 
-if __name__ == '__main__':
-    QSerialInstrument.example()
-
 __all__ = ['QSerialInstrument']

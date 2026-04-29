@@ -1,4 +1,3 @@
-import math
 from pathlib import Path
 import inspect
 import logging
@@ -7,22 +6,10 @@ from qtpy import uic, QtWidgets, QtCore
 
 from .Configure import Configure
 from .QReconcileDialog import QReconcileDialog
-from .lazy import find_fake_cls
+from .lazy import find_fake_cls, values_differ
 
 
 logger = logging.getLogger(__name__)
-
-
-def _values_differ(a: object, b: object) -> bool:
-    '''Return True if *a* and *b* represent meaningfully different values.
-
-    Floats are compared with a relative tolerance of 1e-6 and an
-    absolute tolerance of 1e-9 to avoid spurious mismatches from
-    JSON round-tripping.  All other types use exact equality.
-    '''
-    if isinstance(a, float) and isinstance(b, float):
-        return not math.isclose(a, b, rel_tol=1e-6, abs_tol=1e-9)
-    return a != b
 
 
 class QInstrumentWidget(QtWidgets.QWidget):
@@ -33,6 +20,11 @@ class QInstrumentWidget(QtWidgets.QWidget):
     :attr:`wgetter`, and :attr:`wsignal`.  User interaction with a linked
     widget calls :meth:`device.set`; the device value is read back and
     the widget is updated without re-triggering the signal.
+
+    On first show, saved settings are reconciled with the hardware state
+    via :class:`QReconcileDialog`, and the device is moved to a dedicated
+    worker thread so that serial I/O does not block the GUI.  Settings are
+    saved on close.
 
     Subclass this, declare :attr:`UIFILE`, and supply a device:
 
@@ -489,7 +481,7 @@ class QInstrumentWidget(QtWidgets.QWidget):
 
         diff_keys = [
             k for k in hw
-            if k in saved and _values_differ(hw[k], saved[k])
+            if k in saved and values_differ(hw[k], saved[k])
         ]
 
         if not diff_keys:
@@ -543,7 +535,7 @@ class QInstrumentWidget(QtWidgets.QWidget):
         app = QApplication.instance() or QApplication(sys.argv)
         widget = cls()
         if widget.device is None or not widget.device.isOpen():
-            fake_cls = find_fake_cls(cls)
+            fake_cls = cls._fakeCls()
             if fake_cls is None:
                 print(f'{cls.__name__}: instrument not found or not connected.')
                 return

@@ -184,7 +184,10 @@ class QAbstractInstrument(QtCore.QObject):
 
         Setting it calls each registered setter for keys present in the
         supplied dict, skipping unknown keys, read-only properties, and
-        properties whose ``persist`` flag is ``False``.
+        properties whose ``persist`` flag is ``False``.  Unlike
+        :meth:`set`, the setter does not emit :attr:`propertyValue` for
+        each key; call :meth:`_syncProperties` after a bulk restore if
+        the UI must reflect the new values.
         '''
         with QtCore.QMutexLocker(self.mutex):
             props = list(self._properties.items())

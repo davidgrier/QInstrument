@@ -1,7 +1,32 @@
 import importlib
 import inspect
+import math
 import sys
 from pathlib import Path
+
+
+def values_differ(a: object, b: object) -> bool:
+    '''Return True if *a* and *b* represent meaningfully different values.
+
+    Floats are compared with a relative tolerance of 1e-6 and an
+    absolute tolerance of 1e-9 to avoid spurious mismatches from
+    JSON round-tripping.  All other types use exact equality.
+
+    Parameters
+    ----------
+    a : object
+        First value.
+    b : object
+        Second value.
+
+    Returns
+    -------
+    bool
+        ``True`` if the values are meaningfully different.
+    '''
+    if isinstance(a, float) and isinstance(b, float):
+        return not math.isclose(a, b, rel_tol=1e-6, abs_tol=1e-9)
+    return a != b
 
 
 def find_fake_cls(cls: type) -> type | None:
@@ -96,4 +121,4 @@ def make_getattr(lazy: dict, package: str):
     return __getattr__
 
 
-__all__ = ['make_getattr']
+__all__ = ['values_differ', 'find_fake_cls', 'make_getattr']

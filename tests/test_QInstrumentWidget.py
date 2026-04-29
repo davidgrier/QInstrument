@@ -5,7 +5,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from qtpy import QtWidgets
-from lib.QInstrumentWidget import QInstrumentWidget, _values_differ
+from lib.QInstrumentWidget import QInstrumentWidget
+from lib.lazy import values_differ as _values_differ
 from lib.QFakeInstrument import QFakeInstrument
 
 
