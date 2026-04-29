@@ -92,6 +92,22 @@ class TestSave:
         cfg.save(obj)
         assert not Path(cfg.configname(obj)).exists()
 
+    def test_explicit_settings_overrides_obj_settings(self, cfg):
+        obj = SimpleObj({'freq': 440.0})
+        cfg.save(obj, settings={'freq': 999.0})
+        with open(cfg.configname(obj)) as f:
+            data = json.load(f)
+        assert data == {'freq': 999.0}
+
+    def test_explicit_settings_does_not_read_obj_settings(self, cfg):
+        class NeverRead:
+            @property
+            def settings(self):
+                raise AssertionError('obj.settings should not be read')
+
+        obj = NeverRead()
+        cfg.save(obj, settings={'x': 1.0})   # must not raise
+
 
 # ---------------------------------------------------------------------------
 # restore
