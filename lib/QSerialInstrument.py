@@ -1,6 +1,5 @@
 import logging
 
-from qtpy import QtCore
 from qtpy.QtSerialPort import QSerialPortInfo
 from QInstrument.lib.QAbstractInstrument import QAbstractInstrument
 from QInstrument.lib.QSerialInterface import QSerialInterface
@@ -40,18 +39,19 @@ class QSerialInstrument(QAbstractInstrument):
         Alias for ``QSerialPort.FlowControl``.
     '''
 
-    # Re-export serial enum types so subclass comm dicts need no extra imports.
-    BaudRate    = QSerialInterface.BaudRate
-    DataBits    = QSerialInterface.DataBits
-    StopBits    = QSerialInterface.StopBits
-    Parity      = QSerialInterface.Parity
+    # Re-export serial enum types for convenient access in subclasses
+    BaudRate = QSerialInterface.BaudRate
+    DataBits = QSerialInterface.DataBits
+    StopBits = QSerialInterface.StopBits
+    Parity = QSerialInterface.Parity
     FlowControl = QSerialInterface.FlowControl
 
     comm: dict = {}
 
     def __init__(self, portName: str | None = None, **kwargs) -> None:
         super().__init__()
-        self._interface = QSerialInterface(**(self.comm | kwargs))
+        args = self.comm | kwargs
+        self._interface = QSerialInterface(parent=self, **args)
         if portName:
             self.open(portName)
         self._registerProperties()
@@ -61,8 +61,7 @@ class QSerialInstrument(QAbstractInstrument):
         '''Return True if the connected device is the expected instrument.
 
         The base implementation always returns ``True``.  Subclasses
-        should override this to query the device and verify its identity
-        (e.g. via ``*IDN?``).
+        should override this to query the device and verify its identity.
 
         Returns
         -------
@@ -177,10 +176,10 @@ class QSerialInstrument(QAbstractInstrument):
             If ``None``, all available ports are scanned via :meth:`find`.
         '''
         from qtpy.QtCore import QCoreApplication
-        app = QCoreApplication.instance() or QCoreApplication([])
+        QCoreApplication.instance() or QCoreApplication([])
         instrument = cls().find() if portname is None else cls(portname)
         if not instrument.isOpen():
-            print(f'{cls.__name__}: instrument not found or not connected.')
+            print(f'{cls.__name__}: instrument not found.')
             return
         print(instrument)
 
