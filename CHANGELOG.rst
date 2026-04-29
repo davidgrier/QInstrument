@@ -4,6 +4,48 @@ Changelog
 All notable changes to QInstrument are documented here.
 The format follows `Keep a Changelog <https://keepachangelog.com>`_.
 
+.. _v3.0.1:
+
+3.0.1 — 2026-04-29
+-------------------
+
+Fixed
+~~~~~
+
+- ``lib/QInstrumentWidget``, ``lib/QInstrumentTree``: removed automatic
+  ``startPolling()`` call from ``_firstShow()``.  Auto-polling caused a
+  race condition when SR830/SR844 instruments were embedded in
+  scan-driven applications that also called ``report()`` from the main
+  thread.  Callers that need continuous updates must now invoke
+  ``startPolling()`` explicitly (via
+  ``QMetaObject.invokeMethod(device, 'startPolling', QueuedConnection)``
+  so it executes on the worker thread).
+
+Changed
+~~~~~~~
+
+- ``instruments/StanfordResearch/SR830``,
+  ``instruments/StanfordResearch/SR844``: removed ``x``, ``y``, ``r``,
+  and ``theta`` from the property registry and dropped ``QPollingMixin``
+  from the class hierarchy.  Both instruments are now pure control panels
+  (sensitivity, time constant, frequency, etc.), consistent with their
+  widgets and trees.  The ``report()`` method remains as the measurement
+  API for embedding applications.  SR844 additionally drops
+  ``reference_frequency`` and ``if_frequency``.
+
+- ``instruments/PriorScientific/Proscan``: ``QProscan`` now inherits
+  ``QPollingMixin`` and implements ``_poll()`` — each cycle queries
+  ``position()`` and ``active_limits()``, emitting ``positionChanged``
+  and a new ``limitsChanged`` signal.  ``POLL_INTERVAL`` defaults to
+  200 ms.  ``QProscanWidget`` drops its main-thread ``QTimer`` and
+  cross-thread direct calls; it now connects to the device signals and
+  starts polling via ``invokeMethod(QueuedConnection)`` in
+  ``_firstShow()``, keeping all serial I/O on the worker thread.
+
+- ``lib/QPollingMixin``: updated docstring to reflect that
+  ``startPolling()`` must be called explicitly; it is no longer
+  started automatically by ``QInstrumentWidget`` or ``QInstrumentTree``.
+
 .. _v3.0.0:
 
 3.0.0 — 2026-04-29
