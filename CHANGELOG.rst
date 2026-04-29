@@ -4,6 +4,62 @@ Changelog
 All notable changes to QInstrument are documented here.
 The format follows `Keep a Changelog <https://keepachangelog.com>`_.
 
+Unreleased
+----------
+
+Changed
+~~~~~~~
+
+- ``lib/QSerialInterface.py``: non-blocking mode removed entirely.
+  The ``blocking`` property, ``dataReady`` signal, ``_buffer``, and
+  ``_handleReadyRead`` slot have been deleted.  ``receive()`` and
+  ``readn()`` use ``waitForReadyRead()`` directly and are intended to
+  run in a dedicated worker thread rather than on the GUI thread.
+  The ``QEventLoop``-based approach introduced in 2.4.0 has been
+  reverted; ``waitForReadyRead()`` is safe in a worker thread and
+  avoids reentrancy hazards.
+- ``lib/QSerialInstrument.py``: ``QSerialInterface`` is now constructed
+  as a Qt child of the instrument (``parent=self``), so it migrates
+  automatically when the instrument is moved to a worker thread.
+- ``lib/QInstrumentWidget.py``: on first show, the device is moved to a
+  dedicated ``QThread`` so serial I/O no longer competes with the GUI
+  event loop.  Property sync is now fire-and-forget (``device.get()``);
+  values are delivered asynchronously via the ``propertyValue`` signal
+  to a new ``_onPropertyValue`` slot that applies them with signals
+  blocked.  ``closeEvent`` stops the thread before saving settings.
+- ``lib/QInstrumentTree.py``: full parity with ``QInstrumentWidget`` —
+  same first-show threading lifecycle, ``_restoreSettings()`` with
+  ``QReconcileDialog``, and ``closeEvent`` save.  ``HARDWARE_DOMINANT``
+  class attribute added.
+- ``lib/Configure.py``: ``save()`` accepts an optional ``settings``
+  parameter to avoid cross-thread reads when the device lives in a
+  worker thread.
+- ``lib/lazy.py``: ``values_differ()`` extracted from
+  ``QInstrumentWidget`` (was duplicated) and exported in ``__all__``.
+  ``find_fake_cls()`` added to ``__all__``.
+
+Deprecated
+~~~~~~~~~~
+
+- ``lib/QInstrumentWorker.py``: ``QInstrumentWorker`` is deprecated and
+  will be removed in a future release.  ``QInstrumentWidget`` and
+  ``QInstrumentTree`` now move every ``QSerialInstrument`` into a worker
+  thread automatically on first show; there is no longer any need to
+  manage a separate worker.
+
+.. _v2.4.1:
+
+2.4.1
+-----
+
+Fixed
+~~~~~
+
+- ``lib/QSerialInterface.py``: ``receive()`` now decodes bytes with
+  ``errors='replace'`` instead of the strict default.  Prevents a
+  ``UnicodeDecodeError`` when ``find()`` scans a port occupied by an
+  instrument that responds to ``*IDN?`` with non-UTF-8 bytes.
+
 .. _v2.4.0:
 
 2.4.0
@@ -12,21 +68,16 @@ The format follows `Keep a Changelog <https://keepachangelog.com>`_.
 Changed
 ~~~~~~~
 
-- ``lib/QSerialInterface.py``: ``receive()`` and ``readn()`` no longer call
-  ``waitForReadyRead()``, which blocked the calling thread and tore down the
-  macOS ``CFRunLoop`` dispatcher context on return.  Both methods now wait via
-  a scoped ``QEventLoop`` driven by ``readyRead`` and a ``QTimer``, keeping
-  the main event loop alive during serial I/O so the GUI stays responsive and
-  ``QSocketNotifier`` always has an active dispatcher.
+- ``lib/QSerialInterface.py``: ``receive()`` and ``readn()`` switched
+  from ``waitForReadyRead()`` to a scoped ``QEventLoop`` driven by
+  ``readyRead`` and a ``QTimer``.  (This approach was reverted in the
+  following release; see *Unreleased* above.)
 
 Deprecated
 ~~~~~~~~~~
 
-- ``lib/QInstrumentWorker.py``: ``QInstrumentWorker`` is deprecated and will
-  be removed in a future release.  Its primary motivation was preventing
-  ``waitForReadyRead()`` from blocking the GUI thread; that is no longer
-  necessary.  Instrument polling can run on the main thread using
-  ``QSerialInterface``'s existing ``blocking=False`` / ``dataReady`` path.
+- ``lib/QInstrumentWorker.py``: ``QInstrumentWorker`` is deprecated and
+  will be removed in a future release.
 
 .. _v2.3.2:
 

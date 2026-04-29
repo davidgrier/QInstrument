@@ -232,17 +232,10 @@ Pass ``minimum`` and ``maximum`` to ``registerProperty()`` (or
 
 **Using the fake device interactively**
 
-Add ``FAKEDEVICE`` to make ``example()`` fall back to the fake when
-no hardware is found:
-
-.. code-block:: python
-
-   from QInstrument.instruments.AcmeSystems.Model1000.fake import QFakeModel1000
-
-   class QModel1000Widget(QInstrumentWidget):
-       UIFILE = 'Model1000Widget.ui'
-       INSTRUMENT = QModel1000
-       FAKEDEVICE = QFakeModel1000
+``example()`` falls back to the fake automatically.  When no hardware
+is found it imports the sibling ``fake`` module and instantiates the
+first class listed in its ``__all__``.  No extra class attribute is
+needed; placing a ``fake.py`` alongside ``widget.py`` is sufficient.
 
 ----
 
@@ -277,11 +270,12 @@ installed (``pip install 'QInstrument[tree]'``).
 Step 6 — ``__init__.py``
 ------------------------
 
-Use lazy imports so the package is importable without triggering Qt:
+Use the ``make_getattr`` factory from ``lib.lazy`` so the package is
+importable without triggering Qt:
 
 .. code-block:: python
 
-   import importlib
+   from QInstrument.lib.lazy import make_getattr
 
    _lazy = {
        'QModel1000':       'instrument',
@@ -289,12 +283,7 @@ Use lazy imports so the package is importable without triggering Qt:
        'QModel1000Widget': 'widget',
    }
 
-   def __getattr__(name):
-       if name in _lazy:
-           mod = importlib.import_module(f'.{_lazy[name]}', package=__name__)
-           return getattr(mod, name)
-       raise AttributeError(f'module {__name__!r} has no attribute {name!r}')
-
+   __getattr__ = make_getattr(_lazy, __name__)
    __all__ = list(_lazy)
 
 ----
