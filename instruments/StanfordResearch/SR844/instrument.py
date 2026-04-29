@@ -1,13 +1,11 @@
 import logging
-from qtpy import QtCore
-from QInstrument.lib.QPollingMixin import QPollingMixin
 from QInstrument.lib.QSerialInstrument import QSerialInstrument
 
 
 logger = logging.getLogger(__name__)
 
 
-class QSR844(QPollingMixin, QSerialInstrument):
+class QSR844(QSerialInstrument):
     '''SRS SR844 RF Lock-in Amplifier
 
     Properties
@@ -69,20 +67,6 @@ class QSR844(QPollingMixin, QSerialInstrument):
         7: 300 ms    16:  10 ks
         8:   1 s     17:  30 ks
 
-    Output (read-only)
-    ------------------
-    reference_frequency : int [Hz]
-        Actual reference frequency being used.
-    if_frequency : int [Hz]
-        IF frequency (reference frequency mod 200 MHz).
-    x : float [V]
-        In-phase (X) component of the lock-in signal.
-    y : float [V]
-        Quadrature (Y) component of the lock-in signal.
-    r : float [V]
-        Magnitude R of the lock-in signal.
-    theta : float [degrees]
-        Phase angle theta of the lock-in signal.
     '''
 
     comm = dict(baudRate=QSerialInstrument.BaudRate.Baud19200,
@@ -113,20 +97,6 @@ class QSR844(QPollingMixin, QSerialInstrument):
         self._register('low_pass_slope', 'OFSL', int)
         self._register('sensitivity',    'SENS', int)
         self._register('time_constant',  'OFLT', int)
-        # Read-only frequency displays
-        self.registerProperty('reference_frequency', setter=None, ptype=int,
-                              getter=lambda: self.getValue('FRAQ?', int))
-        self.registerProperty('if_frequency', setter=None, ptype=int,
-                              getter=lambda: self.getValue('FRIQ?', int))
-        # Output channels (read-only)
-        self.registerProperty('x', setter=None, ptype=float,
-                              getter=lambda: self.getValue('OUTP?1', float))
-        self.registerProperty('y', setter=None, ptype=float,
-                              getter=lambda: self.getValue('OUTP?2', float))
-        self.registerProperty('r', setter=None, ptype=float,
-                              getter=lambda: self.getValue('OUTP?3', float))
-        self.registerProperty('theta', setter=None, ptype=float,
-                              getter=lambda: self.getValue('OUTP?4', float))
 
     def _registerMethods(self) -> None:
         '''Register all instrument methods via ``registerMethod()``.
@@ -174,23 +144,6 @@ class QSR844(QPollingMixin, QSerialInstrument):
         checks for the ``'SR844'`` model token in the response.
         '''
         return 'SR844' in self.handshake('*IDN?')
-
-    def _poll(self) -> None:
-        '''Poll frequency, R, and theta simultaneously and emit results.
-
-        Overrides :meth:`QPollingMixin._poll` to use the ``SNAP?9,3,4``
-        batch command instead of three sequential queries, keeping the
-        captured values time-coherent.
-        '''
-        if not getattr(self, '_polling', False):
-            return
-        frequency, r, theta = self.report()
-        self.propertyValue.emit('frequency', frequency)
-        self.propertyValue.emit('r', r)
-        self.propertyValue.emit('theta', theta)
-        if getattr(self, '_polling', False):
-            QtCore.QTimer.singleShot(
-                self.POLL_INTERVAL, self._poll)
 
     def report(self) -> list[float]:
         '''Return the current frequency, magnitude, and phase simultaneously.
