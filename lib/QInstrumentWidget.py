@@ -3,7 +3,7 @@ import inspect
 import logging
 
 from qtpy import uic, QtWidgets, QtCore
-
+from QInstrument.lib.QSerialInstrument import QSerialInstrument
 from .Configure import Configure
 from .QReconcileDialog import QReconcileDialog
 from .lazy import find_fake_cls, values_differ
@@ -451,7 +451,6 @@ class QInstrumentWidget(QtWidgets.QWidget):
         sequentially by the worker thread's event loop, keeping serial
         I/O off the main thread entirely.
         '''
-        from QInstrument.lib.QSerialInstrument import QSerialInstrument
         if not isinstance(self._device, QSerialInstrument):
             return
         self._thread = QtCore.QThread(self)
