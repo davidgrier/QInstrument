@@ -1,4 +1,5 @@
 import logging
+from typing import Literal, overload
 
 from qtpy.QtSerialPort import QSerialPortInfo
 from QInstrument.lib.QAbstractInstrument import QAbstractInstrument
@@ -147,20 +148,35 @@ class QSerialInstrument(QAbstractInstrument):
         '''
         self._interface.transmit(data)
 
-    def receive(self, **kwargs) -> str | bytes:
+    @overload
+    def receive(self, eol: str | bytes | None = None, *,
+                raw: Literal[True]) -> bytes: ...
+
+    @overload
+    def receive(self, eol: str | bytes | None = None,
+                raw: Literal[False] = False) -> str: ...
+
+    @overload
+    def receive(self, eol: str | bytes | None = None,
+                raw: bool = False) -> str | bytes: ...
+
+    def receive(self, eol: str | bytes | None = None,
+                raw: bool = False) -> str | bytes:
         '''Read a response from the instrument via the serial interface.
 
         Parameters
         ----------
-        **kwargs
-            Passed through to :meth:`QSerialInterface.receive`.
+        eol : str | bytes | None, optional
+            End-of-line sequence.  See :meth:`QSerialInterface.receive`.
+        raw : bool, optional
+            If ``True``, return ``bytes`` rather than ``str``.
 
         Returns
         -------
         str | bytes
             Response from the instrument.
         '''
-        return self._interface.receive(**kwargs)
+        return self._interface.receive(eol, raw)
 
     def handshake(self, data: str, **kwargs) -> str:
         '''Transmit a command and return the instrument's response.
@@ -170,7 +186,7 @@ class QSerialInstrument(QAbstractInstrument):
         data : str
             Command string to send to the instrument.
         **kwargs :
-            Passed through to :meth:`receive`.
+            Passed through to :meth:`receive` (``eol``).
 
         Returns
         -------
@@ -178,7 +194,10 @@ class QSerialInstrument(QAbstractInstrument):
             Stripped response string from the instrument.
         '''
         self.transmit(data)
-        return self.receive(**kwargs).strip()
+        response = self.receive(**kwargs)
+        if isinstance(response, bytes):
+            response = response.decode('utf-8', errors='replace')
+        return response.strip()
 
     def expect(self, query: str, response: str, **kwargs) -> bool:
         '''Return True if the instrument's response contains *response*.
@@ -246,7 +265,8 @@ class QSerialInstrument(QAbstractInstrument):
             If ``None``, all available ports are scanned via :meth:`find`.
         '''
         from qtpy.QtCore import QCoreApplication
-        QCoreApplication.instance() or QCoreApplication([])
+        if QCoreApplication.instance() is None:
+            QCoreApplication([])
         instrument = cls().find() if portname is None else cls(portname)
         if not instrument.isOpen():
             print(f'{cls.__name__}: instrument not found.')

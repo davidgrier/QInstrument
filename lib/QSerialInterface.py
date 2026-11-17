@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from typing import Any, Literal, cast, overload
 
 from qtpy import QtCore
 from qtpy.QtSerialPort import QSerialPort
@@ -85,8 +86,8 @@ class QSerialInterface(QSerialPort):
         super().__init__(**kwargs)
         if baudRate is not None:
             # PyQt6 enums expose .value; PyQt5 enums need int()
-            baud = (baudRate.value
-                    if hasattr(baudRate, 'value') else int(baudRate))
+            value: Any = getattr(baudRate, 'value', baudRate)
+            baud = int(value)
             self.setBaudRate(baud)
         if dataBits is not None:
             self.setDataBits(dataBits)
@@ -146,6 +147,18 @@ class QSerialInterface(QSerialPort):
         self.flush()
         logger.debug(f'sent: {data}')
 
+    @overload
+    def receive(self, eol: str | bytes | None = None, *,
+                raw: Literal[True]) -> bytes: ...
+
+    @overload
+    def receive(self, eol: str | bytes | None = None,
+                raw: Literal[False] = False) -> str: ...
+
+    @overload
+    def receive(self, eol: str | bytes | None = None,
+                raw: bool = False) -> str | bytes: ...
+
     def receive(self,
                 eol: str | bytes | None = None,
                 raw: bool = False) -> str | bytes:
@@ -185,11 +198,15 @@ class QSerialInterface(QSerialPort):
                     and not self.waitForReadyRead(self.timeout)):
                 logger.debug('Timeout waiting for response')
                 break
-            buffer += bytes(self.readAll())
+            buffer += self._readAll()
             if eol and eol in buffer:
                 buffer = buffer[:buffer.index(eol)]
                 break
         return buffer if raw else buffer.decode('utf-8', errors='replace')
+
+    def _readAll(self) -> bytes:
+        '''Return everything that has arrived, as ``bytes``.'''
+        return bytes(cast(Any, self.readAll()))
 
     def readn(self, n: int = 1) -> bytes:
         '''Receive exactly n bytes from the instrument.
@@ -214,7 +231,7 @@ class QSerialInterface(QSerialPort):
                     and not self.waitForReadyRead(self.timeout)):
                 logger.warning('Timeout waiting for response')
                 break
-            buffer += bytes(self.readAll())
+            buffer += self._readAll()
         return buffer[:n]
 
     def sendbreak(self, duration: int = 250) -> None:

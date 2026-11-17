@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Any
 import inspect
 import logging
 
@@ -101,17 +102,19 @@ class QInstrumentWidget(QtWidgets.QWidget):
 
     def __init__(self, *args, device=None, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self._device = None
+        # Duck-typed: a QAbstractInstrument, usually a QSerialInstrument
+        # (isOpen) and often a QPollingMixin (stopPolling).
+        self._device: Any = None
         self._configure = Configure()
         self._restored = False
-        self._thread = None
+        self._thread: QtCore.QThread | None = None
         uic.loadUi(self._uiPath(), self)
         if device is None and self.INSTRUMENT is not None:
             device = self.INSTRUMENT().find()
         self.device = device
 
     @QtCore.Property(object)
-    def device(self):
+    def device(self):  # pyright: ignore[reportRedeclaration]
         '''QAbstractInstrument: instrument bound to this widget.
 
         Setting this property identifies matching properties and methods,
@@ -121,7 +124,7 @@ class QInstrumentWidget(QtWidgets.QWidget):
         '''
         return self._device
 
-    @device.setter
+    @device.setter  # pyright: ignore[reportFunctionMemberAccess]
     def device(self, device):
         if device is None:
             return
@@ -144,15 +147,15 @@ class QInstrumentWidget(QtWidgets.QWidget):
         return self._methods
 
     @QtCore.Property(dict)
-    def settings(self) -> dict:
+    def settings(self) -> dict:  # pyright: ignore[reportRedeclaration]
         '''dict: current values of all managed properties.
 
         Getting reads each linked widget.  Setting calls :meth:`set`
         for each key present in the supplied dict.
         '''
-        return {key: self.get(key) for key in self.properties}
+        return {key: self.get(key) for key in self._properties}
 
-    @settings.setter
+    @settings.setter  # pyright: ignore[reportFunctionMemberAccess]
     def settings(self, settings):
         for key, value in settings.items():
             self.set(key, value)
@@ -215,7 +218,7 @@ class QInstrumentWidget(QtWidgets.QWidget):
 
     def _wmethod(self,
                  widget: QtWidgets.QWidget,
-                 method: dict) -> 'callable | None':
+                 method: dict) -> Any:
         '''Return the bound method named by *method* for *widget*'s type.
 
         Returns ``None`` if the widget's class is not in *method*, so
@@ -229,7 +232,9 @@ class QInstrumentWidget(QtWidgets.QWidget):
             One of :attr:`wsetter`, :attr:`wgetter`, or :attr:`wsignal`,
             mapping widget class name to method name.
         '''
-        typeName = widget.metaObject().className()
+        meta = widget.metaObject()
+        assert meta is not None
+        typeName = meta.className()
         name = method.get(typeName)
         if name is None:
             return None
@@ -270,7 +275,7 @@ class QInstrumentWidget(QtWidgets.QWidget):
         on the main thread (direct connection, synchronous) or a
         worker thread (queued connection, asynchronous).
         '''
-        for prop in self.properties:
+        for prop in self._properties:
             self.device.get(prop)
 
     @QtCore.Slot(str, object)
@@ -316,7 +321,7 @@ class QInstrumentWidget(QtWidgets.QWidget):
         value after the debounce interval elapses is sent to the device.
         '''
         self.device.propertyValue.connect(self._onPropertyValue)
-        for prop in self.properties:
+        for prop in self._properties:
             widget = getattr(self, prop)
             signal = self._wmethod(widget, self.wsignal)
             if signal is None:
@@ -326,7 +331,7 @@ class QInstrumentWidget(QtWidgets.QWidget):
                 self._connectDebounced(prop, signal, debounce_ms)
             else:
                 signal.connect(self._setDeviceProperty)
-        for method in self.methods:
+        for method in self._methods:
             widget = getattr(self, method)
             if isinstance(widget, QtWidgets.QPushButton):
                 widget.clicked.connect(
@@ -335,7 +340,7 @@ class QInstrumentWidget(QtWidgets.QWidget):
     def _connectDebounced(
             self,
             prop: str,
-            signal: QtCore.Signal,
+            signal: Any,
             debounce_ms: int
     ) -> None:
         '''Connect *signal* to :meth:`_applyProperty` via a debounce timer.
@@ -357,7 +362,7 @@ class QInstrumentWidget(QtWidgets.QWidget):
         timer = QtCore.QTimer(self)
         timer.setSingleShot(True)
         timer.setInterval(debounce_ms)
-        pending = [None]
+        pending: list[Any] = [None]
 
         def on_change(value):
             pending[0] = value
@@ -400,7 +405,9 @@ class QInstrumentWidget(QtWidgets.QWidget):
         Reads the sender's object name and delegates to
         :meth:`_applyProperty`.
         '''
-        self._applyProperty(self.sender().objectName(), value)
+        sender = self.sender()
+        assert sender is not None
+        self._applyProperty(sender.objectName(), value)
 
     def waitForDevice(self) -> None:
         '''Block until the device has completed the most recent change.

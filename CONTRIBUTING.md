@@ -43,7 +43,7 @@ python -m pytest                           # everything
 python -m pytest tests/test_QDS345.py      # one file
 python -m pytest --cov                     # coverage; pyproject.toml sets the floor
 ruff check .                               # also runs in CI
-pyright                                    # lib/ only; allowed to fail in CI
+pyright                                    # lib/ only; CI fails on an error
 ```
 
 Tests never need hardware: every instrument is tested against its fake or

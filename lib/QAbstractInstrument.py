@@ -1,11 +1,12 @@
 import logging
 from qtpy import QtCore
-from typing import Callable
+from typing import Any, Callable
 
 
 logger = logging.getLogger(__name__)
 
-_AUTO = object()  # sentinel: auto-generate getter/setter from _name convention
+# sentinel: auto-generate getter/setter from the _name convention
+_AUTO: Any = object()
 
 
 class QAbstractInstrument(QtCore.QObject):

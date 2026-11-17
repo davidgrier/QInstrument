@@ -25,10 +25,9 @@ jobs:
   types:
     name: Types (pyright on lib/)
     runs-on: ubuntu-latest
-    # Allowed to fail until the report is empty (see TODO.md).  Pyright is
+    # The report is empty, so a type error fails the workflow.  Pyright is
     # pinned: a newer version finds new things, and they are for us to fix
     # when we choose to move (change the pin and the report together).
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

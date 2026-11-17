@@ -30,7 +30,7 @@ Run the checks (the same ones CI runs):
 ```bash
 python -m pytest                 # tests; add --cov for coverage (floor in pyproject.toml)
 ruff check .                     # lint; line length 79, single quotes
-pyright                          # lib/ only; allowed to fail in CI until clean (see TODO.md)
+pyright                          # lib/ only; the report is empty, and CI fails on an error
 ```
 On a machine without a display, set `QT_QPA_PLATFORM=offscreen`.
 
@@ -44,7 +44,7 @@ pre-commit install
 
 These follow QVideo and QHOT, which are the model for the group's projects.  When a standard changes in one project, check the others.
 
-- **CI** (`.github/workflows/tests.yml`): `lint` (ruff), `types` (pyright pinned to 1.1.414, allowed to fail), `test` (Python 3.10 to 3.14 with PyQt6; PyQt5 on 3.10 and 3.14; PySide6 allowed to fail), coverage in the Python 3.12 / PyQt6 job, and `package` (build the wheel and `twine check`).  CI installs with `pip install -e ".[dev-pyqt6]"`, not a hand-written list: a dependency missing from `pyproject.toml` must fail CI.
+- **CI** (`.github/workflows/tests.yml`): `lint` (ruff), `types` (pyright pinned to 1.1.414 on `lib/`, empty report), `test` (Python 3.10 to 3.14 with PyQt6; PyQt5 on 3.10 and 3.14; PySide6 allowed to fail), coverage in the Python 3.12 / PyQt6 job, and `package` (build the wheel and `twine check`).  CI installs with `pip install -e ".[dev-pyqt6]"`, not a hand-written list: a dependency missing from `pyproject.toml` must fail CI.
 - **Lint**: ruff rules are in `pyproject.toml` (`F B E501 Q SIM PLW2901 UP037 PERF PIE`; `RUF012` and `PERF203` are off on purpose).  `tests/*` and `__init__.py` have per-file ignores.  Fix a finding; do not add `# noqa` without a reason in the comment.
 - **Coverage**: `fail_under` is a floor under the measured value.  Raise it as tests are written; never lower it.
 - **Convention tests** (`tests/test_conventions.py`, `tests/test_packaging.py`, `tests/test_import_cycles.py`) turn the rules of this file into failures: Qt through `qtpy`, no `pyqtProperty`/`pyqtSignal`/`pyqtSlot`, scoped serial enums, no `from QInstrument.lib import X`, `identify()` and public classes have docstrings, every directory with an `__init__.py` is in the `packages` list, every package imports first in a fresh interpreter.  When one fails, fix the code, not the test.  A rule that is only prose is a rule that will be broken; when you add a convention to this file, add a test for it if a machine can check it.

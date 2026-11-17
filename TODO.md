@@ -4,13 +4,10 @@ Ideas for upgrades and extensions, in no particular order.
 
 ## Type checking
 
-`pyright` (pinned to 1.1.414, run on `lib/`) reports 48 errors, and its CI
-job is allowed to fail until the report is empty (2026-11-17).  Then drop
-`continue-on-error` from the `types` job in `.github/workflows/tests.yml`.
-Most are `QByteArray`/`bytes` conversions in `QSerialInterface`, `str | bytes`
-returns of `receive()`, and mixin attributes in `QPollingMixin` and
-`Configure` that the checker cannot see.  The widgets and instrument widgets
-read their attributes from `.ui` files and are not checked.
+`pyright` (pinned to 1.1.414) checks `lib/` with an empty report (2026-11-17).
+Widgets and instrument widgets read their attributes from `.ui` files, which
+pyright cannot see, so they are not included; the instruments are not yet
+included either (`TDS1000` is the main obstacle).
 
 ## Coverage
 

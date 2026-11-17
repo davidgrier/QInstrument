@@ -55,8 +55,11 @@ class QReconcileDialog(QtWidgets.QDialog):
         table.setHorizontalHeaderLabels(['Property', 'Hardware', 'Saved'])
         table.setEditTriggers(
             QtWidgets.QAbstractItemView.EditTrigger.NoEditTriggers)
-        table.verticalHeader().setVisible(False)
-        table.horizontalHeader().setStretchLastSection(True)
+        vheader = table.verticalHeader()
+        hheader = table.horizontalHeader()
+        assert vheader is not None and hheader is not None
+        vheader.setVisible(False)
+        hheader.setStretchLastSection(True)
         for row, key in enumerate(diff_keys):
             table.setItem(row, 0, QtWidgets.QTableWidgetItem(key))
             table.setItem(row, 1,

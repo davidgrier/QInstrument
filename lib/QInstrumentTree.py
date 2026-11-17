@@ -1,4 +1,5 @@
 import logging
+from typing import Any
 from qtpy import QtCore
 from QInstrument.lib.QAbstractInstrument import QAbstractInstrument
 from QInstrument.lib.Configure import Configure
@@ -97,7 +98,7 @@ class QInstrumentTree(ParameterTree):
                  fields: list[str] | None = None,
                  **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self._device: QAbstractInstrument | None = None
+        self._device: Any = None
         self._params: dict[str, Parameter] = {}
         self._updating: bool = False
         self._restored: bool = False
@@ -129,7 +130,7 @@ class QInstrumentTree(ParameterTree):
             return
         self._device = device
         self._buildTree()
-        if device.isOpen():
+        if device.isOpen():  # pyright: ignore[reportAttributeAccessIssue]
             self._connectSignals()
             self._syncProperties()
         else:
@@ -247,7 +248,7 @@ class QInstrumentTree(ParameterTree):
                     lambda p, v, n=name: self._onParamChanged(n, v))
 
         for name in self._visibleMethods:
-            self._params[name].sigActivated.connect(
+            self._params[name].sigActivated.connect(  # pyright: ignore[reportAttributeAccessIssue]
                 lambda p, n=name: self._device.execute(n))
 
         self._device.propertyValue.connect(self._onDevicePropertyValue)
@@ -426,7 +427,7 @@ class QInstrumentTree(ParameterTree):
         from qtpy.QtWidgets import QApplication
         app = QApplication.instance() or QApplication(sys.argv)
         tree = cls()
-        if tree.device is None or not tree.device.isOpen():
+        if tree.device is None or not tree.device.isOpen():  # pyright: ignore[reportAttributeAccessIssue]
             fake_cls = cls._fakeCls()
             if fake_cls is None:
                 print(f'{cls.__name__}: instrument not found'

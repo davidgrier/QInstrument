@@ -128,8 +128,8 @@ docstring-quotes = "single"
              "RUF012", "PLW2901", "UP037", "PERF", "PIE"]
 
 [tool.pyright]
-# Type checking of lib/, as an allowed-to-fail job in CI until the report
-# is empty (48 errors on 2026-11-17; see TODO.md).  The widgets and the
+# Type checking of lib/; the report is empty and CI fails on an error.  The
+# widgets and the
 # instrument widgets read their attributes from .ui files, which pyright
 # cannot see, so they are not included.  Run it
 # in an environment with PyQt6 and no other Qt binding, as CI does.  qtpy

@@ -4,6 +4,7 @@ import json
 import logging
 from datetime import datetime
 from pathlib import Path
+from typing import Any, cast
 
 from qtpy import QtCore, QtWidgets
 
@@ -79,7 +80,7 @@ class Configure(QtCore.QObject):
         '''
         return str(self.datadir / (prefix + self.timestamp() + suffix))
 
-    def configname(self, obj: object) -> str:
+    def configname(self, obj: Any) -> str:
         '''Return the path to the JSON configuration file for *obj*.
 
         The filename is derived from ``obj``'s class name, so all
@@ -98,7 +99,7 @@ class Configure(QtCore.QObject):
         '''
         return str(self.configdir / (obj.__class__.__name__ + '.json'))
 
-    def save(self, obj: object,
+    def save(self, obj: Any,
              settings: dict | None = None) -> None:
         '''Save *obj*'s settings to its JSON configuration file.
 
@@ -124,7 +125,7 @@ class Configure(QtCore.QObject):
                       indent=2, separators=(',', ': '),
                       ensure_ascii=False)
 
-    def restore(self, obj: object) -> None:
+    def restore(self, obj: Any) -> None:
         '''Restore *obj*'s settings from its JSON configuration file.
 
         Reads the JSON file at :meth:`configname` and assigns the result
@@ -147,7 +148,7 @@ class Configure(QtCore.QObject):
                 f'Could not read {filename}: {ex}'
                 '\n\tUsing default configuration.')
 
-    def read(self, obj: object) -> dict | None:
+    def read(self, obj: Any) -> dict | None:
         '''Read and return *obj*'s saved configuration without applying it.
 
         Reads the JSON file at :meth:`configname` and returns its
@@ -171,7 +172,7 @@ class Configure(QtCore.QObject):
         except Exception:
             return None
 
-    def query_save(self, obj: object) -> None:
+    def query_save(self, obj: Any) -> None:
         '''Prompt the user and save *obj*'s settings if confirmed.
 
         Opens a modal dialog asking whether to save the current
@@ -183,7 +184,7 @@ class Configure(QtCore.QObject):
             Object to save if the user confirms.
         '''
         mbox = QtWidgets.QMessageBox
-        msg = mbox(self.parent())
+        msg = mbox(cast('QtWidgets.QWidget | None', self.parent()))
         msg.setWindowTitle('Confirmation')
         msg.setText('Save current configuration?')
         msg.setStandardButtons(mbox.StandardButton.Yes |
