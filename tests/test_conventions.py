@@ -3,7 +3,7 @@
 Each rule is here because breaking it fails somewhere else, later and less
 clearly: another Qt binding, a wheel that lacks a file, a documentation page
 that is empty.  The scan reads the source of the package, not the tests,
-the documentation, or the experimental ``Tektronix`` package.
+or the documentation.
 '''
 import ast
 import re
@@ -11,7 +11,7 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-SKIP_DIRS = ('tests', 'docs', 'build', 'dist', 'Tektronix')
+SKIP_DIRS = ('tests', 'docs', 'build', 'dist')
 QT_BINDINGS = ('PyQt5', 'PyQt6', 'PySide2', 'PySide6')
 SHORT_ENUMS = re.compile(
     r'\bQSerialInstrument\.(Baud\d+|Data\d|OneStop|TwoStop|OneAndHalfStop'
@@ -156,8 +156,6 @@ class TestInstrumentPackages(unittest.TestCase):
         found = []
         for init in sorted(ROOT.glob('instruments/*/*/__init__.py')):
             package = init.parent
-            if package.parent.name == 'Tektronix':
-                continue
             has_widget = (package / 'widget.py').exists()
             wanted = ['instrument.py', '__init__.py']
             if has_widget:

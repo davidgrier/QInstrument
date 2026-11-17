@@ -180,3 +180,32 @@ class TestOpen:
 
     def test_none_port_returns_false(self, iface):
         assert iface.open(None) is False
+
+
+# ---------------------------------------------------------------------------
+# readn keeps what it was not asked for
+# ---------------------------------------------------------------------------
+
+class TestReadnSurplus:
+
+    @patch.object(QSerialInterface, 'isOpen', return_value=True)
+    @patch.object(QSerialInterface, 'bytesAvailable', return_value=True)
+    def test_successive_reads_see_every_byte(self, mock_avail, mock_open,
+                                             iface):
+        with patch.object(QSerialInterface, 'readAll',
+                          side_effect=[b'#40004ABCD\n']):
+            assert iface.readn(2) == b'#4'
+            assert iface.readn(4) == b'0004'
+            assert iface.readn(4) == b'ABCD'
+            assert iface.readn(1) == b'\n'
+
+    @patch.object(QSerialInterface, 'isOpen', return_value=True)
+    @patch.object(QSerialInterface, 'bytesAvailable', return_value=True)
+    def test_transmit_drops_the_surplus(self, mock_avail, mock_open, iface):
+        with patch.object(QSerialInterface, 'readAll',
+                          side_effect=[b'ABCDE', b'xy']), \
+                patch.object(QSerialInterface, 'write'), \
+                patch.object(QSerialInterface, 'flush'):
+            assert iface.readn(2) == b'AB'
+            iface.transmit('NEXT?')
+            assert iface.readn(2) == b'xy'

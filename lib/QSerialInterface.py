@@ -98,6 +98,9 @@ class QSerialInterface(QSerialPort):
         if flowControl is not None:
             self.setFlowControl(flowControl)
         self.eol = eol if isinstance(eol, bytes) else eol.encode()
+        # Bytes that arrived beyond what readn() was asked for, kept for the
+        # next readn(); a new command (transmit) starts a new response.
+        self._surplus = b''
         self.timeout = timeout or 100
         self.open(portName)
 
@@ -143,6 +146,7 @@ class QSerialInterface(QSerialPort):
             return
         if isinstance(data, str):
             data = data.encode() + self.eol
+        self._surplus = b''
         self.write(data)
         self.flush()
         logger.debug(f'sent: {data}')
@@ -211,6 +215,11 @@ class QSerialInterface(QSerialPort):
     def readn(self, n: int = 1) -> bytes:
         '''Receive exactly n bytes from the instrument.
 
+        Bytes that arrive beyond the ``n`` that were asked for are kept
+        for the next call, so that a binary response can be read in
+        pieces (a header, then the data it announces).  They are dropped
+        when the next command is transmitted.
+
         Parameters
         ----------
         n : int
@@ -225,13 +234,14 @@ class QSerialInterface(QSerialPort):
         if not self.isOpen():
             logger.warning('Cannot read data: device is not open.')
             return b''
-        buffer = b''
+        buffer, self._surplus = self._surplus, b''
         while len(buffer) < n:
             if (not self.bytesAvailable()
                     and not self.waitForReadyRead(self.timeout)):
                 logger.warning('Timeout waiting for response')
                 break
             buffer += self._readAll()
+        self._surplus = buffer[n:]
         return buffer[:n]
 
     def sendbreak(self, duration: int = 250) -> None:

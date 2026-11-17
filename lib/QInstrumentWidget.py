@@ -107,6 +107,7 @@ class QInstrumentWidget(QtWidgets.QWidget):
         self._device: Any = None
         self._configure = Configure()
         self._restored = False
+        self._debounceTimers: list[QtCore.QTimer] = []
         self._thread: QtCore.QThread | None = None
         uic.loadUi(self._uiPath(), self)
         if device is None and self.INSTRUMENT is not None:
@@ -373,6 +374,7 @@ class QInstrumentWidget(QtWidgets.QWidget):
 
         signal.connect(on_change)
         timer.timeout.connect(on_timeout)
+        self._debounceTimers.append(timer)
 
     def _applyProperty(
             self, name: str, value: bool | int | float | str
@@ -518,8 +520,11 @@ class QInstrumentWidget(QtWidgets.QWidget):
         known device state) rather than querying the device directly,
         avoiding any cross-thread read.  Only saves if the widget was
         previously shown, so that test widgets closed during teardown do
-        not overwrite saved configuration.
+        not overwrite saved configuration.  Pending debounced changes are
+        dropped: they would otherwise reach a device whose widget is gone.
         '''
+        for timer in self._debounceTimers:
+            timer.stop()                # a pending change dies with the widget
         if self._thread is not None:
             if hasattr(self._device, 'stopPolling'):
                 self._device.stopPolling()

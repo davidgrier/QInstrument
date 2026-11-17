@@ -566,3 +566,17 @@ class TestPollingIntegration:
         with patch.object(device, 'stopPolling') as mock_stop:
             w.close()
         mock_stop.assert_not_called()
+
+
+class TestDebounceAndClose:
+
+    def test_a_pending_change_is_dropped_when_the_widget_closes(self, qtbot):
+        '''A debounce timer that fires after the widget is closed reached a
+        device whose widget was gone (a segfault under coverage).'''
+        device = DebouncedDevice()
+        w = _make_debounced_widget(qtbot, device)
+        w.power.setValue(75.0)
+        w.close()
+        with qtbot.assertNotEmitted(w.propertyChanged, wait=300):
+            pass
+        assert device._power == pytest.approx(0.0)

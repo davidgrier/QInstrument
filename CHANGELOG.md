@@ -13,6 +13,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Quality gates: `ruff`, `pyright` (clean on `lib/`), a coverage floor, a Python 3.10 to 3.14 and PyQt5/PyQt6/PySide6 CI matrix, a wheel check, pre-commit hooks and Dependabot.
 - Tests of the package list, the first import of each package and the conventions of `CLAUDE.md`, a suite that takes every instrument (fake, widget, tree, package) through the path of a user, and tests of `QJoystick`, `QJoystickPad` and `QRotaryEncoder`.
 - `tests/test_docstrings.py`: every public class, function, method and property is documented (Sphinx lists only what has a docstring), and a `Parameters` section matches the signature.  Docstrings added to the `example()` functions and to `QLedWidget.blink`, `interval` and `sizeHint`.
+- `tests/test_QTDS1000.py`; `TDS1000` is no longer exempt from the convention, docstring and package checks.
 - `CONTRIBUTING.md`.
 
 ### Changed
@@ -23,6 +24,9 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Fixed
 
+- `QTDS1000.data()`: it called `get_value` (the method is `getValue`), took `int(data[1])` of a `bytes` (an ordinal, not a digit), and read the waveform up to the first newline, so a sample equal to 10 truncated it.  It now reads the IEEE 488.2 block by its declared length, converts the samples with `numpy`, and raises `ValueError` or `TimeoutError` instead of returning garbage.  `portname` is now `portName`, as in every other instrument.
+- `QSerialInterface.readn()` discarded the bytes that arrived beyond the count that it was asked for, so a binary response could not be read in pieces.  It keeps them for the next call (they are dropped when the next command is transmitted).  `QSerialInstrument.readn()` is new.
+- `QInstrumentWidget`: a debounce timer could fire after the widget was closed and write to a device whose widget was gone (a segfault in the suite under coverage).  Pending debounced changes are dropped on close.
 - `QJoystick`: the dead-band `tolerance` was passed to `numpy.allclose` as `rtol`, so near the center (where the last value is 0) it suppressed nothing.  It is now an absolute tolerance, as documented.
 - `QJoystickPad`: the knob returned to center after a click by a bare `QTimer.singleShot`, which raised `RuntimeError: wrapped C/C++ object has been deleted` if the pad was closed within 200 ms.  The timer is now a child of the pad.
 - The rack picker listed `Opus`, the abstract base class, next to the real models.  Its shared widget is now `Opus/_widget.py`, which the picker does not see; the models import it from there.

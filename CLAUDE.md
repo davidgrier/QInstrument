@@ -247,4 +247,4 @@ organised by manufacturer.
 
 ### Not subject to migration
 
-- `instruments/Tektronix/TDS1000/` — experimental; waveform acquisition only (no property-based control, no widget, no fake). Scope undefined.
+- `instruments/Tektronix/TDS1000/` — experimental; waveform acquisition only (`data(channel)` reads a definite-length binary block with `readn()`; tested against a scripted stream).  No property-based control, no widget, no fake.  Scope undefined, but it is held to the same checks as the other instruments.

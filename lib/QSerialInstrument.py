@@ -25,8 +25,9 @@ class QSerialInstrument(QAbstractInstrument):
     - :meth:`handshake` — send a command and return the raw response
     - :meth:`expect` — send a command and test the response string
     - :meth:`getValue` — send a command and return a typed value
+    - :meth:`readn` — read an exact number of bytes (binary responses)
 
-    All four methods are defined here.  A future transport subclass
+    All five methods are defined here.  A future transport subclass
     (e.g. ``QGPIBInstrument``) would provide the same API over a
     different physical layer.
 
@@ -177,6 +178,24 @@ class QSerialInstrument(QAbstractInstrument):
             Response from the instrument.
         '''
         return self._interface.receive(eol, raw)
+
+    def readn(self, n: int = 1) -> bytes:
+        '''Read exactly *n* bytes from the instrument.
+
+        For binary responses that cannot be framed by an end-of-line
+        sequence.  See :meth:`QSerialInterface.readn`.
+
+        Parameters
+        ----------
+        n : int
+            Number of bytes to read.  Default: ``1``.
+
+        Returns
+        -------
+        bytes
+            The bytes received; shorter than *n* if the read timed out.
+        '''
+        return self._interface.readn(n)
 
     def handshake(self, data: str, **kwargs) -> str:
         '''Transmit a command and return the instrument's response.

@@ -7,8 +7,7 @@ disappears from the documentation.  This test says which.
 A method is documented if it, or the method of a base class that it
 overrides, has a docstring: Sphinx inherits docstrings the same way.
 Overrides of Qt event handlers (``*Event``) are exempt, and so are Qt
-signals, which are documented in the docstring of their class.  The
-experimental ``Tektronix`` package is not checked.
+signals, which are documented in the docstring of their class.
 '''
 import importlib
 import inspect
@@ -20,7 +19,6 @@ import unittest
 PACKAGES = ('QInstrument.lib', 'QInstrument.widgets',
             'QInstrument.instruments')
 MODULES = ('QInstrument.QInstrumentRack',)
-SKIP = ('QInstrument.instruments.Tektronix',)
 
 
 def modules(package: str):
@@ -28,8 +26,7 @@ def modules(package: str):
     pkg = importlib.import_module(package)
     yield pkg
     for info in pkgutil.walk_packages(pkg.__path__, package + '.'):
-        if not info.name.startswith(SKIP):
-            yield importlib.import_module(info.name)
+        yield importlib.import_module(info.name)
 
 
 def own_doc(member) -> str:

@@ -1,9 +1,11 @@
 Tektronix TDS1000 Oscilloscope
 ==============================
 
-
 .. note::
 
-   API documentation for this instrument is pending migration to the current
-   registerProperty() design.  See instruments/DS345/ for the
-   reference implementation.
+   Experimental: the TDS1000 reads waveforms.  It registers no properties,
+   so it has no fake, widget or tree.
+
+.. autoclass:: QInstrument.instruments.Tektronix.TDS1000.instrument.QTDS1000
+   :members:
+   :show-inheritance:
