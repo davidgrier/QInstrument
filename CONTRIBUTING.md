@@ -56,7 +56,9 @@ A pull request needs the tests and the linter to pass.
 
 Some tests check the conventions of the code (`tests/test_conventions.py`:
 Qt is imported through `qtpy`, properties use `registerProperty()`, serial
-enums are scoped, `identify()` has a docstring) and the packaging
+enums are scoped, `identify()` has a docstring) and the docstrings
+(`tests/test_docstrings.py`: every public name is documented, and a
+`Parameters` section lists the parameters of the signature) and the packaging
 (`tests/test_packaging.py`: every package is listed in `pyproject.toml`, or
 it is missing from the wheel).  When one of them fails, fix the code, not
 the test.

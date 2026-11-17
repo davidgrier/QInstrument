@@ -607,6 +607,7 @@ class QProscan(QPollingMixin, QSerialInstrument):
 
 
 def example() -> None:
+    '''Find a Proscan controller and print its firmware version.'''
     proscan = QProscan().find()
     if proscan is not None:
         print(f'version: {proscan.version()}')

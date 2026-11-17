@@ -15,8 +15,8 @@ repos:
         language: system
         types: [python]
       - id: convention-tests
-        name: packaging, convention and import cycle tests
-        entry: python -m pytest -q tests/test_packaging.py tests/test_conventions.py tests/test_import_cycles.py
+        name: packaging, convention, docstring and import cycle tests
+        entry: python -m pytest -q tests/test_packaging.py tests/test_conventions.py tests/test_docstrings.py tests/test_import_cycles.py
         language: system
         pass_filenames: false
         types: [python]

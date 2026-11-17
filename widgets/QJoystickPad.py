@@ -414,6 +414,7 @@ class QJoystickPad(QtWidgets.QWidget):
 
 
 def example() -> None:
+    '''Show a joystick pad in a window and print its output.'''
     from qtpy.QtWidgets import QApplication
 
     def report(xy: np.ndarray) -> None:

@@ -12,6 +12,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - `QOpus`: `wavelength` and `minimum_power` are read-only properties taken from the class attributes `WAVELENGTH` and `MINIMUM_POWER`; the model subclasses (`Opus532`, `Opus660`, `Opus1064`) set them.  `power` and `maximum_power` carry the minimum and maximum as metadata.
 - Quality gates: `ruff`, `pyright` (clean on `lib/`), a coverage floor, a Python 3.10 to 3.14 and PyQt5/PyQt6/PySide6 CI matrix, a wheel check, pre-commit hooks and Dependabot.
 - Tests of the package list, the first import of each package and the conventions of `CLAUDE.md`, a suite that takes every instrument (fake, widget, tree, package) through the path of a user, and tests of `QJoystick`, `QJoystickPad` and `QRotaryEncoder`.
+- `tests/test_docstrings.py`: every public class, function, method and property is documented (Sphinx lists only what has a docstring), and a `Parameters` section matches the signature.  Docstrings added to the `example()` functions and to `QLedWidget.blink`, `interval` and `sizeHint`.
 - `CONTRIBUTING.md`.
 
 ### Changed

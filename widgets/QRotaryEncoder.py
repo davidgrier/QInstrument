@@ -83,6 +83,7 @@ class QRotaryEncoder(QDial):
 
 
 def example() -> None:
+    '''Show a 200-step encoder in a window and print its value.'''
     from qtpy.QtWidgets import QApplication
 
     def report(value: int) -> None:

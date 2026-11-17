@@ -87,10 +87,16 @@ class QLedWidget(QtWidgets.QWidget):
         self.timer.timeout.connect(self.flipState)
 
     def sizeHint(self) -> QtCore.QSize:
+        '''Return the preferred size: the minimum size.'''
         return self.minimumSize()
 
     @property
     def blink(self) -> bool:
+        '''bool: whether the LED is blinking.
+
+        Setting ``True`` starts the blink timer; setting ``False`` stops
+        it and restores the saved state.
+        '''
         return self._blink
 
     @blink.setter
@@ -105,6 +111,7 @@ class QLedWidget(QtWidgets.QWidget):
 
     @property
     def interval(self) -> int:
+        '''int: duration of each ON/OFF phase while blinking [ms].'''
         return self._interval
 
     @interval.setter
@@ -220,6 +227,7 @@ class QLedWidget(QtWidgets.QWidget):
 
 
 def example() -> None:
+    '''Show a blinking red LED in a window.'''
     from qtpy.QtWidgets import QApplication
 
     app = QApplication.instance() or QApplication(sys.argv)
