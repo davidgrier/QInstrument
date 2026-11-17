@@ -205,7 +205,7 @@ class QInstrumentWidget(QtWidgets.QWidget):
             logger.error(f'Unknown property {key}')
             return
         if value is None:
-            self.device.get(key)
+            self._device.get(key)
             return
         setter = self._wmethod(widget, self.wsetter)
         if setter is None:
@@ -261,8 +261,8 @@ class QInstrumentWidget(QtWidgets.QWidget):
         '''
         uwidgets = {name for name, obj in self.__dict__.items()
                     if isinstance(obj, QtWidgets.QWidget)}
-        dproperties = set(self.device.properties)
-        dmethods = set(self.device.methods)
+        dproperties = set(self._device.properties)
+        dmethods = set(self._device.methods)
         self._properties = list(uwidgets & dproperties)
         self._methods = list(uwidgets & dmethods)
 
@@ -276,7 +276,7 @@ class QInstrumentWidget(QtWidgets.QWidget):
         worker thread (queued connection, asynchronous).
         '''
         for prop in self._properties:
-            self.device.get(prop)
+            self._device.get(prop)
 
     @QtCore.Slot(str, object)
     def _onPropertyValue(self, name: str, value: object) -> None:
@@ -320,13 +320,13 @@ class QInstrumentWidget(QtWidgets.QWidget):
         changes (e.g. spinbox scrolling) are coalesced: only the final
         value after the debounce interval elapses is sent to the device.
         '''
-        self.device.propertyValue.connect(self._onPropertyValue)
+        self._device.propertyValue.connect(self._onPropertyValue)
         for prop in self._properties:
             widget = getattr(self, prop)
             signal = self._wmethod(widget, self.wsignal)
             if signal is None:
                 continue
-            debounce_ms = self.device.propertyMeta(prop).get('debounce', 0)
+            debounce_ms = self._device.propertyMeta(prop).get('debounce', 0)
             if debounce_ms:
                 self._connectDebounced(prop, signal, debounce_ms)
             else:
@@ -335,7 +335,7 @@ class QInstrumentWidget(QtWidgets.QWidget):
             widget = getattr(self, method)
             if isinstance(widget, QtWidgets.QPushButton):
                 widget.clicked.connect(
-                    lambda m=method: self.device.execute(m))
+                    lambda m=method: self._device.execute(m))
 
     def _connectDebounced(
             self,
@@ -391,7 +391,7 @@ class QInstrumentWidget(QtWidgets.QWidget):
         '''
         if name in self._properties:
             logger.debug(f'Setting device: {name}: {value}')
-            self.device.set(name, value)
+            self._device.set(name, value)
             self.waitForDevice()
             self.propertyChanged.emit(name, value)
 
@@ -547,7 +547,7 @@ class QInstrumentWidget(QtWidgets.QWidget):
         from qtpy.QtWidgets import QApplication
         app = QApplication.instance() or QApplication(sys.argv)
         widget = cls()
-        if widget.device is None or not widget.device.isOpen():
+        if widget._device is None or not widget._device.isOpen():
             fake_cls = cls._fakeCls()
             if fake_cls is None:
                 print(f'{cls.__name__}: instrument not found '

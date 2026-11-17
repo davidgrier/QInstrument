@@ -25,15 +25,18 @@ jobs:
   types:
     name: Types (pyright on lib/)
     runs-on: ubuntu-latest
-    # The report is empty, so a type error fails the workflow.  Pyright is
-    # pinned: a newer version finds new things, and they are for us to fix
-    # when we choose to move (change the pin and the report together).
+    # The report is empty, so a type error fails the workflow.  Pyright and
+    # PyQt6 (whose stubs pyright reads) are pinned: a newer version finds new
+    # things, and they are for us to fix when we choose to move (change the
+    # pins and the report together).  The stubs of PyQt6 6.12.1 declare the
+    # `arguments` keyword of pyqtSignal as required, which every
+    # QtCore.Signal(...) call is then reported for.
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install -e ".[dev-pyqt6]" pyright==1.1.414
+      - run: pip install -e ".[dev-pyqt6]" pyright==1.1.414 PyQt6==6.11.0 PyQt6-Qt6==6.11.0
       - run: pyright
 
   test:
