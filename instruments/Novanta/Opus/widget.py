@@ -34,7 +34,9 @@ class QOpusWidget(QInstrumentWidget):
     }
 
     def __init__(self, *args, device=None, **kwargs) -> None:
-        device = device or QOpus().find()
+        if device is None:
+            cls = self.INSTRUMENT if self.INSTRUMENT is not None else QOpus
+            device = cls().find()
         super().__init__(*args, device=device, **kwargs)
         self._timer = QtCore.QTimer(self)
         self._timer.setInterval(self.poll_interval)
@@ -63,14 +65,17 @@ class QOpusWidget(QInstrumentWidget):
         self._updatePowerRange()
 
     def _updatePowerRange(self) -> None:
-        '''Apply ``maximum_power`` [mW] to the power setpoint encoder [W].
+        '''Apply power limits to the power setpoint encoder [W].
 
-        Called at setup and again after the first show event so that a
+        Reads ``minimum_power`` and ``maximum_power`` from the device
+        [mW] and applies them to the encoder bounds [W].  Called at
+        setup and again after the first show event so that a
         ``maximum_power`` restored from the saved configuration is
         reflected in the encoder bounds.
         '''
+        min_p = float(self.device.get('minimum_power') or 0.)
         max_p = float(self.device.get('maximum_power') or 1000.)
-        self.power_setpoint.setMinimum(0.)
+        self.power_setpoint.setMinimum(min_p / 1000.)
         self.power_setpoint.setMaximum(max_p / 1000.)
 
     def showEvent(self, event) -> None:

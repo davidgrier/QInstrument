@@ -6,7 +6,7 @@ logger = logging.getLogger(__name__)
 
 
 class QOpus(QSerialInstrument):
-    '''Laser Quantum Opus Continuous-wave Laser
+    '''Novanta Opus continuous-wave laser.
 
     The Opus command interface uses plain text:
 
@@ -23,15 +23,12 @@ class QOpus(QSerialInstrument):
     -------
     power : float [mW]
         Getter returns the actual output power.
-        Setter transmits a new power setpoint, clamped to ``maximum_power``.
+        Setter transmits a new power setpoint, clamped to
+        ``[MINIMUM_POWER, maximum_power]``.
     maximum_power : float [mW]
-        Software upper bound on the power setpoint.  Default: 1000.
-        Not discoverable from the hardware; set at startup and persisted
-        via the saved configuration.
-    wavelength : float [nm]
-        Emission wavelength of the specific laser unit.  Default: 532.
-        Not discoverable from the hardware; set at startup and persisted
-        via the saved configuration.
+        Software upper bound on the power setpoint.  Initialised from
+        :attr:`MAXIMUM_POWER` and persisted via the saved configuration.
+        Accepts values in ``[MINIMUM_POWER, MAXIMUM_POWER]``.
     current : float [%]
         Diode current as a percentage of maximum.
     emission : bool
@@ -43,11 +40,31 @@ class QOpus(QSerialInstrument):
         True if the laser is ENABLED (interlock satisfied and ready to
         emit).  False if DISABLED (keyswitch off or enable button not
         pressed); a warning is logged when DISABLED is received.
+    wavelength : float [nm]
+        Emission wavelength.  Fixed at :attr:`WAVELENGTH`.
+    minimum_power : float [mW]
+        Hardware minimum power setpoint.  Fixed at :attr:`MINIMUM_POWER`.
     laser_temperature : float [°C]
         Laser head temperature.
     psu_temperature : float [°C]
         Power supply unit temperature.
+
+    Class Attributes
+    ----------------
+    WAVELENGTH : float
+        Emission wavelength [nm].  Set by each model subclass.
+    MINIMUM_POWER : float
+        Hardware minimum output power [mW].  0 for most models;
+        2000 for the Opus1064.
+    MAXIMUM_POWER : float
+        Hardware maximum output power [mW].  Used to initialise the
+        ``maximum_power`` soft cap and as the upper bound for the
+        ``power`` property metadata.
     '''
+
+    WAVELENGTH: float = 0.       # nm — subclasses override
+    MINIMUM_POWER: float = 0.    # mW
+    MAXIMUM_POWER: float = 1000. # mW — conservative default; subclasses override
 
     comm = dict(baudRate=QSerialInstrument.BaudRate.Baud19200,
                 dataBits=QSerialInstrument.DataBits.Data8,
@@ -60,27 +77,31 @@ class QOpus(QSerialInstrument):
     def _registerProperties(self) -> None:
         '''Register all instrument properties via ``registerProperty()``.
 
-        Called once from ``__init__``. Subclasses that extend the property
-        set should call ``super()._registerProperties()`` first.
+        Called once from ``__init__``.  Subclasses that extend the
+        property set should call ``super()._registerProperties()`` first.
 
-        ``maximum_power`` and ``wavelength`` are not discoverable from the
-        hardware at runtime.  They are initialised to defaults here and
-        restored from the saved configuration on the first widget show.
+        ``maximum_power`` is initialised from :attr:`MAXIMUM_POWER` and
+        restored from saved configuration on the first widget show.
+        ``wavelength`` and ``minimum_power`` are read-only constants
+        derived from class attributes.
         '''
-        self._maximum_power = getattr(type(self), 'MAXIMUM_POWER', 1000.)
-        self._wavelength = 532.
+        self._maximum_power: float = self.MAXIMUM_POWER
         self._power: float = 0.
         register = self.registerProperty
         register('power', ptype=float,
                  getter=self._getPower,
-                 setter=self._setPower)
+                 setter=self._setPower,
+                 minimum=self.MINIMUM_POWER,
+                 maximum=self.MAXIMUM_POWER)
         register('maximum_power', ptype=float,
                  getter=lambda: self._maximum_power,
                  setter=self._setMaximumPower,
-                 minimum=0.)
-        register('wavelength', ptype=float,
-                 getter=lambda: self._wavelength,
-                 setter=lambda v: setattr(self, '_wavelength', float(v)))
+                 minimum=self.MINIMUM_POWER,
+                 maximum=self.MAXIMUM_POWER)
+        register('wavelength', ptype=float, setter=None,
+                 getter=lambda: self.WAVELENGTH)
+        register('minimum_power', ptype=float, setter=None,
+                 getter=lambda: self.MINIMUM_POWER)
         register('current', ptype=float,
                  getter=self._getCurrent,
                  setter=lambda v: self.handshake(f'CURRENT={float(v)}'))
@@ -163,25 +184,29 @@ class QOpus(QSerialInstrument):
         return response == 'ENABLED'
 
     def _setPower(self, v: float) -> None:
-        '''Transmit a new power setpoint, clamped to ``maximum_power``.
+        '''Transmit a new power setpoint, clamped to ``[MINIMUM_POWER,
+        maximum_power]``.
 
         Parameters
         ----------
         v : float
             Requested output power [mW].
         '''
-        limit = self._maximum_power
-        clamped = min(float(v), limit)
-        if clamped < float(v):
+        v = float(v)
+        clamped = min(max(v, self.MINIMUM_POWER), self._maximum_power)
+        if clamped != v:
             logger.warning(
-                f'power {v:.1f} mW exceeds maximum_power '
-                f'{limit:.1f} mW; clamped to {clamped:.1f} mW')
+                f'power {v:.1f} mW out of range '
+                f'[{self.MINIMUM_POWER:.1f}, {self._maximum_power:.1f}] mW; '
+                f'clamped to {clamped:.1f} mW')
         self.handshake(f'POWER={clamped}')
 
     def _setMaximumPower(self, v: float) -> None:
         '''Set the software upper bound on the power setpoint.
 
-        Values at or below zero are rejected and a warning is logged.
+        Rejects non-positive values and values outside
+        ``[MINIMUM_POWER, MAXIMUM_POWER]``, and
+        logs a warning.
 
         Parameters
         ----------
@@ -189,9 +214,11 @@ class QOpus(QSerialInstrument):
             New maximum output power [mW].
         '''
         v = float(v)
-        if v <= 0.:
+        if v <= 0. or v < self.MINIMUM_POWER or v > self.MAXIMUM_POWER:
             logger.warning(
-                f'maximum_power {v:.1f} mW must be positive; ignored')
+                f'maximum_power {v:.1f} mW out of range '
+                f'[{self.MINIMUM_POWER:.1f}, {self.MAXIMUM_POWER:.1f}] mW; '
+                'ignored')
             return
         self._maximum_power = v
 
