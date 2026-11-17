@@ -117,7 +117,7 @@ def make_getattr(lazy: dict, package: str):
             value = getattr(mod, name)
             sys.modules[package].__dict__[name] = value
             return value
-        raise AttributeError(f"module {package!r} has no attribute {name!r}")
+        raise AttributeError(f'module {package!r} has no attribute {name!r}')
     return __getattr__
 
 

@@ -200,7 +200,8 @@ class QSR844(QSerialInstrument):
             1: X, 2: Y, 3: R
         '''
         if channel not in (1, 2, 3):
-            logger.warning(f'auto_offset: channel must be 1, 2, or 3 (got {channel})')
+            logger.warning(
+                f'auto_offset: channel must be 1, 2, or 3 (got {channel})')
             return
         self.transmit(f'AOFF{channel}')
 

@@ -261,7 +261,7 @@ class QInstrumentRack(QtWidgets.QWidget):
         layout.addStretch()
         return bar
 
-    def _slotAt(self, index: int) -> '_InstrumentSlot | None':
+    def _slotAt(self, index: int) -> _InstrumentSlot | None:
         item = self._slots.itemAt(index)
         return item.widget() if item else None
 
@@ -462,7 +462,7 @@ class QInstrumentRack(QtWidgets.QWidget):
                 break
 
     def _hoverSlot(self,
-                   slot: '_InstrumentSlot',
+                   slot: _InstrumentSlot,
                    hover_pos: QtCore.QPoint) -> None:
         '''Highlight the slot under the cursor during a drag.
 
@@ -486,7 +486,7 @@ class QInstrumentRack(QtWidgets.QWidget):
             s.setHighlighted(s is target and s is not slot)
 
     def _moveSlot(self,
-                  slot: '_InstrumentSlot',
+                  slot: _InstrumentSlot,
                   drop_pos: QtCore.QPoint) -> None:
         '''Move *slot* to the position of the slot under the drop point.
 

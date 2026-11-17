@@ -38,10 +38,19 @@ docs = [
     "pydata-sphinx-theme>=0.16",
     "sphinx-autodoc-typehints>=2.0",
 ]
-dev = [
+test = [
+    "QInstrument[tree]",
     "pytest>=7.0",
+    "pytest-cov",
     "pytest-qt>=4.0",
 ]
+pyqt5 = ["PyQt5>=5.15"]
+pyqt6 = ["PyQt6"]
+pyside6 = ["PySide6>=6.7"]
+dev-pyqt5 = ["QInstrument[test]", "PyQt5>=5.15"]
+dev-pyqt6 = ["QInstrument[test]", "PyQt6"]
+dev-pyside6 = ["QInstrument[test]", "PySide6>=6.7"]
+dev = ["QInstrument[test]", "PyQt6", "ruff", "pyright==1.1.414"]
 
 [project.gui-scripts]
 qinstrument = "QInstrument.__main__:main"
@@ -86,3 +95,70 @@ packages = [
 
 [tool.setuptools.exclude-package-data]
 "QInstrument" = [".qi/**", "tests/**", "docs/**"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 79
+extend-exclude = [".qi", "docs/_build"]
+
+[tool.ruff.lint]
+select = ["F", "B", "E501", "Q", "SIM", "PLW2901", "UP037",
+          "PERF", "PIE"]
+# __all__ is written as 'A B C'.split(), which is the style of the package.
+# RUF012: the ``comm`` dicts and the widget ``wsetter`` tables are class
+# attributes by design and are never mutated.  PERF203: a try/except in a
+# loop is how the instrument scan skips what will not import.
+ignore = ["SIM905", "RUF012", "PERF203"]
+
+[tool.ruff.lint.flake8-quotes]
+inline-quotes = "single"
+multiline-quotes = "single"
+docstring-quotes = "single"
+
+[tool.ruff.lint.per-file-ignores]
+# Package files re-export names; tests build stubs and mocks.
+"__init__.py" = ["F401"]
+"docs/conf.py" = ["A001"]
+"tests/*" = ["E501", "F401", "F811", "F841", "B018", "B905", "SIM",
+             "RUF012", "PLW2901", "UP037", "PERF", "PIE"]
+
+[tool.pyright]
+# Type checking of lib/, as an allowed-to-fail job in CI until the report
+# is empty (48 errors on 2026-11-17; see TODO.md).  The widgets and the
+# instrument widgets read their attributes from .ui files, which pyright
+# cannot see, so they are not included.  Run it
+# in an environment with PyQt6 and no other Qt binding, as CI does.  qtpy
+# does not declare Slot and Signal as exports of its modules
+# (reportPrivateImportUsage), and the Qt stubs type the arguments of event
+# handlers as Optional (reportIncompatibleMethodOverride): neither says
+# anything about our code.
+include = ["lib"]
+exclude = ["**/__pycache__", ".qi"]
+pythonVersion = "3.10"
+extraPaths = [".."]
+reportPrivateImportUsage = "none"
+reportIncompatibleMethodOverride = "none"
+reportUnsupportedDunderAll = "none"
+
+[tool.coverage.run]
+source = ["."]
+omit = [
+    "*/tests/*",
+    "*/__pycache__/*",
+    "*/docs/*",
+    "*/.qi/*",
+]
+
+[tool.coverage.report]
+# The measured coverage was 54% when this was set (2026-11-17): most of the
+# fakes, widgets and trees are not yet tested.  Raise the floor as the tests
+# are written; never lower it.
+fail_under = 50
+show_missing = true
+skip_covered = true
+exclude_lines = [
+    "pragma: no cover",
+    "if __name__ == .__main__.:",
+]

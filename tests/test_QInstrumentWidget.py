@@ -384,7 +384,7 @@ class TestRestoreSettings:
 
         def fake_loadUi(path, parent):
             freq_w.setObjectName('frequency')
-            setattr(parent, 'frequency', freq_w)
+            parent.frequency = freq_w
 
         class RestoreW(QInstrumentWidget):
             UIFILE = 'RestoreW.ui'

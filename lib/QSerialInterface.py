@@ -181,10 +181,10 @@ class QSerialInterface(QSerialPort):
             eol = self.eol
         buffer = b''
         while True:
-            if not self.bytesAvailable():
-                if not self.waitForReadyRead(self.timeout):
-                    logger.debug('Timeout waiting for response')
-                    break
+            if (not self.bytesAvailable()
+                    and not self.waitForReadyRead(self.timeout)):
+                logger.debug('Timeout waiting for response')
+                break
             buffer += bytes(self.readAll())
             if eol and eol in buffer:
                 buffer = buffer[:buffer.index(eol)]
@@ -210,10 +210,10 @@ class QSerialInterface(QSerialPort):
             return b''
         buffer = b''
         while len(buffer) < n:
-            if not self.bytesAvailable():
-                if not self.waitForReadyRead(self.timeout):
-                    logger.warning('Timeout waiting for response')
-                    break
+            if (not self.bytesAvailable()
+                    and not self.waitForReadyRead(self.timeout)):
+                logger.warning('Timeout waiting for response')
+                break
             buffer += bytes(self.readAll())
         return buffer[:n]
 

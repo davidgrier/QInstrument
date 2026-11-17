@@ -64,7 +64,7 @@ class QOpus(QSerialInstrument):
 
     WAVELENGTH: float = 0.       # nm — subclasses override
     MINIMUM_POWER: float = 0.    # mW
-    MAXIMUM_POWER: float = 1000. # mW — conservative default; subclasses override
+    MAXIMUM_POWER: float = 1000.  # mW; subclasses override
 
     comm = dict(baudRate=QSerialInstrument.BaudRate.Baud19200,
                 dataBits=QSerialInstrument.DataBits.Data8,

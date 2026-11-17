@@ -25,7 +25,8 @@ class QFakePDUS210(QFakeInstrument, QPDUS210):
             self.registerProperty(
                 name,
                 getter=lambda n=name, d=default: self._store.get(n, d),
-                setter=lambda v, n=name, t=dtype: self._store.update({n: t(v)}),
+                setter=lambda v, n=name, t=dtype: (
+                    self._store.update({n: t(v)})),
                 ptype=dtype)
         for name, default in (
                 ('phaseGain',   1),

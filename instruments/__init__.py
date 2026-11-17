@@ -23,7 +23,7 @@ def __getattr__(name: str):
                 return getattr(mod, name)
         except ImportError:
             continue
-    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+    raise AttributeError(f'module {__name__!r} has no attribute {name!r}')
 
 
 __all__ = [

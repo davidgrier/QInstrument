@@ -76,7 +76,6 @@ class QFakeInstrument(QAbstractInstrument):
 
     def transmit(self, data) -> None:
         '''No-op: fake instruments have no transport layer.'''
-        pass
 
     def receive(self, **kwargs) -> str:
         '''No-op: fake instruments have no transport layer.'''

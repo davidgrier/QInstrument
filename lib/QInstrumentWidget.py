@@ -409,7 +409,6 @@ class QInstrumentWidget(QtWidgets.QWidget):
         The base implementation is a no-op; subclasses should override
         this if the instrument requires a settling delay.
         '''
-        pass
 
     def showEvent(self, event) -> None:
         '''Reconcile device settings on first show.

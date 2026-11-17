@@ -206,8 +206,8 @@ class QInstrumentTree(ParameterTree):
                     kw['step'] = meta['step']
             children.append(kw)
 
-        for name in self._visibleMethods:
-            children.append(dict(name=name, type='action'))
+        children.extend(dict(name=name, type='action')
+                        for name in self._visibleMethods)
 
         root = Parameter.create(
             name=type(self._device).__name__,

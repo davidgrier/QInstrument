@@ -2,7 +2,6 @@ from qtpy import QtCore
 from QInstrument.lib.QInstrumentWidget import QInstrumentWidget
 from QInstrument.instruments.Novanta.Opus.instrument import QOpus
 from QInstrument.widgets.QLedWidget import QLedWidget
-from QInstrument.widgets.QRotaryEncoderSpinBox import QRotaryEncoderSpinBox
 
 
 class QOpusWidget(QInstrumentWidget):
@@ -46,7 +45,7 @@ class QOpusWidget(QInstrumentWidget):
             self._timer.start()
 
     def _setupControls(self) -> None:
-        '''Configure the group box title, LED color, and power setpoint encoder.
+        '''Configure the group title, LED color and power setpoint encoder.
 
         Called once after the device is confirmed open.  Updates the
         group box title with the device wavelength if available, sets the

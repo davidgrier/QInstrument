@@ -43,7 +43,7 @@ def example():
     from PyQt5.QtCore import QCoreApplication
     import matplotlib.pyplot as plt
 
-    app = QCoreApplication([])
+    app = QCoreApplication([])  # noqa: F841  (keeps the event loop alive)
     scope = QTDS1000().find()
     t, s = scope.data('CH1')
     plt.plot(t, s)

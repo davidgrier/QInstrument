@@ -1,4 +1,4 @@
-"""Sphinx configuration for QInstrument."""
+'''Sphinx configuration for QInstrument.'''
 
 import os
 import sys

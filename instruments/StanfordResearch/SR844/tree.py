@@ -3,7 +3,7 @@ from QInstrument.instruments.StanfordResearch.SR844.instrument import QSR844
 
 
 class QSR844Tree(QInstrumentTree):
-    '''Parameter tree for the Stanford Research Systems SR844 RF Lock-in Amplifier.'''
+    '''Parameter tree for the Stanford Research SR844 RF lock-in amplifier.'''
 
     INSTRUMENT = QSR844
 

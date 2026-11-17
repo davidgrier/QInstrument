@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import sys
 from pathlib import Path
 from qtpy import uic, QtCore, QtGui
@@ -16,11 +17,9 @@ class _SuppressArrowKeys(QtCore.QObject):
     def eventFilter(self,
                     obj: QtCore.QObject,
                     event: QtCore.QEvent) -> bool:
-        if event.type() == QtCore.QEvent.Type.KeyPress:
-            if event.key() in (QtCore.Qt.Key.Key_Up,
-                               QtCore.Qt.Key.Key_Down):
-                return True
-        return False
+        return (event.type() == QtCore.QEvent.Type.KeyPress
+                and event.key() in (QtCore.Qt.Key.Key_Up,
+                                    QtCore.Qt.Key.Key_Down))
 
 
 class QRotaryEncoderSpinBox(QWidget):
@@ -117,10 +116,8 @@ class QRotaryEncoderSpinBox(QWidget):
             disable color interpolation.
         '''
         self._colors = colors
-        try:
+        with contextlib.suppress(RuntimeError, TypeError):
             self.valueChanged.disconnect(self._setColor)
-        except (RuntimeError, TypeError):
-            pass
         if colors is not None:
             self._c1 = QtGui.QColor(colors[0])
             self._c2 = QtGui.QColor(colors[1])

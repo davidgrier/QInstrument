@@ -66,10 +66,8 @@ class QSerialInstrument(QAbstractInstrument):
 
     def __repr__(self) -> str:
         name = self.__class__.__name__
-        if self.isOpen():
-            port = self._interface.portName()
-        else:
-            port = 'not connected'
+        port = (self._interface.portName() if self.isOpen()
+                else 'not connected')
         return f'{name}({port})'
 
     def identify(self) -> bool:

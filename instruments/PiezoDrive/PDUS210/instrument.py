@@ -93,7 +93,8 @@ class QPDUS210(QSerialInstrument):
             self.registerProperty(
                 name,
                 getter=lambda c=cmd, t=dtype: self.getValue(f'get{c}', t),
-                setter=lambda v, c=cmd, t=dtype: self.transmit(f'set{c}{t(v)}'),
+                setter=lambda v, c=cmd, t=dtype: (
+                    self.transmit(f'set{c}{t(v)}')),
                 ptype=dtype)
         for name, gcmd, scmd in (
                 ('phaseGain',   'PHASEGAIN',   'GAINPHASE'),
@@ -167,7 +168,7 @@ class QPDUS210(QSerialInstrument):
                 'temperature', 'measuredPhase', 'measuredCurrent',
                 'impedance', 'transformerTurns']
         vals = unpack('<7cx18f', data)
-        return dict(zip(keys, vals))
+        return dict(zip(keys, vals, strict=False))
 
     def _toggle(self, pstr: str, enable: bool) -> None:
         if pstr == 'ENABLE':

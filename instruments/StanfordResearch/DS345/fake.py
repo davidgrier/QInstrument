@@ -20,7 +20,8 @@ class QFakeDS345(QFakeInstrument, QDS345):
         QDS345._registerProperties(self)
         self.registerProperty('amplitude',
                               getter=lambda: self._store.get('amplitude', 1.),
-                              setter=lambda v: self._store.__setitem__('amplitude', float(v)))
+                              setter=lambda v: self._store.__setitem__(
+                                  'amplitude', float(v)))
 
         def _mute_setter(v: bool) -> None:
             v = bool(v)

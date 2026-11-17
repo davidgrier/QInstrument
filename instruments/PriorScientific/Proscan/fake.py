@@ -110,7 +110,8 @@ class QFakeProscan(QFakeInstrument, QProscan):
                 relative: bool = False) -> bool:
         if relative:
             current = self._store.get('position', [0, 0, 0])
-            position = [c + d for c, d in zip(current, list(position) + [0])]
+            position = [c + d for c, d in zip(current, list(position) + [0],
+                                                 strict=False)]
         self._store['position'] = list(position) + [0] * (3 - len(position))
         return True
 
