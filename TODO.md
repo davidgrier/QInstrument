@@ -11,10 +11,11 @@ included either (`TDS1000` is the main obstacle).
 
 ## Coverage
 
-The floor is 50% and the measured coverage 54% (2026-11-17).  The fakes,
-widgets (`QJoystick`, `QJoystickPad`, `QLedWidget`, `QRotaryEncoderSpinBox`)
-and trees have no tests.  Raise `fail_under` in `pyproject.toml` as they get
-them.
+The floor is 75% and the measured coverage 77% (2026-11-17).  What is left is
+mostly the instrument classes (`DS345`, `IPGLaser`, `Opus`, `Proscan`,
+`SR830`, `SR844`: the methods that talk to the hardware, to be tested against
+a scripted serial stand-in), `Proscan`'s widget and `QInstrumentRack`'s mouse
+handling.  Raise `fail_under` in `pyproject.toml` as they get tests.
 
 ## Python floor
 

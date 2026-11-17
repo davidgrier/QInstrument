@@ -126,8 +126,9 @@ only in hardware constants (power limits, wavelength, etc.), define a
 base class in `instruments/<Manufacturer>/<Family>/instrument.py` and
 place model-specific constants as class attributes on thin subclasses
 in `instruments/<Manufacturer>/<Model>/instrument.py`.  The base
-package should omit `widget.py` if only the model packages should
-appear in the rack picker.  See `instruments/Novanta/Opus*` for an
+package keeps its shared widget in `_widget.py` (not `widget.py`), because
+the rack picker lists every package that has a `widget.py`, and only the
+model packages should appear there.  See `instruments/Novanta/Opus*` for an
 example of this pattern.
 
 ### Qt Imports

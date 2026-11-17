@@ -177,3 +177,16 @@ class TestColorAliases:
             assert color in QLedWidget.hexcodes
             assert QLedWidget.ON in QLedWidget.hexcodes[color]
             assert QLedWidget.OFF in QLedWidget.hexcodes[color]
+
+
+class TestPaint:
+
+    @pytest.mark.parametrize('color', list(QLedWidget.Color))
+    @pytest.mark.parametrize('state', list(QLedWidget.State))
+    def test_every_color_and_state_renders(self, led, color, state):
+        led.resize(48, 48)
+        led.color = color
+        led.state = state
+        image = led.grab().toImage()
+        assert not image.isNull()
+        assert image.width() == 48

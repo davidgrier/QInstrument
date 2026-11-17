@@ -162,6 +162,13 @@ class QJoystickPad(QtWidgets.QWidget):
         self._holdTimer = QtCore.QTimer(self)
         self._holdTimer.setSingleShot(True)
         self._holdTimer.timeout.connect(self._onHeld)
+        # Returns the knob to center after a click.  The timer is a child
+        # of the pad, so it dies with the pad: a bare QTimer.singleShot
+        # would fire later on a joystick that no longer exists.
+        self._returnTimer = QtCore.QTimer(self)
+        self._returnTimer.setSingleShot(True)
+        self._returnTimer.timeout.connect(
+            lambda: self.joystick.setKnobFraction(0., 0.))
 
         self._buttons: dict[str, QTriangleButton] = {}
         for direction in ('up', 'down', 'left', 'right'):
@@ -280,8 +287,7 @@ class QJoystickPad(QtWidgets.QWidget):
         fx, fy = self._STEP_VECTORS[direction]
         self.joystick.setKnobFraction(fx * self._stepFraction,
                                       fy * self._stepFraction)
-        QtCore.QTimer.singleShot(
-            200, lambda: self.joystick.setKnobFraction(0., 0.))
+        self._returnTimer.start(200)
         self.stepped.emit(direction)
 
     # ------------------------------------------------------------------

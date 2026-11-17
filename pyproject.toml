@@ -155,10 +155,9 @@ omit = [
 ]
 
 [tool.coverage.report]
-# The measured coverage was 54% when this was set (2026-11-17): most of the
-# fakes, widgets and trees are not yet tested.  Raise the floor as the tests
-# are written; never lower it.
-fail_under = 50
+# A floor under the measured 77% (2026-11-17).  Raise it as the tests are
+# written; never lower it.
+fail_under = 75
 show_missing = true
 skip_covered = true
 exclude_lines = [

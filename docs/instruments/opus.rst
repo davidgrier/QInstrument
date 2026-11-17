@@ -17,7 +17,7 @@ Base class
    :members:
    :show-inheritance:
 
-.. autoclass:: QInstrument.instruments.Novanta.Opus.widget.QOpusWidget
+.. autoclass:: QInstrument.instruments.Novanta.Opus._widget.QOpusWidget
    :members:
    :show-inheritance:
 

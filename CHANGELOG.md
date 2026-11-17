@@ -10,8 +10,8 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ### Added
 
 - `QOpus`: `wavelength` and `minimum_power` are read-only properties taken from the class attributes `WAVELENGTH` and `MINIMUM_POWER`; the model subclasses (`Opus532`, `Opus660`, `Opus1064`) set them.  `power` and `maximum_power` carry the minimum and maximum as metadata.
-- Quality gates: `ruff`, `pyright` (allowed to fail until the report is empty), a coverage floor, a Python 3.10 to 3.14 and PyQt5/PyQt6/PySide6 CI matrix, a wheel check, pre-commit hooks and Dependabot.
-- Tests of the package list, the first import of each package and the conventions of `CLAUDE.md`.
+- Quality gates: `ruff`, `pyright` (clean on `lib/`), a coverage floor, a Python 3.10 to 3.14 and PyQt5/PyQt6/PySide6 CI matrix, a wheel check, pre-commit hooks and Dependabot.
+- Tests of the package list, the first import of each package and the conventions of `CLAUDE.md`, a suite that takes every instrument (fake, widget, tree, package) through the path of a user, and tests of `QJoystick`, `QJoystickPad` and `QRotaryEncoder`.
 - `CONTRIBUTING.md`.
 
 ### Changed
@@ -19,6 +19,12 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - `QOpus`: power is clamped to `[MINIMUM_POWER, maximum_power]`, and `maximum_power` rejects values that are not positive or are outside `[MINIMUM_POWER, MAXIMUM_POWER]`.  `QOpusWidget` takes its device class from `INSTRUMENT` and applies `minimum_power` to the power encoder.
 - The changelog is Markdown (`CHANGELOG.md`).  The publish workflow makes the GitHub release only after the package is on PyPI.
 - `.githooks/pre-push` is replaced by `pre-commit` (`pre-commit install`).
+
+### Fixed
+
+- `QJoystick`: the dead-band `tolerance` was passed to `numpy.allclose` as `rtol`, so near the center (where the last value is 0) it suppressed nothing.  It is now an absolute tolerance, as documented.
+- `QJoystickPad`: the knob returned to center after a click by a bare `QTimer.singleShot`, which raised `RuntimeError: wrapped C/C++ object has been deleted` if the pad was closed within 200 ms.  The timer is now a child of the pad.
+- The rack picker listed `Opus`, the abstract base class, next to the real models.  Its shared widget is now `Opus/_widget.py`, which the picker does not see; the models import it from there.
 
 ### Removed
 

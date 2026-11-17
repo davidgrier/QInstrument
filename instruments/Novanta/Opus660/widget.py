@@ -1,4 +1,4 @@
-from QInstrument.instruments.Novanta.Opus.widget import QOpusWidget
+from QInstrument.instruments.Novanta.Opus._widget import QOpusWidget
 from QInstrument.instruments.Novanta.Opus660.instrument import QOpus660
 
 

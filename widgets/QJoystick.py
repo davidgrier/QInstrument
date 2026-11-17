@@ -357,7 +357,7 @@ class QJoystick(QtWidgets.QWidget):
         is within :attr:`tolerance` on both axes.
         '''
         values = self._fractions()
-        if np.allclose(values, self._values, self.tolerance):
+        if np.allclose(values, self._values, rtol=0., atol=self.tolerance):
             return
         self._values = values
         lo, hi = self._minimum, self._maximum
