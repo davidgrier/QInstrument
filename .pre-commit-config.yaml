@@ -1,0 +1,29 @@
+# Run the checks that CI runs, before a commit: `pip install pre-commit ruff`,
+# then `pre-commit install` in the checkout.  Both hooks use what is
+# installed in the environment, so they agree with what you run by hand.
+# The convention tests are the ones that fail late otherwise (packages
+# missing from the wheel, a Qt binding imported directly, import cycles).
+# Install both stages once per clone: `pre-commit install`.  The pre-push
+# stage runs the full suite, as .githooks/pre-push did.
+default_install_hook_types: [pre-commit, pre-push]
+repos:
+  - repo: local
+    hooks:
+      - id: ruff
+        name: ruff check
+        entry: ruff check
+        language: system
+        types: [python]
+      - id: convention-tests
+        name: packaging, convention and import cycle tests
+        entry: python -m pytest -q tests/test_packaging.py tests/test_conventions.py tests/test_import_cycles.py
+        language: system
+        pass_filenames: false
+        types: [python]
+      - id: full-tests
+        name: full test suite
+        entry: python -m pytest -q
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]
