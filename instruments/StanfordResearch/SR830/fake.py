@@ -15,6 +15,7 @@ class QFakeSR830(QFakeInstrument, QSR830):
         self.identification = 'Fake SR830 Lock-in Amplifier'
 
     def identify(self) -> bool:
+        '''Return True: a fake instrument is always the right device.'''
         return True
 
     def report(self) -> list[float]:

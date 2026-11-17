@@ -67,6 +67,7 @@ class QFakeOpus(QFakeInstrument, QOpus):
         self._store['power'] = clamped
 
     def identify(self) -> bool:
+        '''Return True: a fake instrument is always the right device.'''
         return True
 
 

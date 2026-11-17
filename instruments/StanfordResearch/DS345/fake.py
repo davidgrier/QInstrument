@@ -40,6 +40,7 @@ class QFakeDS345(QFakeInstrument, QDS345):
                               setter=_mute_setter)
 
     def identify(self) -> bool:
+        '''Return True: a fake instrument is always the right device.'''
         return True
 
 

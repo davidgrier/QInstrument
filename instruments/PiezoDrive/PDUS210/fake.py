@@ -58,6 +58,7 @@ class QFakePDUS210(QFakeInstrument, QPDUS210):
                 ptype=dtype)
 
     def identify(self) -> bool:
+        '''Return True: a fake instrument is always the right device.'''
         return True
 
     def save(self) -> str:

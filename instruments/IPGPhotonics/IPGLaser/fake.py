@@ -74,6 +74,7 @@ class QFakeIPGLaser(QFakeInstrument, QIPGLaser):
         self.identification = 'Fake IPG Fiber Laser'
 
     def identify(self) -> bool:
+        '''Return True: a fake instrument is always the right device.'''
         return True
 
 

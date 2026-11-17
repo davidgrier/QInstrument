@@ -72,6 +72,7 @@ class QFakeProscan(QFakeInstrument, QProscan):
         self.identification = 'Fake Prior Proscan'
 
     def identify(self) -> bool:
+        '''Return True: a fake instrument is always the right device.'''
         return True
 
     def position(self) -> list[int]:

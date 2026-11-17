@@ -20,6 +20,8 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Scientific/Engineering",
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
@@ -43,6 +45,7 @@ test = [
     "pytest>=7.0",
     "pytest-cov",
     "pytest-qt>=4.0",
+    "tomli; python_version < '3.11'",
 ]
 pyqt5 = ["PyQt5>=5.15"]
 pyqt6 = ["PyQt6"]

@@ -26,6 +26,7 @@ class QLedWidget(QtWidgets.QWidget):
     '''
 
     class Color(Enum):
+        '''Colors of the lit LED.'''
         RED = 1
         AMBER = 2
         GREEN = 3
@@ -34,6 +35,7 @@ class QLedWidget(QtWidgets.QWidget):
         WHITE = 6
 
     class State(Enum):
+        '''Whether the LED is lit.'''
         OFF = 0
         ON = 1
 
