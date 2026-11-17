@@ -4,7 +4,7 @@ Installation
 Requirements
 ------------
 
-- Python 3.10 or later
+- Python 3.11 or later
 - A Qt binding: PyQt5, PyQt6, PySide2, or PySide6
 - ``qtpy >= 2.0``
 - ``numpy >= 1.20``

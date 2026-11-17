@@ -50,7 +50,7 @@ Tests never need hardware: every instrument is tested against its fake or
 a stand-in for the serial port.  On a machine without a display, set
 `QT_QPA_PLATFORM=offscreen`.
 
-CI runs the suite on Python 3.10 to 3.14 with PyQt6 and PyQt5 (PySide6 is
+CI runs the suite on Python 3.11 to 3.14 with PyQt6 and PyQt5 (PySide6 is
 experimental), runs `ruff check .`, measures coverage, and builds the wheel.
 A pull request needs the tests and the linter to pass.
 

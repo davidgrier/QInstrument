@@ -72,3 +72,6 @@ docs/_build/
 
 # Copyrighted instrument manuals
 *.pdf
+
+# Editor and hand-made backups
+*.bak

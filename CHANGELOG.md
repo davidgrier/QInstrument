@@ -29,6 +29,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Removed
 
+- Support for Python 3.10: `requires-python` is `>=3.11`, as in QVideo and QHOT.
 - `QOpus.wavelength` is no longer writable.
 
 ## [3.0.2] — 2026-04-29

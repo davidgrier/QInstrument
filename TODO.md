@@ -11,13 +11,8 @@ included either (`TDS1000` is the main obstacle).
 
 ## Coverage
 
-The floor is 75% and the measured coverage 77% (2026-11-17).  What is left is
+The floor is 79% and the measured coverage 80% (2026-11-17).  What is left is
 mostly the instrument classes (`DS345`, `IPGLaser`, `Opus`, `Proscan`,
 `SR830`, `SR844`: the methods that talk to the hardware, to be tested against
 a scripted serial stand-in), `Proscan`'s widget and `QInstrumentRack`'s mouse
 handling.  Raise `fail_under` in `pyproject.toml` as they get tests.
-
-## Python floor
-
-`requires-python` is still 3.10; QVideo and QHOT require 3.11.  Raising it
-would drop the `tomli` dependency of the tests and a CI leg.

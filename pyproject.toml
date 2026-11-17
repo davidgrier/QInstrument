@@ -17,7 +17,6 @@ classifiers = [
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
@@ -25,7 +24,7 @@ classifiers = [
     "Topic :: Scientific/Engineering",
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = [
     "numpy>=1.20",
     "qtpy>=2.0",
@@ -45,7 +44,6 @@ test = [
     "pytest>=7.0",
     "pytest-cov",
     "pytest-qt>=4.0",
-    "tomli; python_version < '3.11'",
 ]
 pyqt5 = ["PyQt5>=5.15"]
 pyqt6 = ["PyQt6"]
@@ -139,7 +137,7 @@ docstring-quotes = "single"
 # anything about our code.
 include = ["lib"]
 exclude = ["**/__pycache__", ".qi"]
-pythonVersion = "3.10"
+pythonVersion = "3.11"
 extraPaths = [".."]
 reportPrivateImportUsage = "none"
 reportIncompatibleMethodOverride = "none"
@@ -155,12 +153,14 @@ omit = [
 ]
 
 [tool.coverage.report]
-# A floor under the measured 77% (2026-11-17).  Raise it as the tests are
+# A floor under the measured 80% (2026-11-17).  Raise it as the tests are
 # written; never lower it.
-fail_under = 75
+fail_under = 79
 show_missing = true
 skip_covered = true
 exclude_lines = [
     "pragma: no cover",
     "if __name__ == .__main__.:",
+    # The example() of a module is a demonstration that opens a window.
+    "def example\\(",
 ]
