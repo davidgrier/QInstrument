@@ -7,6 +7,8 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+## [3.1.0] — 2026-11-23
+
 ### Added
 
 - `pyright` now checks the whole package, not only `lib/`.  The children that `uic.loadUi` attaches to the instrument widgets are declared by modules generated from the `.ui` files (`<name>_ui.py`; regenerate with `python -m QInstrument.lib.uitypes`), and `tests/test_uitypes.py` fails when one is stale.  `QSerialInstrument.receive` is overloaded on `raw`, and `find()` returns the type of the instrument it is called on.
