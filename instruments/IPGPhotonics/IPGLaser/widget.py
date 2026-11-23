@@ -1,10 +1,17 @@
+from typing import TYPE_CHECKING
 from qtpy import QtCore
 from QInstrument.lib.QInstrumentWidget import QInstrumentWidget
 from QInstrument.instruments.IPGPhotonics.IPGLaser.instrument import QIPGLaser
 from QInstrument.widgets.QLedWidget import QLedWidget
 
 
-class QIPGLaserWidget(QInstrumentWidget):
+if TYPE_CHECKING:
+    from .IPGLaserWidget_ui import UiIPGLaserWidget
+else:
+    UiIPGLaserWidget = object
+
+
+class QIPGLaserWidget(QInstrumentWidget, UiIPGLaserWidget):
     '''Control widget for an IPG fiber laser.
 
     Displays power-supply, keyswitch, and fault status as LED indicators.

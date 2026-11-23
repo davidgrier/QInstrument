@@ -3,6 +3,7 @@ from __future__ import annotations
 import contextlib
 import sys
 from pathlib import Path
+from typing import TYPE_CHECKING
 from qtpy import uic, QtCore, QtGui
 from qtpy.QtWidgets import QWidget
 
@@ -17,9 +18,10 @@ class _SuppressArrowKeys(QtCore.QObject):
     def eventFilter(self,
                     obj: QtCore.QObject,
                     event: QtCore.QEvent) -> bool:
-        return (event.type() == QtCore.QEvent.Type.KeyPress
-                and event.key() in (QtCore.Qt.Key.Key_Up,
-                                    QtCore.Qt.Key.Key_Down))
+        return (event.type() == QtCore.QEvent.Type.KeyPress and
+                isinstance(event, QtGui.QKeyEvent) and
+                event.key() in (QtCore.Qt.Key.Key_Up,
+                                QtCore.Qt.Key.Key_Down))
 
 
 class QRotaryEncoderSpinBox(QWidget):
@@ -50,13 +52,38 @@ class QRotaryEncoderSpinBox(QWidget):
 
     styleSheetUpdated = QtCore.Signal(str)
 
+    if TYPE_CHECKING:
+        # Children of the .ui file and methods delegated to the spinbox
+        # by _inheritMethods, which a type checker cannot see.
+        from qtpy.QtWidgets import QDoubleSpinBox, QLabel
+        from .QRotaryEncoder import QRotaryEncoder
+        encoder: QRotaryEncoder
+        _spinbox: QDoubleSpinBox
+        label: QLabel
+        decimals = QDoubleSpinBox.decimals
+        setDecimals = QDoubleSpinBox.setDecimals
+        maximum = QDoubleSpinBox.maximum
+        minimum = QDoubleSpinBox.minimum
+        prefix = QDoubleSpinBox.prefix
+        setPrefix = QDoubleSpinBox.setPrefix
+        suffix = QDoubleSpinBox.suffix
+        setSuffix = QDoubleSpinBox.setSuffix
+        singleStep = QDoubleSpinBox.singleStep
+        setSingleStep = QDoubleSpinBox.setSingleStep
+        stepType = QDoubleSpinBox.stepType
+        setStepType = QDoubleSpinBox.setStepType
+        value = QDoubleSpinBox.value
+        setValue = QDoubleSpinBox.setValue
+        valueChanged = QDoubleSpinBox.valueChanged
+
     def __init__(self,
                  *args,
                  colors: tuple[str, str] | None = None,
                  **kwargs) -> None:
         super().__init__(*args, **kwargs)
         uic.loadUi(Path(__file__).with_suffix('.ui'), self)
-        self._spinbox = self.value  # save before _inheritMethods overwrites
+        # save the child spinbox before _inheritMethods overwrites it
+        self._spinbox = vars(self)['value']
         self._filter = _SuppressArrowKeys(self)
         self._spinbox.installEventFilter(self._filter)
         self._inheritMethods()

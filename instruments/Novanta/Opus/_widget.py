@@ -1,10 +1,17 @@
+from typing import TYPE_CHECKING
 from qtpy import QtCore
 from QInstrument.lib.QInstrumentWidget import QInstrumentWidget
 from QInstrument.instruments.Novanta.Opus.instrument import QOpus
 from QInstrument.widgets.QLedWidget import QLedWidget
 
 
-class QOpusWidget(QInstrumentWidget):
+if TYPE_CHECKING:
+    from .OpusWidget_ui import UiOpusWidget
+else:
+    UiOpusWidget = object
+
+
+class QOpusWidget(QInstrumentWidget, UiOpusWidget):
     '''Control widget for a Laser Quantum Opus diode laser.
 
     Shows actual output power [W] and diode current [%] as read-only

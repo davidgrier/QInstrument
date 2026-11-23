@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
 import logging
 from pathlib import Path
 from qtpy import QtCore
@@ -13,7 +14,13 @@ _NORMAL_STYLE = 'background: lightyellow;'
 _LIMIT_STYLE = 'background: #FF6B6B;'
 
 
-class QProscanWidget(QInstrumentWidget):
+if TYPE_CHECKING:
+    from .ProscanWidget_ui import UiQProscanWidget
+else:
+    UiQProscanWidget = object
+
+
+class QProscanWidget(QInstrumentWidget, UiQProscanWidget):
     '''Control widget for the Prior Scientific Proscan stage controller.
 
     Displays the current XY and Z position, provides a joystick for

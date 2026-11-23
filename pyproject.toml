@@ -143,16 +143,17 @@ docstring-quotes = "single"
              "UP037", "PLW0108", "PLW1510", "E731", "RUF015", "A002"]
 
 [tool.pyright]
-# Type checking of lib/; the report is empty and CI fails on an error.  The
-# widgets and the
-# instrument widgets read their attributes from .ui files, which pyright
-# cannot see, so they are not included.  Run it
-# in an environment with PyQt6 and no other Qt binding, as CI does.  qtpy
-# does not declare Slot and Signal as exports of its modules
+# Type checking of the program, not the tests.  The report is empty and CI
+# fails on an error.  Widgets built by uic.loadUi read their children from
+# .ui files, which pyright cannot see: modules generated from those files
+# (python -m QInstrument.lib.uitypes) declare them.  Run it in an
+# environment with PyQt6 and no other Qt binding, as CI does.  qtpy does not
+# declare Slot and Signal as exports of its modules
 # (reportPrivateImportUsage), and the Qt stubs type the arguments of event
 # handlers as Optional (reportIncompatibleMethodOverride): neither says
 # anything about our code.
-include = ["lib"]
+include = ["lib", "widgets", "instruments", "QInstrumentRack.py",
+           "__main__.py", "__init__.py"]
 exclude = ["**/__pycache__", ".qi"]
 pythonVersion = "3.11"
 extraPaths = [".."]

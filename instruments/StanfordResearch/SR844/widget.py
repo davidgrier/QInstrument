@@ -1,8 +1,15 @@
+from typing import TYPE_CHECKING
 from QInstrument.lib.QInstrumentWidget import QInstrumentWidget
 from QInstrument.instruments.StanfordResearch.SR844.instrument import QSR844
 
 
-class QSR844Widget(QInstrumentWidget):
+if TYPE_CHECKING:
+    from .SR844Widget_ui import UiSR844Widget
+else:
+    UiSR844Widget = object
+
+
+class QSR844Widget(QInstrumentWidget, UiSR844Widget):
     '''Stanford Research Systems SR844 RF Lock-in Amplifier
     '''
 

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
 import logging
 from pathlib import Path
 from qtpy import QtCore
@@ -9,7 +10,13 @@ from QInstrument.instruments.PiezoDrive.PDUS210.instrument import QPDUS210
 logger = logging.getLogger(__name__)
 
 
-class QPDUS210Widget(QInstrumentWidget):
+if TYPE_CHECKING:
+    from .PDUS210Widget_ui import UiPDUS210
+else:
+    UiPDUS210 = object
+
+
+class QPDUS210Widget(QInstrumentWidget, UiPDUS210):
     '''Control widget for the PiezoDrive PDUS210 ultrasonic amplifier.
 
     Displays measured values (current, voltage, frequency, impedance, phase,

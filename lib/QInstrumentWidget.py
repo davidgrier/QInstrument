@@ -1,5 +1,5 @@
+from typing import TYPE_CHECKING, Any, ClassVar
 from pathlib import Path
-from typing import Any, ClassVar
 import inspect
 import logging
 
@@ -11,6 +11,13 @@ from .lazy import find_fake_cls, values_differ
 
 
 logger = logging.getLogger(__name__)
+
+if TYPE_CHECKING:
+    def _qproperty(ptype: type) -> type[property]:
+        '''Type checkers see a plain property; Qt sees a Qt Property.'''
+        return property
+else:
+    _qproperty = QtCore.Property
 
 
 class QInstrumentWidget(QtWidgets.QWidget):
@@ -114,8 +121,8 @@ class QInstrumentWidget(QtWidgets.QWidget):
             device = self.INSTRUMENT().find()
         self.device = device
 
-    @QtCore.Property(object)
-    def device(self):  # pyright: ignore[reportRedeclaration]
+    @_qproperty(object)
+    def device(self) -> Any:
         '''QAbstractInstrument: instrument bound to this widget.
 
         Setting this property identifies matching properties and methods,
@@ -125,8 +132,8 @@ class QInstrumentWidget(QtWidgets.QWidget):
         '''
         return self._device
 
-    @device.setter  # pyright: ignore[reportFunctionMemberAccess]
-    def device(self, device):
+    @device.setter
+    def device(self, device: Any) -> None:
         if device is None:
             return
         self._device = device
@@ -137,18 +144,18 @@ class QInstrumentWidget(QtWidgets.QWidget):
         else:
             self.setEnabled(False)
 
-    @QtCore.Property(list)
+    @_qproperty(list)
     def properties(self) -> list[str]:
         '''list[str]: device property names managed by this widget.'''
         return self._properties
 
-    @QtCore.Property(list)
+    @_qproperty(list)
     def methods(self) -> list[str]:
         '''list[str]: device method names managed by this widget.'''
         return self._methods
 
-    @QtCore.Property(dict)
-    def settings(self) -> dict:  # pyright: ignore[reportRedeclaration]
+    @_qproperty(dict)
+    def settings(self) -> dict:
         '''dict: current values of all managed properties.
 
         Getting reads each linked widget.  Setting calls :meth:`set`
