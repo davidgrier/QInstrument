@@ -249,9 +249,10 @@ class QProscan(QPollingMixin, QSerialInstrument):
 
     @settings.setter
     def settings(self, s: QAbstractInstrument.Settings) -> None:
-        QAbstractInstrument.settings.fset(
-            self, {k: v for k, v in s.items()
-                   if k not in self._VOLATILE})
+        fset = QAbstractInstrument.settings.fset
+        assert fset is not None
+        fset(self, {k: v for k, v in s.items()
+                    if k not in self._VOLATILE})
 
     def _registerProperties(self) -> None:
         self._flip: bool = False
@@ -483,7 +484,8 @@ class QProscan(QPollingMixin, QSerialInstrument):
         int
             Bitmask; bits 0–3 indicate motion in progress.
         '''
-        return self.getValue('$', int)
+        value = self.getValue('$', int)
+        return 0 if value is None else int(value)
 
     @QtCore.Slot()
     def emergency_stop(self) -> bool:

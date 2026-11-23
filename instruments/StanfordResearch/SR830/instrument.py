@@ -150,12 +150,15 @@ class QSR830(QSerialInstrument):
         ptype : type, optional
             Value type: ``float`` (default), ``int``, or ``bool``.
         '''
-        if ptype is bool:
-            def getter(): return bool(self.getValue(f'{cmd}?', int))
-            def setter(v): self.transmit(f'{cmd}{int(bool(v))}')
-        else:
-            def getter(): return self.getValue(f'{cmd}?', ptype)
-            def setter(v): self.transmit(f'{cmd}{ptype(v)}')
+        def getter():
+            if ptype is bool:
+                return bool(self.getValue(f'{cmd}?', int))
+            return self.getValue(f'{cmd}?', ptype)
+
+        def setter(v) -> None:
+            value = int(bool(v)) if ptype is bool else ptype(v)
+            self.transmit(f'{cmd}{value}')
+
         self.registerProperty(name, getter=getter, setter=setter,
                               ptype=ptype)
 

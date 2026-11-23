@@ -42,19 +42,19 @@ class _DragHandle(QtWidgets.QLabel):
         self.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
         self.setCursor(QtCore.Qt.CursorShape.OpenHandCursor)
 
-    def mousePressEvent(self, event: QtCore.QEvent) -> None:
-        if event.button() == QtCore.Qt.MouseButton.LeftButton:
+    def mousePressEvent(self, event: QtGui.QMouseEvent | None) -> None:
+        if event and event.button() == QtCore.Qt.MouseButton.LeftButton:
             self.setCursor(QtCore.Qt.CursorShape.ClosedHandCursor)
         super().mousePressEvent(event)
 
-    def mouseMoveEvent(self, event: QtCore.QEvent) -> None:
-        if event.buttons() & QtCore.Qt.MouseButton.LeftButton:
+    def mouseMoveEvent(self, event: QtGui.QMouseEvent | None) -> None:
+        if event and event.buttons() & QtCore.Qt.MouseButton.LeftButton:
             self.dragging.emit(QtGui.QCursor.pos())
         super().mouseMoveEvent(event)
 
-    def mouseReleaseEvent(self, event: QtCore.QEvent) -> None:
+    def mouseReleaseEvent(self, event: QtGui.QMouseEvent | None) -> None:
         self.setCursor(QtCore.Qt.CursorShape.OpenHandCursor)
-        if event.button() == QtCore.Qt.MouseButton.LeftButton:
+        if event and event.button() == QtCore.Qt.MouseButton.LeftButton:
             self.dropped.emit(QtGui.QCursor.pos())
         super().mouseReleaseEvent(event)
 
@@ -263,7 +263,8 @@ class QInstrumentRack(QtWidgets.QWidget):
 
     def _slotAt(self, index: int) -> _InstrumentSlot | None:
         item = self._slots.itemAt(index)
-        return item.widget() if item else None
+        slot = item.widget() if item else None
+        return slot if isinstance(slot, _InstrumentSlot) else None
 
     def _iterSlots(self):
         for i in range(self._slots.count()):
@@ -405,8 +406,9 @@ class QInstrumentRack(QtWidgets.QWidget):
         '''Remove and schedule deletion of all instrument widgets.'''
         while self._slots.count():
             item = self._slots.takeAt(0)
-            if item.widget():
-                item.widget().deleteLater()
+            widget = item.widget() if item is not None else None
+            if widget is not None:
+                widget.deleteLater()
 
     @classmethod
     def _instrumentPaths(cls):
@@ -457,7 +459,10 @@ class QInstrumentRack(QtWidgets.QWidget):
     def _removeInstrument(self, name: str) -> None:
         for i in range(self._slots.count()):
             if (slot := self._slotAt(i)) is not None and slot._name == name:
-                self._slots.takeAt(i).widget().deleteLater()
+                item = self._slots.takeAt(i)
+                widget = item.widget() if item is not None else None
+                if widget is not None:
+                    widget.deleteLater()
                 self.adjustSize()
                 break
 
@@ -569,7 +574,7 @@ class QInstrumentRack(QtWidgets.QWidget):
                             help='use fake instruments')
         args, _ = parser.parse_known_args()
         app = QApplication.instance() or QApplication(sys.argv)
-        rack = cls(instruments='Proscan DS345 SR830'.split(), fake=args.fake)
+        rack = cls(instruments=['Proscan', 'DS345', 'SR830'], fake=args.fake)
         rack.show()
         sys.exit(app.exec())
 

@@ -226,7 +226,9 @@ class QJoystickPad(QtWidgets.QWidget):
         side = min(w, h)
         dx = (w - side) // 2
         dy = (h - side) // 2
-        self.layout().setContentsMargins(dx, dy, dx, dy)
+        layout = self.layout()
+        assert layout is not None
+        layout.setContentsMargins(dx, dy, dx, dy)
         super().resizeEvent(event)
 
     def sizeHint(self) -> QtCore.QSize:
@@ -262,6 +264,7 @@ class QJoystickPad(QtWidgets.QWidget):
         '''Hold threshold reached — begin continuous velocity motion.'''
         self._isHeld = True
         direction = self._heldDirection
+        assert direction is not None
         fx, fy = self._STEP_VECTORS[direction]
         fracs  = np.array([fx, fy]) * self._stepFraction
         lo, hi = self.joystick.minimum(), self.joystick.maximum()

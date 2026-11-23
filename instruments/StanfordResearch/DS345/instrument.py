@@ -168,12 +168,15 @@ class QDS345(QSerialInstrument):
         dtype : type, optional
             Value type: ``float`` (default), ``int``, or ``bool``.
         '''
-        if dtype is bool:
-            def getter(): return bool(self.getValue(f'{cmd}?', int))
-            def setter(v): return self.transmit(f'{cmd}{int(bool(v))}')
-        else:
-            def getter(): return self.getValue(f'{cmd}?', dtype)
-            def setter(v): return self.transmit(f'{cmd}{dtype(v)}')
+        def getter():
+            if dtype is bool:
+                return bool(self.getValue(f'{cmd}?', int))
+            return self.getValue(f'{cmd}?', dtype)
+
+        def setter(v) -> None:
+            value = int(bool(v)) if dtype is bool else dtype(v)
+            self.transmit(f'{cmd}{value}')
+
         self.registerProperty(name, getter=getter, setter=setter, ptype=dtype)
 
     def identify(self) -> bool:

@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 import logging
 from pathlib import Path
-from qtpy import QtCore
+from qtpy import QtCore, QtWidgets
 from QInstrument.lib.QInstrumentWidget import QInstrumentWidget
 from QInstrument.instruments.PriorScientific.Proscan.instrument import QProscan
 
@@ -20,7 +20,9 @@ else:
     UiQProscanWidget = object
 
 
-class QProscanWidget(QInstrumentWidget, UiQProscanWidget):
+# The .ui children ``x`` and ``y`` replace QWidget.x() and QWidget.y().
+class QProscanWidget(  # pyright: ignore[reportIncompatibleVariableOverride]
+        QInstrumentWidget, UiQProscanWidget):
     '''Control widget for the Prior Scientific Proscan stage controller.
 
     Displays the current XY and Z position, provides a joystick for
@@ -76,11 +78,21 @@ class QProscanWidget(QInstrumentWidget, UiQProscanWidget):
         self.advanced.setVisible(checked)
         self.advancedToggle.setText(
             '▾ Advanced Settings' if checked else '▸ Advanced Settings')
-        self.window().adjustSize()
+        self._adjustWindow()
+
+    def _adjustWindow(self) -> None:
+        window = self.window()
+        if window is not None:
+            window.adjustSize()
+
+    def _lcd(self, name: str) -> QtWidgets.QLCDNumber:
+        '''Return the display child *name* (``x`` and ``y`` clash with
+        :class:`QWidget` methods, so the type checker cannot see them).'''
+        return vars(self)[name]
 
     def showEvent(self, event: object) -> None:
         super().showEvent(event)
-        self.window().adjustSize()
+        self._adjustWindow()
 
     @QtCore.Slot(object)
     def _onPositionChanged(self, pos: list[int]) -> None:
@@ -89,12 +101,12 @@ class QProscanWidget(QInstrumentWidget, UiQProscanWidget):
             x, y, z = pos
         except (TypeError, ValueError):
             return
-        self.x.display(x)
-        self.y.display(y)
+        self._lcd('x').display(x)
+        self._lcd('y').display(y)
         self.z.display(z)
 
     @QtCore.Slot(object)
-    def _onLimitsChanged(self, limits: object) -> None:
+    def _onLimitsChanged(self, limits: Any) -> None:
         '''Update limit-switch indicator styles and log new activations.'''
         if limits and not self._prev_limits:
             logger.warning(
@@ -102,8 +114,8 @@ class QProscanWidget(QInstrumentWidget, UiQProscanWidget):
                 f'Y={limits[1]}, Z={limits[2]}')
         self._prev_limits = limits
         x_hit, y_hit, z_hit, _ = limits or (False, False, False, False)
-        self.x.setStyleSheet(_LIMIT_STYLE if x_hit else _NORMAL_STYLE)
-        self.y.setStyleSheet(_LIMIT_STYLE if y_hit else _NORMAL_STYLE)
+        self._lcd('x').setStyleSheet(_LIMIT_STYLE if x_hit else _NORMAL_STYLE)
+        self._lcd('y').setStyleSheet(_LIMIT_STYLE if y_hit else _NORMAL_STYLE)
         self.z.setStyleSheet(_LIMIT_STYLE if z_hit else _NORMAL_STYLE)
 
     @QtCore.Slot(str)

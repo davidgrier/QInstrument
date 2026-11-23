@@ -93,7 +93,8 @@ def target(ui: Path) -> Path:
 
 def main(argv: list[str] | None = None) -> int:
     '''Write (or with ``--check``, verify) the typing modules.'''
-    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    summary = (__doc__ or '').splitlines()[0]
+    parser = argparse.ArgumentParser(description=summary)
     parser.add_argument('base', nargs='?', type=Path,
                         default=Path(__file__).parents[1],
                         help='directory to search for .ui files')
