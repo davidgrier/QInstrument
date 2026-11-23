@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import ClassVar
+
 import sys
 from enum import Enum
 from qtpy import QtCore, QtWidgets, QtGui
@@ -49,7 +51,7 @@ class QLedWidget(QtWidgets.QWidget):
     OFF = State.OFF
     ON = State.ON
 
-    hexcodes = {RED:    {OFF: ('3f0000', 'a00000'),
+    hexcodes: ClassVar[dict] = {RED:    {OFF: ('3f0000', 'a00000'),
                          ON:  ('af0000', 'ff0f0f')},
                 AMBER:  {OFF: ('aa4400', 'ad892c'),
                          ON:  ('d45500', 'ffd42a')},

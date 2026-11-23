@@ -1,3 +1,4 @@
+from typing import ClassVar
 import numpy as np
 from QInstrument.lib.QSerialInstrument import QSerialInstrument
 
@@ -16,7 +17,7 @@ class QTDS1000(QSerialInstrument):
         Acquire the waveform on a channel: ``(t, v)`` arrays.
     '''
 
-    comm = dict(baudRate=QSerialInstrument.BaudRate.Baud9600,
+    comm: ClassVar[dict] = dict(baudRate=QSerialInstrument.BaudRate.Baud9600,
                 dataBits=QSerialInstrument.DataBits.Data8,
                 stopBits=QSerialInstrument.StopBits.OneStop,
                 parity=QSerialInstrument.Parity.NoParity,

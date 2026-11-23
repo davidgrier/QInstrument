@@ -1,3 +1,4 @@
+from typing import ClassVar
 import logging
 from QInstrument.lib.QSerialInstrument import QSerialInstrument
 
@@ -123,7 +124,7 @@ class QIPGLaser(QSerialInstrument):
     +---------+--------------------------+--------------------------+
     '''
 
-    flag = {'TMP': 0x2,        # over-temperature condition
+    flag: ClassVar[dict] = {'TMP': 0x2,        # over-temperature condition
             'EMX': 0x4,        # laser emission active
             'BKR': 0x8,        # excessive backreflection
             'ACL': 0x10,       # analog control mode enabled
@@ -138,7 +139,7 @@ class QIPGLaser(QSerialInstrument):
             'KEY': 0x200000,   # keyswitch in REM position
             'ERR': 0x2 | 0x8 | 0x800 | 0x20000}  # composite fault mask
 
-    comm = dict(baudRate=QSerialInstrument.BaudRate.Baud57600,
+    comm: ClassVar[dict] = dict(baudRate=QSerialInstrument.BaudRate.Baud57600,
                 dataBits=QSerialInstrument.DataBits.Data8,
                 stopBits=QSerialInstrument.StopBits.OneStop,
                 parity=QSerialInstrument.Parity.NoParity,

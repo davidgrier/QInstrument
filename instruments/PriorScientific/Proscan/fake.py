@@ -66,7 +66,7 @@ class QFakeProscan(QFakeInstrument, QProscan):
             ptype=bool)
         self.registerProperty(
             'limits',
-            getter=lambda: self.active_limits(),
+            getter=self.active_limits,
             setter=None,
             ptype=object)
         self.identification = 'Fake Prior Proscan'

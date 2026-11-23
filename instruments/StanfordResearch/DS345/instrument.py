@@ -1,3 +1,4 @@
+from typing import ClassVar
 import logging
 import numpy as np
 from numpy.typing import ArrayLike
@@ -98,7 +99,7 @@ class QDS345(QSerialInstrument):
         Range: 1 mHz – 40 MHz
     '''
 
-    comm = dict(baudRate=QSerialInstrument.BaudRate.Baud9600,
+    comm: ClassVar[dict] = dict(baudRate=QSerialInstrument.BaudRate.Baud9600,
                 dataBits=QSerialInstrument.DataBits.Data8,
                 stopBits=QSerialInstrument.StopBits.TwoStop,
                 parity=QSerialInstrument.Parity.NoParity,

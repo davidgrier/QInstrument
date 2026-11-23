@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import ClassVar
+
 import logging
 from qtpy import QtCore
 from QInstrument.lib.QAbstractInstrument import QAbstractInstrument
@@ -233,7 +235,7 @@ class QProscan(QPollingMixin, QSerialInstrument):
         _VOLATILE = QProscan._VOLATILE | frozenset({'stepsize'})
     '''
 
-    comm = dict(baudRate=QSerialInstrument.BaudRate.Baud9600,
+    comm: ClassVar[dict] = dict(baudRate=QSerialInstrument.BaudRate.Baud9600,
                 dataBits=QSerialInstrument.DataBits.Data8,
                 stopBits=QSerialInstrument.StopBits.OneStop,
                 parity=QSerialInstrument.Parity.NoParity,
@@ -310,7 +312,7 @@ class QProscan(QPollingMixin, QSerialInstrument):
             ptype=bool)
         self.registerProperty(
             'limits',
-            getter=lambda: self.active_limits(),
+            getter=self.active_limits,
             setter=None,
             ptype=object)
 

@@ -1,5 +1,5 @@
 import logging
-from typing import Literal, overload
+from typing import Literal, overload, ClassVar
 
 from qtpy.QtSerialPort import QSerialPortInfo
 from QInstrument.lib.QAbstractInstrument import QAbstractInstrument
@@ -57,7 +57,7 @@ class QSerialInstrument(QAbstractInstrument):
     Parity = QSerialInterface.Parity
     FlowControl = QSerialInterface.FlowControl
 
-    comm: dict = {}
+    comm: ClassVar[dict] = {}
 
     def __init__(self, portName: str | None = None, **kwargs) -> None:
         super().__init__()

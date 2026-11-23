@@ -1,3 +1,4 @@
+from typing import ClassVar
 import logging
 from QInstrument.lib.QSerialInstrument import QSerialInstrument
 
@@ -86,7 +87,7 @@ class QSR830(QSerialInstrument):
 
     '''
 
-    comm = dict(baudRate=QSerialInstrument.BaudRate.Baud9600,
+    comm: ClassVar[dict] = dict(baudRate=QSerialInstrument.BaudRate.Baud9600,
                 dataBits=QSerialInstrument.DataBits.Data8,
                 stopBits=QSerialInstrument.StopBits.OneStop,
                 parity=QSerialInstrument.Parity.NoParity,

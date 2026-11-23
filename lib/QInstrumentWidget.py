@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar
 import inspect
 import logging
 
@@ -64,7 +64,7 @@ class QInstrumentWidget(QtWidgets.QWidget):
         the property name and the new value.
     '''
 
-    wsetter = {'QCheckBox':      'setChecked',
+    wsetter: ClassVar[dict] = {'QCheckBox':      'setChecked',
                'QComboBox':      'setCurrentIndex',
                'QDoubleSpinBox': 'setValue',
                'QGroupBox':      'setChecked',
@@ -74,7 +74,7 @@ class QInstrumentWidget(QtWidgets.QWidget):
                'QRadioButton':   'setChecked',
                'QSpinBox':       'setValue'}
 
-    wgetter = {'QCheckBox':      'isChecked',
+    wgetter: ClassVar[dict] = {'QCheckBox':      'isChecked',
                'QComboBox':      'currentIndex',
                'QDoubleSpinBox': 'value',
                'QGroupBox':      'isChecked',
@@ -84,7 +84,7 @@ class QInstrumentWidget(QtWidgets.QWidget):
                'QRadioButton':   'isChecked',
                'QSpinBox':       'value'}
 
-    wsignal = {'QCheckBox':      'toggled',
+    wsignal: ClassVar[dict] = {'QCheckBox':      'toggled',
                'QComboBox':      'currentIndexChanged',
                'QDoubleSpinBox': 'valueChanged',
                'QGroupBox':      'toggled',

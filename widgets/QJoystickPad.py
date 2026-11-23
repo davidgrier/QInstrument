@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import ClassVar
+
 import sys
 import logging
 import numpy as np
@@ -24,7 +26,7 @@ class QTriangleButton(QtWidgets.QAbstractButton):
     '''
 
     # Normalised (x, y) vertices for each direction, within [0, 1]^2.
-    _VERTICES: dict[str, list[tuple[float, float]]] = {
+    _VERTICES: ClassVar[dict[str, list[tuple[float, float]]]] = {
         'up':    [(0.5, 0.0), (0.0, 1.0), (1.0, 1.0)],
         'down':  [(0.5, 1.0), (0.0, 0.0), (1.0, 0.0)],
         'left':  [(0.0, 0.5), (1.0, 0.0), (1.0, 1.0)],
@@ -132,7 +134,7 @@ class QJoystickPad(QtWidgets.QWidget):
     _HOLD_THRESHOLD_MS = 300  # ms before a press is treated as a hold
 
     # Unit step vectors (fx, fy) in joystick fraction space [-1, 1]^2.
-    _STEP_VECTORS: dict[str, tuple[float, float]] = {
+    _STEP_VECTORS: ClassVar[dict[str, tuple[float, float]]] = {
         'left':  (-1.,  0.),
         'right': ( 1.,  0.),
         'up':    ( 0.,  1.),

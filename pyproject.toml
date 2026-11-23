@@ -102,16 +102,27 @@ testpaths = ["tests"]
 
 [tool.ruff]
 line-length = 79
+# The environment lives in the tree, in .qi.
 extend-exclude = [".qi", "docs/_build"]
 
 [tool.ruff.lint]
-select = ["F", "B", "E501", "Q", "SIM", "PLW2901", "UP037",
-          "PERF", "PIE"]
-# __all__ is written as 'A B C'.split(), which is the style of the package.
-# RUF012: the ``comm`` dicts and the widget ``wsetter`` tables are class
-# attributes by design and are never mutated.  PERF203: a try/except in a
-# loop is how the instrument scan skips what will not import.
-ignore = ["SIM905", "RUF012", "PERF203"]
+# F pyflakes, B bugbear, E501 line length, Q quotes, SIM simplifications
+# (except SIM905), PERF performance, PIE misc, RUF012 mutable class
+# attributes, RUF100 stale noqa, UP037 quoted annotations; E402 imports at
+# the top, E731 lambda assigned, E741 ambiguous name, RUF015 first element,
+# RUF059 unused unpacked variable, PLW0108 needless lambda, PLW1510
+# subprocess without check, TID252 a relative import of a parent (a sibling
+# is imported as `.name`), A001 and A002 a name that hides a builtin, C400
+# and C401 a generator that is a comprehension, PLW2901 a loop variable that
+# is overwritten.
+select = ["F", "B", "E402", "E501", "E731", "E741", "Q", "SIM", "PERF",
+          "PIE", "PLW0108", "PLW1510", "PLW2901", "RUF012", "RUF015",
+          "RUF059", "RUF100", "TID252", "UP037", "A001", "A002", "C400",
+          "C401"]
+ignore = ["SIM905"]
+
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports = "parents"
 
 [tool.ruff.lint.flake8-quotes]
 inline-quotes = "single"
@@ -121,9 +132,15 @@ docstring-quotes = "single"
 [tool.ruff.lint.per-file-ignores]
 # Package files re-export names; tests build stubs and mocks.
 "__init__.py" = ["F401"]
-"docs/conf.py" = ["A001"]
-"tests/*" = ["E501", "F401", "F811", "F841", "B018", "B905", "SIM",
-             "RUF012", "PLW2901", "UP037", "PERF", "PIE"]
+# Sphinx reads the name `copyright`.
+"docs/conf.py" = ["A001", "E402"]
+# Tests import after patching, unpack to name what they do not use, keep a
+# temporary file open across a test, and are not held to the style rules
+# that simplify code (a lambda in a test is often late binding on purpose,
+# and a test runs a child process without a check).
+"tests/*" = ["E402", "E501", "F401", "F811", "F841", "B018", "B905",
+             "RUF012", "RUF059", "SIM", "PERF", "PIE", "PLW2901",
+             "UP037", "PLW0108", "PLW1510", "E731", "RUF015", "A002"]
 
 [tool.pyright]
 # Type checking of lib/; the report is empty and CI fails on an error.  The
