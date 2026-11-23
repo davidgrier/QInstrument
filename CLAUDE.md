@@ -30,9 +30,11 @@ Run the checks (the same ones CI runs):
 ```bash
 python -m pytest                 # tests; add --cov for coverage (floor in pyproject.toml)
 ruff check .                     # lint; line length 79, single quotes
-pyright                          # lib/ only; the report is empty, and CI fails on an error
+pyright                          # the whole package; the report is empty, and CI fails on an error
 ```
 On a machine without a display, set `QT_QPA_PLATFORM=offscreen`.
+
+Children that `uic.loadUi` attaches to a widget are declared for pyright by the generated `<name>_ui.py` beside each `.ui` file. After editing a `.ui` file run `python -m QInstrument.lib.uitypes`; the widget class lists the generated `Ui<Name>` class as a base under `if TYPE_CHECKING:` (see `instruments/Novanta/Opus/_widget.py`). `tests/test_uitypes.py` fails if one is stale. `QRotaryEncoderSpinBox` is annotated by hand.
 
 Install the git hooks once per clone (`pip install -e ".[dev]"` provides `pre-commit` and `ruff`; activate `.qi` first, because the hooks use what is installed in the environment):
 ```bash

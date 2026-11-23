@@ -135,7 +135,7 @@ class QTDS1000(QSerialInstrument):
 
 def example() -> None:
     '''Acquire CH1, plot it, and save it to ``tds1000.csv``.'''
-    import matplotlib.pyplot as plt
+    import matplotlib.pyplot as plt  # pyright: ignore[reportMissingImports]
     from qtpy.QtCore import QCoreApplication
 
     if QCoreApplication.instance() is None:

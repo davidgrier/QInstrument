@@ -24,8 +24,7 @@ def test_generated_module_is_current(ui):
 
 def test_generated_children_match_loaded_widget(qtbot):
     '''Every annotated child exists on the widget loaded by uic.'''
-    from QInstrument.instruments.Novanta.Opus.widget import QOpusWidget
-    from QInstrument.instruments.Novanta.Opus.instrument import QOpus
+    from QInstrument.instruments.Novanta.Opus import QOpus, QOpusWidget
     ui = BASE / 'instruments/Novanta/Opus/OpusWidget.ui'
     names = [line.split(':')[0].strip()
              for line in uitypes.generate(ui).splitlines()

@@ -1,9 +1,6 @@
-from typing import TYPE_CHECKING
+from typing import Any
 
 from qtpy import QtCore
-
-if TYPE_CHECKING:
-    from QInstrument.lib.QAbstractInstrument import QAbstractInstrument
 
 
 class QPollingMixin:
@@ -47,13 +44,6 @@ class QPollingMixin:
                     QtCore.QTimer.singleShot(
                         self.POLL_INTERVAL, self._poll)
     '''
-
-    if TYPE_CHECKING:
-        # What the mixin takes from the instrument it is mixed into.
-        properties: list[str]
-
-        def get(self, key: str) -> QAbstractInstrument.PropertyValue | None:
-            ...
 
     POLL_INTERVAL: int = 0
     '''Milliseconds between the end of one poll response and the start
@@ -100,8 +90,9 @@ class QPollingMixin:
         '''
         if not getattr(self, '_polling', False):
             return
-        for name in self.properties:
-            self.get(name)
+        instrument: Any = self  # mixed into a QAbstractInstrument
+        for name in instrument.properties:
+            instrument.get(name)
         if getattr(self, '_polling', False):
             QtCore.QTimer.singleShot(self.POLL_INTERVAL, self._poll)
 

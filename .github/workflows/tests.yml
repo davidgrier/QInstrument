@@ -23,7 +23,7 @@ jobs:
       - run: ruff check .
 
   types:
-    name: Types (pyright on lib/)
+    name: Types (pyright)
     runs-on: ubuntu-latest
     # The report is empty, so a type error fails the workflow.  Pyright and
     # PyQt6 (whose stubs pyright reads) are pinned: a newer version finds new

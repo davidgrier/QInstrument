@@ -1,5 +1,5 @@
 import logging
-from typing import Literal, overload, ClassVar
+from typing import Literal, TypeVar, overload, ClassVar
 
 from qtpy.QtSerialPort import QSerialPortInfo
 from QInstrument.lib.QAbstractInstrument import QAbstractInstrument
@@ -7,6 +7,8 @@ from QInstrument.lib.QSerialInterface import QSerialInterface
 
 
 logger = logging.getLogger(__name__)
+
+_T = TypeVar('_T', bound='QSerialInstrument')
 
 
 class QSerialInstrument(QAbstractInstrument):
@@ -118,7 +120,7 @@ class QSerialInstrument(QAbstractInstrument):
         '''Close the serial interface.'''
         self._interface.close()
 
-    def find(self) -> 'QSerialInstrument':
+    def find(self: _T) -> _T:
         '''Scan all available serial ports to locate the instrument.
 
         Calls :meth:`open` on each port returned by
@@ -126,7 +128,7 @@ class QSerialInstrument(QAbstractInstrument):
 
         Returns
         -------
-        QSerialInstrument
+        Instance of the calling class
             The instance itself, whether or not a device was found.
             Call :meth:`isOpen` to check the result.
         '''
